@@ -1,0 +1,27 @@
+{
+  "name": "TrainingWeek",
+  "type": "object",
+  "properties": {
+    "athlete_id": {
+      "type": "string",
+      "description": "User ID of the athlete"
+    },
+    "week_start_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Monday of the training week"
+    },
+    "athlete_reflection": {
+      "type": "string",
+      "description": "How did the week feel?"
+    },
+    "coach_feedback": {
+      "type": "string",
+      "description": "Coach's weekly feedback"
+    }
+  },
+  "required": [
+    "athlete_id",
+    "week_start_date"
+  ]
+}

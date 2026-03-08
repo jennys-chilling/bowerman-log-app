@@ -1,0 +1,166 @@
+{
+  "name": "DayPlan",
+  "type": "object",
+  "properties": {
+    "training_week_id": {
+      "type": "string"
+    },
+    "date": {
+      "type": "string",
+      "format": "date"
+    },
+    "day_of_week": {
+      "type": "string",
+      "enum": [
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday",
+        "Sunday"
+      ]
+    },
+    "am_coach": {
+      "type": "object",
+      "properties": {
+        "workout_type": {
+          "type": "string"
+        },
+        "planned_difficulty": {
+          "type": "number"
+        },
+        "prescription": {
+          "type": "string"
+        },
+        "coach_notes": {
+          "type": "string"
+        }
+      }
+    },
+    "pm_coach": {
+      "type": "object",
+      "properties": {
+        "workout_type": {
+          "type": "string"
+        },
+        "planned_difficulty": {
+          "type": "number"
+        },
+        "prescription": {
+          "type": "string"
+        },
+        "coach_notes": {
+          "type": "string"
+        }
+      }
+    },
+    "am_session": {
+      "type": "object",
+      "properties": {
+        "session_type": {
+          "type": "string",
+          "enum": [
+            "Run",
+            "X-Train",
+            "Off"
+          ]
+        },
+        "duration_minutes": {
+          "type": "number"
+        },
+        "mileage": {
+          "type": "number"
+        },
+        "location": {
+          "type": "string"
+        },
+        "shoes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "rpe": {
+          "type": "number"
+        },
+        "comments": {
+          "type": "string"
+        }
+      }
+    },
+    "pm_session": {
+      "type": "object",
+      "properties": {
+        "session_type": {
+          "type": "string",
+          "enum": [
+            "Run",
+            "X-Train",
+            "Off"
+          ]
+        },
+        "duration_minutes": {
+          "type": "number"
+        },
+        "mileage": {
+          "type": "number"
+        },
+        "location": {
+          "type": "string"
+        },
+        "shoes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "rpe": {
+          "type": "number"
+        },
+        "comments": {
+          "type": "string"
+        }
+      }
+    },
+    "lift": {
+      "type": "object",
+      "properties": {
+        "duration_minutes": {
+          "type": "number"
+        },
+        "lift_type": {
+          "type": "string"
+        }
+      }
+    },
+    "splits": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "rep_number": {
+            "type": "number"
+          },
+          "distance": {
+            "type": "string"
+          },
+          "time": {
+            "type": "string"
+          },
+          "rest": {
+            "type": "string"
+          },
+          "notes": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "required": [
+    "training_week_id",
+    "date",
+    "day_of_week"
+  ]
+}

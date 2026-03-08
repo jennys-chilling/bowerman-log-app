@@ -1,0 +1,50 @@
+{
+  "name": "Shoe",
+  "type": "object",
+  "properties": {
+    "athlete_id": {
+      "type": "string",
+      "description": "User ID of the athlete"
+    },
+    "name": {
+      "type": "string",
+      "description": "Custom name for the shoe"
+    },
+    "model": {
+      "type": "string",
+      "description": "Brand and model"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "Trainer",
+        "Workout",
+        "Spike",
+        "Trail",
+        "Racing Flat"
+      ]
+    },
+    "current_mileage": {
+      "type": "number",
+      "default": 0
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Active",
+        "Retired"
+      ],
+      "default": "Active"
+    },
+    "color": {
+      "type": "string",
+      "description": "Color for visual identification"
+    }
+  },
+  "required": [
+    "athlete_id",
+    "name",
+    "model",
+    "type"
+  ]
+}
