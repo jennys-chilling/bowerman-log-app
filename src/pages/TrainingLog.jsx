@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import { appClient } from '@/api/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { startOfWeek, addDays, format, startOfMonth } from 'date-fns';
-import WeekNavigation from '@/components/training/WeekNavigation';
+import WeekNavigation from '@/components/training/WeeklyNavigation';
 import DayColumn from '@/components/training/DayColumn';
 import WeeklyTotals from '@/components/training/WeeklyTotals';
 import WeeklyReflection from '@/components/training/WeeklyReflection';
@@ -12,7 +12,6 @@ import SplitsEditor from '@/components/training/SplitsEditor';
 import MonthView from '@/components/training/MonthView';
 import { DifficultyKey } from '@/components/training/DifficultyBadge';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, ClipboardList, User, Users, CalendarDays, Calendar } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -38,7 +37,7 @@ export default function TrainingLog() {
   });
   
   useEffect(() => {
-    base44.auth.me().then(u => {
+    appClient.auth.me().then(u => {
       setUser(u);
       if (u.role !== 'admin') {
         setViewingAthleteId(u.id);
@@ -52,14 +51,14 @@ export default function TrainingLog() {
   // Fetch athletes for coach
   const { data: athletes = [] } = useQuery({
     queryKey: ['athletes'],
-    queryFn: () => base44.entities.User.list(),
+    queryFn: () => appClient.entities.User.list(),
     enabled: isCoach,
   });
   
   // Fetch training week
   const { data: trainingWeeks = [], isLoading: loadingWeek } = useQuery({
     queryKey: ['trainingWeek', effectiveAthleteId, format(currentWeekStart, 'yyyy-MM-dd')],
-    queryFn: () => base44.entities.TrainingWeek.filter({
+    queryFn: () => appClient.entities.TrainingWeek.filter({
       athlete_id: effectiveAthleteId,
       week_start_date: format(currentWeekStart, 'yyyy-MM-dd'),
     }),
@@ -71,7 +70,7 @@ export default function TrainingLog() {
   // Fetch day plans
   const { data: dayPlans = [], isLoading: loadingPlans } = useQuery({
     queryKey: ['dayPlans', trainingWeek?.id],
-    queryFn: () => base44.entities.DayPlan.filter({ training_week_id: trainingWeek.id }),
+    queryFn: () => appClient.entities.DayPlan.filter({ training_week_id: trainingWeek.id }),
     enabled: !!trainingWeek?.id,
   });
   
@@ -79,7 +78,7 @@ export default function TrainingLog() {
   const { data: monthWeeks = [] } = useQuery({
     queryKey: ['monthWeeks', effectiveAthleteId, format(currentMonth, 'yyyy-MM')],
     queryFn: async () => {
-      const allWeeks = await base44.entities.TrainingWeek.filter({ athlete_id: effectiveAthleteId });
+      const allWeeks = await appClient.entities.TrainingWeek.filter({ athlete_id: effectiveAthleteId });
       const monthStr = format(currentMonth, 'yyyy-MM');
       return allWeeks.filter(w => w.week_start_date && w.week_start_date.startsWith(monthStr.slice(0, 7)));
     },
@@ -94,10 +93,10 @@ export default function TrainingLog() {
       const month = currentMonth.getMonth();
       const startStr = format(new Date(year, month - 1, 22), 'yyyy-MM-dd');
       const endStr = format(new Date(year, month + 1, 10), 'yyyy-MM-dd');
-      const allWeeks = await base44.entities.TrainingWeek.filter({ athlete_id: effectiveAthleteId });
+      const allWeeks = await appClient.entities.TrainingWeek.filter({ athlete_id: effectiveAthleteId });
       const relevantWeeks = allWeeks.filter(w => w.week_start_date >= startStr && w.week_start_date <= endStr);
       const plansArrays = await Promise.all(
-        relevantWeeks.map(w => base44.entities.DayPlan.filter({ training_week_id: w.id }))
+        relevantWeeks.map(w => appClient.entities.DayPlan.filter({ training_week_id: w.id }))
       );
       return plansArrays.flat();
     },
@@ -114,14 +113,14 @@ export default function TrainingLog() {
   // Fetch shoes
   const { data: shoes = [] } = useQuery({
     queryKey: ['shoes', effectiveAthleteId],
-    queryFn: () => base44.entities.Shoe.filter({ athlete_id: effectiveAthleteId }),
+    queryFn: () => appClient.entities.Shoe.filter({ athlete_id: effectiveAthleteId }),
     enabled: !!effectiveAthleteId,
   });
   
   // Create week mutation
   const createWeekMutation = useMutation({
     mutationFn: async () => {
-      const week = await base44.entities.TrainingWeek.create({
+      const week = await appClient.entities.TrainingWeek.create({
         athlete_id: effectiveAthleteId,
         week_start_date: format(currentWeekStart, 'yyyy-MM-dd'),
       });
@@ -131,25 +130,25 @@ export default function TrainingLog() {
         date: format(addDays(currentWeekStart, index), 'yyyy-MM-dd'),
         day_of_week: day,
       }));
-      await base44.entities.DayPlan.bulkCreate(dayPlansData);
+      await appClient.entities.DayPlan.bulkCreate(dayPlansData);
       return week;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['trainingWeek']);
-      queryClient.invalidateQueries(['dayPlans']);
+      queryClient.invalidateQueries({ queryKey: ['trainingWeek'] });
+      queryClient.invalidateQueries({ queryKey: ['dayPlans'] });
     },
   });
   
   // Update day plan mutation
   const updateDayPlanMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.DayPlan.update(id, data),
-    onSuccess: () => queryClient.invalidateQueries(['dayPlans']),
+    mutationFn: ({ id, data }) => appClient.entities.DayPlan.update(id, data),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['dayPlans'] }),
   });
   
   // Update week mutation
   const updateWeekMutation = useMutation({
-    mutationFn: (data) => base44.entities.TrainingWeek.update(trainingWeek.id, data),
-    onSuccess: () => queryClient.invalidateQueries(['trainingWeek']),
+    mutationFn: (data) => appClient.entities.TrainingWeek.update(trainingWeek.id, data),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['trainingWeek'] }),
   });
   
   // Update shoe mileage after session save
@@ -158,13 +157,13 @@ export default function TrainingLog() {
       for (const shoeId of shoeIds) {
         const shoe = shoes.find(s => s.id === shoeId);
         if (shoe) {
-          await base44.entities.Shoe.update(shoeId, {
+          await appClient.entities.Shoe.update(shoeId, {
             current_mileage: (shoe.current_mileage || 0) + mileage,
           });
         }
       }
     },
-    onSuccess: () => queryClient.invalidateQueries(['shoes']),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['shoes'] }),
   });
   
   const handleEditDay = (dayPlan, mode) => {
@@ -345,8 +344,8 @@ export default function TrainingLog() {
           <div className="mt-8 bg-white rounded-xl border border-slate-200 p-12 text-center">
             <h3 className="text-lg font-medium text-slate-700 mb-2">No training week found</h3>
             <p className="text-slate-500 mb-4">Create a training week to start planning.</p>
-            <Button onClick={() => createWeekMutation.mutate()} disabled={createWeekMutation.isLoading}>
-              {createWeekMutation.isLoading ? (
+            <Button onClick={() => createWeekMutation.mutate()} disabled={createWeekMutation.isPending}>
+              {createWeekMutation.isPending ? (
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
               ) : null}
               Create Training Week

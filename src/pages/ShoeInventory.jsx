@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import { appClient } from '@/api/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,7 +9,6 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Progress } from '@/components/ui/progress';
 import { Plus, Pencil, Archive, ArrowLeft, Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
@@ -43,28 +42,28 @@ export default function ShoeInventory() {
   });
   
   useEffect(() => {
-    base44.auth.me().then(setUser);
+    appClient.auth.me().then(setUser);
   }, []);
   
   const { data: shoes = [], isLoading } = useQuery({
     queryKey: ['shoes', user?.id],
-    queryFn: () => base44.entities.Shoe.filter({ athlete_id: user.id }),
+    queryFn: () => appClient.entities.Shoe.filter({ athlete_id: user.id }),
     enabled: !!user?.id,
   });
   
   const createShoeMutation = useMutation({
-    mutationFn: (data) => base44.entities.Shoe.create({ ...data, athlete_id: user.id }),
+    mutationFn: (data) => appClient.entities.Shoe.create({ ...data, athlete_id: user.id }),
     onSuccess: () => {
-      queryClient.invalidateQueries(['shoes']);
+      queryClient.invalidateQueries({ queryKey: ['shoes'] });
       setShowEditor(false);
       resetForm();
     },
   });
   
   const updateShoeMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.Shoe.update(id, data),
+    mutationFn: ({ id, data }) => appClient.entities.Shoe.update(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries(['shoes']);
+      queryClient.invalidateQueries({ queryKey: ['shoes'] });
       setShowEditor(false);
       resetForm();
     },

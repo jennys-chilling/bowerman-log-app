@@ -1,39 +1,33 @@
-**Welcome to your Base44 project** 
+# Bowerman Training Log
 
-**About**
+This repository is the standalone codebase for the Bowerman training log app. It no longer depends on the original generated plugin scaffolding, so you can develop and deploy it from your own private repository like a normal Vite application.
 
-View and Edit  your app on [Base44.com](http://Base44.com) 
+## Local development
 
-This project contains everything you need to run your app locally.
+1. Install dependencies with `npm install`.
+2. Create an `.env.local` file.
+3. Start the app with `npm run dev`.
 
-**Edit the code in your local development environment**
+```bash
+VITE_APP_ID=your_app_id
+VITE_APP_BASE_URL=https://your-app-host.example.com
 
-Any change pushed to the repo will also be reflected in the Base44 Builder.
+# Optional. Override the hosted API origin if needed.
+VITE_API_BASE_URL=https://your-api-host.example.com
 
-**Prerequisites:** 
-
-1. Clone the repository using the project's Git URL 
-2. Navigate to the project directory
-3. Install dependencies: `npm install`
-4. Create an `.env.local` file and set the right environment variables
-
-```
-VITE_BASE44_APP_ID=your_app_id
-VITE_BASE44_APP_BASE_URL=your_backend_url
-
-e.g.
-VITE_BASE44_APP_ID=cbef744a8545c389ef439ea6
-VITE_BASE44_APP_BASE_URL=https://my-to-do-list-81bfaad7.base44.app
+# Optional compatibility setting if you rely on versioned functions.
+VITE_FUNCTIONS_VERSION=
 ```
 
-Run the app: `npm run dev`
+Legacy environment variable names from the exported app are still accepted so existing local setups do not break during the transition.
 
-**Publish your changes**
+## Scripts
 
-Open [Base44.com](http://Base44.com) and click on Publish.
+- `npm run dev` starts the Vite dev server.
+- `npm run build` creates a production build.
+- `npm run preview` serves the production build locally.
+- `npm run lint` runs ESLint.
 
-**Docs & Support**
+## Notes
 
-Documentation: [https://docs.base44.com/Integrations/Using-GitHub](https://docs.base44.com/Integrations/Using-GitHub)
-
-Support: [https://app.base44.com/support](https://app.base44.com/support)
+The app still expects a valid hosted backend and app ID. The codebase has been renamed and de-coupled from the original export scaffolding, but it will continue calling the configured backend APIs until you migrate those services elsewhere.

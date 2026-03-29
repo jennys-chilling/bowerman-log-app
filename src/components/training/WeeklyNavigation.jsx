@@ -1,14 +1,14 @@
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, Calendar } from "lucide-react";
-import { format, startOfWeek, addWeeks, subWeeks, isThisWeek } from "date-fns";
+import { format, startOfWeek, addDays, addWeeks, subWeeks, isThisWeek } from "date-fns";
 
 export default function WeekNavigation({ currentWeekStart, onWeekChange }) {
   const goToPreviousWeek = () => onWeekChange(subWeeks(currentWeekStart, 1));
   const goToNextWeek = () => onWeekChange(addWeeks(currentWeekStart, 1));
   const goToCurrentWeek = () => onWeekChange(startOfWeek(new Date(), { weekStartsOn: 1 }));
   
-  const weekEnd = addWeeks(currentWeekStart, 1);
+  const weekEnd = addDays(currentWeekStart, 6);
   const isCurrentWeek = isThisWeek(currentWeekStart, { weekStartsOn: 1 });
   
   return (
@@ -26,7 +26,7 @@ export default function WeekNavigation({ currentWeekStart, onWeekChange }) {
       <div className="flex items-center gap-3">
         <div className="text-center">
           <div className="text-lg font-semibold text-slate-900">
-            {format(currentWeekStart, 'MMM d')} – {format(addWeeks(currentWeekStart, 1), 'MMM d, yyyy')}
+            {format(currentWeekStart, 'MMM d')} – {format(weekEnd, 'MMM d, yyyy')}
           </div>
           {isCurrentWeek && (
             <span className="text-xs text-emerald-600 font-medium">Current Week</span>
