@@ -3,6 +3,7 @@ import { appClient } from '@/api/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { startOfWeek, addDays, format, startOfMonth } from 'date-fns';
 import WeekNavigation from '@/components/training/WeeklyNavigation';
+import { useAuth } from '@/lib/AuthContext';
 import DayColumn from '@/components/training/DayColumn';
 import WeeklyTotals from '@/components/training/WeeklyTotals';
 import WeeklyReflection from '@/components/training/WeeklyReflection';
@@ -13,7 +14,7 @@ import MonthView from '@/components/training/MonthView';
 import { DifficultyKey } from '@/components/training/DifficultyBadge';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, ClipboardList, User, Users, CalendarDays, Calendar } from 'lucide-react';
+import { Loader2, ClipboardList, User, Users, CalendarDays, Calendar, LogOut } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 
@@ -21,6 +22,7 @@ const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'
 
 export default function TrainingLog() {
   const queryClient = useQueryClient();
+  const { logout } = useAuth();
   const [currentWeekStart, setCurrentWeekStart] = useState(
     startOfWeek(new Date(), { weekStartsOn: 1 })
   );
@@ -260,6 +262,10 @@ export default function TrainingLog() {
           
           <div className="flex items-center gap-3">
             <DifficultyKey />
+            <Button variant="ghost" size="sm" onClick={() => logout()}>
+              <LogOut className="mr-1.5 h-4 w-4" />
+              Sign Out
+            </Button>
             <Link to={createPageUrl('ShoeInventory')}>
               <Button variant="outline" size="sm">
                 👟 Shoes

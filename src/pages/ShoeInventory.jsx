@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { appClient } from '@/api/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useAuth } from '@/lib/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Pencil, Archive, ArrowLeft, Loader2 } from 'lucide-react';
+import { Plus, Pencil, Archive, ArrowLeft, Loader2, LogOut } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 
@@ -29,6 +30,7 @@ const MAX_MILEAGE = 500; // Standard shoe lifespan
 
 export default function ShoeInventory() {
   const queryClient = useQueryClient();
+  const { logout } = useAuth();
   const [user, setUser] = useState(null);
   const [showEditor, setShowEditor] = useState(false);
   const [editingShoe, setEditingShoe] = useState(null);
@@ -145,9 +147,15 @@ export default function ShoeInventory() {
             </div>
           </div>
           
-          <Button onClick={() => setShowEditor(true)}>
-            <Plus className="w-4 h-4 mr-2" /> Add Shoe
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="sm" onClick={() => logout()}>
+              <LogOut className="mr-1.5 h-4 w-4" />
+              Sign Out
+            </Button>
+            <Button onClick={() => setShowEditor(true)}>
+              <Plus className="w-4 h-4 mr-2" /> Add Shoe
+            </Button>
+          </div>
         </div>
         
         {isLoading ? (

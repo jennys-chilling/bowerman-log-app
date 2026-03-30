@@ -1,33 +1,59 @@
 # Bowerman Training Log
 
-This repository is the standalone codebase for the Bowerman training log app. It no longer depends on the original generated plugin scaffolding, so you can develop and deploy it from your own private repository like a normal Vite application.
+This project now uses Supabase for authentication and data storage, and can be deployed as a normal Vite app on Vercel.
+
+## Environment variables
+
+Create `.env.local` for local development:
+
+```bash
+VITE_APP_BASE_URL=http://localhost:5173
+VITE_SUPABASE_URL=https://your-project-ref.supabase.co
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+```
+
+In Vercel, add the same variables in `Settings -> Environment Variables`, but set `VITE_APP_BASE_URL` to your deployed site URL.
+
+## Supabase setup
+
+1. Create a new Supabase project.
+2. In Supabase, enable Email auth.
+3. Open the SQL editor and run [supabase/schema.sql](/Users/jennyschilling/bowerman-training-log/supabase/schema.sql).
+4. Copy your project URL and anon key into `.env.local`.
+5. Start the app with `npm run dev`.
+6. Sign in with your email using the magic link on the login screen.
+7. Promote your coach account to admin after the first sign-in:
+
+```sql
+update public.profiles
+set role = 'admin'
+where email = 'you@example.com';
+```
+
+New users are created as `athlete` profiles by default.
 
 ## Local development
 
-1. Install dependencies with `npm install`.
-2. Create an `.env.local` file.
-3. Start the app with `npm run dev`.
-
 ```bash
-VITE_APP_ID=your_app_id
-VITE_APP_BASE_URL=https://your-app-host.example.com
-
-# Optional. Override the hosted API origin if needed.
-VITE_API_BASE_URL=https://your-api-host.example.com
-
-# Optional compatibility setting if you rely on versioned functions.
-VITE_FUNCTIONS_VERSION=
+npm install
+npm run dev
 ```
 
-Legacy environment variable names from the exported app are still accepted so existing local setups do not break during the transition.
+## Vercel deployment
 
-## Scripts
+1. Push this repo to GitHub.
+2. Import the repo into Vercel as a Vite project.
+3. Set these environment variables in Vercel:
 
-- `npm run dev` starts the Vite dev server.
-- `npm run build` creates a production build.
-- `npm run preview` serves the production build locally.
-- `npm run lint` runs ESLint.
+```bash
+VITE_APP_BASE_URL=https://your-project.vercel.app
+VITE_SUPABASE_URL=https://your-project-ref.supabase.co
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+```
 
-## Notes
+4. Redeploy after saving the variables.
 
-The app still expects a valid hosted backend and app ID. The codebase has been renamed and de-coupled from the original export scaffolding, but it will continue calling the configured backend APIs until you migrate those services elsewhere.
+## Verification
+
+- `npm run build`
+- `npm run lint`

@@ -1,127 +1,117 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
-import { appClient, fetchPublicAppSettings } from '@/api/client';
-import { appParams, clearStoredAppSession } from '@/lib/app-params';
+import { appClient } from '@/api/client';
+import { appParams, hasSupabaseConfig, missingSupabaseConfig } from '@/lib/app-params';
+import { supabase } from '@/lib/supabase';
 
 const AuthContext = createContext();
+
+const getConfigurationError = () => ({
+  type: 'configuration',
+  message: `Missing Supabase environment variables: ${missingSupabaseConfig.join(', ')}`,
+});
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoadingAuth, setIsLoadingAuth] = useState(true);
-  const [isLoadingPublicSettings, setIsLoadingPublicSettings] = useState(true);
+  const [isLoadingPublicSettings, setIsLoadingPublicSettings] = useState(false);
   const [authError, setAuthError] = useState(null);
-  const [appPublicSettings, setAppPublicSettings] = useState(null); // Contains only { id, public_settings }
+  const [authMessage, setAuthMessage] = useState(null);
 
-  useEffect(() => {
-    checkAppState();
-  }, []);
-
-  const checkAppState = async () => {
-    try {
-      setIsLoadingPublicSettings(true);
-      setAuthError(null);
-
-      try {
-        const publicSettings = await fetchPublicAppSettings();
-        setAppPublicSettings(publicSettings);
-
-        if (appParams.token) {
-          await checkUserAuth();
-        } else {
-          setIsLoadingAuth(false);
-          setIsAuthenticated(false);
-        }
-        setIsLoadingPublicSettings(false);
-      } catch (appError) {
-        console.error('App state check failed:', appError);
-        
-        // Handle app-level errors
-        if (appError.status === 403 && appError.data?.extra_data?.reason) {
-          const reason = appError.data.extra_data.reason;
-          if (reason === 'auth_required') {
-            setAuthError({
-              type: 'auth_required',
-              message: 'Authentication required'
-            });
-          } else if (reason === 'user_not_registered') {
-            setAuthError({
-              type: 'user_not_registered',
-              message: 'User not registered for this app'
-            });
-          } else {
-            setAuthError({
-              type: reason,
-              message: appError.message
-            });
-          }
-        } else {
-          setAuthError({
-            type: 'unknown',
-            message: appError.message || 'Failed to load app'
-          });
-        }
-        setIsLoadingPublicSettings(false);
-        setIsLoadingAuth(false);
-      }
-    } catch (error) {
-      console.error('Unexpected error:', error);
-      setAuthError({
-        type: 'unknown',
-        message: error.message || 'An unexpected error occurred'
-      });
-      setIsLoadingPublicSettings(false);
-      setIsLoadingAuth(false);
-    }
+  const resetAuthState = () => {
+    setUser(null);
+    setIsAuthenticated(false);
   };
 
-  const checkUserAuth = async () => {
-    try {
+  const loadCurrentUser = async ({ showLoader = true } = {}) => {
+    if (!hasSupabaseConfig) {
+      setAuthError(getConfigurationError());
+      resetAuthState();
+      setIsLoadingAuth(false);
+      return;
+    }
+
+    if (showLoader) {
       setIsLoadingAuth(true);
+    }
+
+    try {
       const currentUser = await appClient.auth.me();
       setUser(currentUser);
       setIsAuthenticated(true);
-      setIsLoadingAuth(false);
+      setAuthError(null);
     } catch (error) {
-      console.error('User auth check failed:', error);
-      setIsLoadingAuth(false);
-      setIsAuthenticated(false);
-      
-      if (error.status === 401 || error.status === 403) {
+      if (error.status === 401) {
+        resetAuthState();
+        setAuthError(null);
+      } else {
         setAuthError({
-          type: 'auth_required',
-          message: 'Authentication required'
+          type: 'unknown',
+          message: error.message || 'Failed to load your account',
         });
       }
+    } finally {
+      setIsLoadingAuth(false);
     }
   };
 
-  const logout = (shouldRedirect = true) => {
-    setUser(null);
-    setIsAuthenticated(false);
-    
-    if (shouldRedirect) {
-      appClient.auth.logout(window.location.href);
-    } else {
-      clearStoredAppSession();
+  useEffect(() => {
+    if (!hasSupabaseConfig) {
+      setAuthError(getConfigurationError());
+      setIsLoadingAuth(false);
+      return undefined;
     }
+
+    loadCurrentUser();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        setAuthMessage(null);
+        loadCurrentUser({ showLoader: false });
+      } else {
+        resetAuthState();
+        setIsLoadingAuth(false);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const logout = async () => {
+    await appClient.auth.logout();
+    setAuthMessage(null);
+    resetAuthState();
   };
 
   const navigateToLogin = () => {
-    appClient.auth.redirectToLogin(window.location.href);
+    setAuthError(null);
+  };
+
+  const signInWithMagicLink = async (email) => {
+    const redirectTo = appParams.appBaseUrl || window.location.origin;
+    await appClient.auth.signInWithMagicLink(email, redirectTo);
+    setAuthMessage(`Magic link sent to ${email}. Open the link in the same browser to sign in.`);
+    setAuthError(null);
   };
 
   return (
-    <AuthContext.Provider value={{ 
-      user, 
-      isAuthenticated, 
-      isLoadingAuth,
-      isLoadingPublicSettings,
-      authError,
-      appPublicSettings,
-      logout,
-      navigateToLogin,
-      checkAppState
-    }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        isAuthenticated,
+        isLoadingAuth,
+        isLoadingPublicSettings,
+        authError,
+        authMessage,
+        appPublicSettings: null,
+        logout,
+        navigateToLogin,
+        checkAppState: loadCurrentUser,
+        signInWithMagicLink,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
