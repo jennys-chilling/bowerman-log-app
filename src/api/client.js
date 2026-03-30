@@ -161,19 +161,22 @@ const ensureProfile = async (authUser) => {
 const getCurrentProfile = async () => {
   const supabase = assertSupabaseConfigured();
   const {
-    data: { user },
+    data: { session },
     error,
-  } = await supabase.auth.getUser();
+  } = await supabase.auth.getSession();
 
   if (error) {
+    if (error.name === 'AuthSessionMissingError' || error.message === 'Auth session missing!') {
+      throw createAppError('Authentication required', { status: 401 });
+    }
     throw normalizeSupabaseError(error, 'Failed to load current user');
   }
 
-  if (!user) {
+  if (!session?.user) {
     throw createAppError('Authentication required', { status: 401 });
   }
 
-  return ensureProfile(user);
+  return ensureProfile(session.user);
 };
 
 const createEntityHandler = (entityName) => {
