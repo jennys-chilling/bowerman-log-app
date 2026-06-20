@@ -4,7 +4,9 @@ const ENTITY_TABLES = {
   User: 'profiles',
   TrainingWeek: 'training_weeks',
   DayPlan: 'day_plans',
+  WeekTemplate: 'week_templates',
   Shoe: 'shoes',
+  Feedback: 'feedback_submissions',
 };
 
 const createAppError = (message, options = {}) => {
@@ -134,6 +136,8 @@ const ensureProfile = async (authUser) => {
   const profileDefaults = {
     id: authUser.id,
     email: authUser.email,
+    first_name: authUser.user_metadata?.first_name || null,
+    last_name: authUser.user_metadata?.last_name || null,
     full_name:
       authUser.user_metadata?.full_name ||
       authUser.user_metadata?.name ||
@@ -309,6 +313,60 @@ export const appClient = {
 
       return { success: true };
     },
+    async signInWithPassword(email, password) {
+      const supabase = assertSupabaseConfigured();
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        throw normalizeSupabaseError(error, 'Failed to sign in');
+      }
+
+      return data;
+    },
+    async signUpWithPassword(email, password, redirectTo) {
+      const supabase = assertSupabaseConfigured();
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: redirectTo,
+        },
+      });
+
+      if (error) {
+        throw normalizeSupabaseError(error, 'Failed to create account');
+      }
+
+      return data;
+    },
+    async signInWithGoogle(redirectTo) {
+      const supabase = assertSupabaseConfigured();
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo,
+        },
+      });
+
+      if (error) {
+        throw normalizeSupabaseError(error, 'Failed to start Google sign-in');
+      }
+
+      return data;
+    },
+    async updateEmail(email) {
+      const supabase = assertSupabaseConfigured();
+      const { data, error } = await supabase.auth.updateUser({ email });
+
+      if (error) {
+        throw normalizeSupabaseError(error, 'Failed to update email');
+      }
+
+      return data;
+    },
     async logout() {
       const supabase = assertSupabaseConfigured();
       const { error } = await supabase.auth.signOut();
@@ -330,6 +388,27 @@ export const appClient = {
       },
     }
   ),
+  storage: {
+    async uploadProfilePicture(userId, file) {
+      const supabase = assertSupabaseConfigured();
+      const extension = file.name?.split('.').pop()?.toLowerCase() || 'jpg';
+      const path = `${userId}/${Date.now()}.${extension}`;
+      const { error } = await supabase.storage
+        .from('profile-pictures')
+        .upload(path, file, {
+          cacheControl: '3600',
+          contentType: file.type,
+          upsert: true,
+        });
+
+      if (error) {
+        throw normalizeSupabaseError(error, 'Failed to upload profile picture');
+      }
+
+      const { data } = supabase.storage.from('profile-pictures').getPublicUrl(path);
+      return data.publicUrl;
+    },
+  },
   appLogs: {
     async logUserInApp() {
       return null;

@@ -1,24 +1,91 @@
 import React, { useState, useEffect } from 'react';
 import { appClient } from '@/api/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { startOfWeek, addDays, format, startOfMonth } from 'date-fns';
+import { startOfWeek, addDays, format, startOfMonth, parseISO } from 'date-fns';
 import WeekNavigation from '@/components/training/WeeklyNavigation';
 import { useAuth } from '@/lib/AuthContext';
 import DayColumn from '@/components/training/DayColumn';
 import WeeklyTotals from '@/components/training/WeeklyTotals';
 import WeeklyReflection from '@/components/training/WeeklyReflection';
+import WeeklyMileageGoal from '@/components/training/WeeklyMileageGoal';
 import CoachPlanEditor from '@/components/training/CoachPlanEditor';
 import AthleteLogEditor from '@/components/training/AthleteLogEditor';
 import SplitsEditor from '@/components/training/SplitsEditor';
 import MonthView from '@/components/training/MonthView';
-import { DifficultyKey } from '@/components/training/DifficultyBadge';
+import CopyWeekToAthletesDialog from '@/components/training/CopyWeekToAthletesDialog';
+import BrandMark from '@/components/BrandMark';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Loader2, ClipboardList, User, Users, CalendarDays, Calendar, LogOut } from 'lucide-react';
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command';
+import { Label } from '@/components/ui/label';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Loader2, Users, CalendarDays, Calendar, LogOut, Footprints, UserCircle, Mail, Phone, Copy, Layers, Check, ChevronsUpDown } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
+import { toast } from '@/components/ui/use-toast';
+import { cn } from '@/lib/utils';
+import {
+  getAthleteActivities,
+  getCoachActivities,
+  hasCoachLiftData,
+  hasCoachSessionData,
+  makeCoachSession,
+  sanitizeCoachLift,
+} from '@/components/training/sessionUtils';
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
+const getDisplayName = (athlete = {}) => {
+  const structuredName = `${athlete.first_name || ''} ${athlete.last_name || ''}`.trim();
+  return structuredName || athlete.full_name || athlete.email;
+};
+
+const getInitials = (athlete = {}) => {
+  const initials = `${athlete.first_name?.[0] || ''}${athlete.last_name?.[0] || ''}`.trim();
+  return (initials || athlete.full_name?.[0] || athlete.email?.[0] || 'A').toUpperCase();
+};
+
+const hasCoachDayContent = (dayPlan = {}) => (
+  hasCoachSessionData(dayPlan.am_coach) ||
+  hasCoachSessionData(dayPlan.pm_coach) ||
+  hasCoachLiftData(dayPlan.lift_coach)
+);
+
+const normalizeCoachSession = (session = {}) => makeCoachSession(getCoachActivities(session));
+
+const getShoeMileageById = (session = {}) => {
+  const mileageByShoe = new Map();
+
+  getAthleteActivities(session).forEach((activity) => {
+    const mileage = Number(activity.mileage) || 0;
+    if (activity.session_type === 'Off' || mileage === 0) return;
+
+    (activity.shoes || []).forEach((shoeId) => {
+      mileageByShoe.set(shoeId, (mileageByShoe.get(shoeId) || 0) + mileage);
+    });
+  });
+
+  return mileageByShoe;
+};
+
+const combineShoeMileageMaps = (...maps) => {
+  const combined = new Map();
+
+  maps.forEach((map) => {
+    map.forEach((mileage, shoeId) => {
+      combined.set(shoeId, (combined.get(shoeId) || 0) + mileage);
+    });
+  });
+
+  return combined;
+};
 
 export default function TrainingLog() {
   const queryClient = useQueryClient();
@@ -30,6 +97,7 @@ export default function TrainingLog() {
   const [currentMonth, setCurrentMonth] = useState(startOfMonth(new Date()));
   const [user, setUser] = useState(null);
   const [viewingAthleteId, setViewingAthleteId] = useState(null);
+  const [athleteSelectorOpen, setAthleteSelectorOpen] = useState(false);
   const [editorState, setEditorState] = useState({
     coachEditor: false,
     athleteEditor: false,
@@ -37,6 +105,7 @@ export default function TrainingLog() {
     selectedDay: null,
     selectedDayPlan: null,
   });
+  const [copyDialogOpen, setCopyDialogOpen] = useState(false);
   
   useEffect(() => {
     appClient.auth.me().then(u => {
@@ -48,7 +117,7 @@ export default function TrainingLog() {
   }, []);
   
   const isCoach = user?.role === 'admin';
-  const effectiveAthleteId = viewingAthleteId || user?.id;
+  const effectiveAthleteId = isCoach ? viewingAthleteId : (viewingAthleteId || user?.id);
   
   // Fetch athletes for coach
   const { data: athletes = [] } = useQuery({
@@ -56,6 +125,18 @@ export default function TrainingLog() {
     queryFn: () => appClient.entities.User.list(),
     enabled: isCoach,
   });
+
+  useEffect(() => {
+    if (!isCoach || viewingAthleteId || athletes.length === 0) return;
+
+    const firstAthlete = athletes.find((athlete) => athlete.role !== 'admin');
+    if (firstAthlete) {
+      setViewingAthleteId(firstAthlete.id);
+    }
+  }, [athletes, isCoach, viewingAthleteId]);
+
+  const selectedAthlete = athletes.find(athlete => athlete.id === effectiveAthleteId);
+  const athleteOptions = athletes.filter((athlete) => athlete.role !== 'admin');
   
   // Fetch training week
   const { data: trainingWeeks = [], isLoading: loadingWeek } = useQuery({
@@ -75,18 +156,8 @@ export default function TrainingLog() {
     queryFn: () => appClient.entities.DayPlan.filter({ training_week_id: trainingWeek.id }),
     enabled: !!trainingWeek?.id,
   });
+  const hasSourceCoachPlan = dayPlans.some(hasCoachDayContent);
   
-  // Fetch all training weeks for month view
-  const { data: monthWeeks = [] } = useQuery({
-    queryKey: ['monthWeeks', effectiveAthleteId, format(currentMonth, 'yyyy-MM')],
-    queryFn: async () => {
-      const allWeeks = await appClient.entities.TrainingWeek.filter({ athlete_id: effectiveAthleteId });
-      const monthStr = format(currentMonth, 'yyyy-MM');
-      return allWeeks.filter(w => w.week_start_date && w.week_start_date.startsWith(monthStr.slice(0, 7)));
-    },
-    enabled: !!effectiveAthleteId && viewMode === 'month',
-  });
-
   // Fetch all day plans for the month
   const { data: monthDayPlans = [], isLoading: loadingMonthPlans } = useQuery({
     queryKey: ['monthDayPlans', effectiveAthleteId, format(currentMonth, 'yyyy-MM')],
@@ -167,10 +238,132 @@ export default function TrainingLog() {
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['shoes'] }),
   });
+
+  const copyWeekMutation = useMutation({
+    mutationFn: async ({ athleteIds, overwriteExisting }) => {
+      const weekStartDate = format(currentWeekStart, 'yyyy-MM-dd');
+      const sourceByDate = new Map(dayPlans.map((dayPlan) => [dayPlan.date, dayPlan]));
+      const sourceWeekGoal = {
+        goal_mileage_min: trainingWeek?.goal_mileage_min ?? null,
+        goal_mileage_max: trainingWeek?.goal_mileage_max ?? null,
+      };
+      const hasSourceWeekGoal = sourceWeekGoal.goal_mileage_min !== null || sourceWeekGoal.goal_mileage_max !== null;
+      let updatedDays = 0;
+
+      const ensureTargetWeek = async (athleteId) => {
+        const existingWeeks = await appClient.entities.TrainingWeek.filter({
+          athlete_id: athleteId,
+          week_start_date: weekStartDate,
+        });
+
+        const week = existingWeeks[0] || await appClient.entities.TrainingWeek.create({
+          athlete_id: athleteId,
+          week_start_date: weekStartDate,
+        });
+
+        const existingDayPlans = await appClient.entities.DayPlan.filter({ training_week_id: week.id });
+        const existingByDate = new Map(existingDayPlans.map((dayPlan) => [dayPlan.date, dayPlan]));
+        const missingDayPlans = DAYS
+          .map((day, index) => ({
+            training_week_id: week.id,
+            date: format(addDays(currentWeekStart, index), 'yyyy-MM-dd'),
+            day_of_week: day,
+          }))
+          .filter((dayPlan) => !existingByDate.has(dayPlan.date));
+
+        const createdDayPlans = missingDayPlans.length
+          ? await appClient.entities.DayPlan.bulkCreate(missingDayPlans)
+          : [];
+
+        return {
+          week,
+          dayPlansByDate: new Map(
+            [...existingDayPlans, ...createdDayPlans].map((dayPlan) => [dayPlan.date, dayPlan])
+          ),
+        };
+      };
+
+      for (const athleteId of athleteIds) {
+        const { week: targetWeek, dayPlansByDate: targetByDate } = await ensureTargetWeek(athleteId);
+
+        if (
+          hasSourceWeekGoal &&
+          (
+            overwriteExisting ||
+            (
+              (targetWeek.goal_mileage_min === null || targetWeek.goal_mileage_min === undefined) &&
+              (targetWeek.goal_mileage_max === null || targetWeek.goal_mileage_max === undefined)
+            )
+          )
+        ) {
+          await appClient.entities.TrainingWeek.update(targetWeek.id, sourceWeekGoal);
+        }
+
+        for (const dayIndex of DAYS.keys()) {
+          const date = format(addDays(currentWeekStart, dayIndex), 'yyyy-MM-dd');
+          const sourceDayPlan = sourceByDate.get(date);
+          const targetDayPlan = targetByDate.get(date);
+
+          if (!sourceDayPlan || !targetDayPlan) {
+            continue;
+          }
+
+          const sourceAmCoach = normalizeCoachSession(sourceDayPlan.am_coach);
+          const sourcePmCoach = normalizeCoachSession(sourceDayPlan.pm_coach);
+          const sourceLiftCoach = sanitizeCoachLift(sourceDayPlan.lift_coach);
+          const data = {};
+
+          if (overwriteExisting) {
+            data.am_coach = sourceAmCoach;
+            data.pm_coach = sourcePmCoach;
+            data.lift_coach = sourceLiftCoach;
+          } else {
+            if (hasCoachSessionData(sourceAmCoach) && !hasCoachSessionData(targetDayPlan.am_coach)) {
+              data.am_coach = sourceAmCoach;
+            }
+            if (hasCoachSessionData(sourcePmCoach) && !hasCoachSessionData(targetDayPlan.pm_coach)) {
+              data.pm_coach = sourcePmCoach;
+            }
+            if (hasCoachLiftData(sourceLiftCoach) && !hasCoachLiftData(targetDayPlan.lift_coach)) {
+              data.lift_coach = sourceLiftCoach;
+            }
+          }
+
+          if (Object.keys(data).length > 0) {
+            await appClient.entities.DayPlan.update(targetDayPlan.id, data);
+            updatedDays += 1;
+          }
+        }
+      }
+
+      return {
+        athleteCount: athleteIds.length,
+        updatedDays,
+      };
+    },
+    onSuccess: ({ athleteCount, updatedDays }) => {
+      queryClient.invalidateQueries({ queryKey: ['trainingWeek'] });
+      queryClient.invalidateQueries({ queryKey: ['dayPlans'] });
+      queryClient.invalidateQueries({ queryKey: ['monthWeeks'] });
+      queryClient.invalidateQueries({ queryKey: ['monthDayPlans'] });
+      setCopyDialogOpen(false);
+      toast({
+        title: 'Week copied',
+        description: `Applied coach plans to ${athleteCount} athlete${athleteCount === 1 ? '' : 's'} across ${updatedDays} day${updatedDays === 1 ? '' : 's'}.`,
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: 'Copy failed',
+        description: error.message || 'Could not copy this week.',
+        variant: 'destructive',
+      });
+    },
+  });
   
   const handleEditDay = (dayPlan, mode) => {
     const dayDate = dayPlan?.date 
-      ? new Date(dayPlan.date) 
+      ? parseISO(dayPlan.date)
       : addDays(currentWeekStart, DAYS.indexOf(dayPlan?.day_of_week || 'Monday'));
     
     setEditorState({
@@ -182,43 +375,78 @@ export default function TrainingLog() {
     });
   };
   
-  const handleSaveCoachPlan = async (data) => {
-    if (editorState.selectedDayPlan?.id) {
-      await updateDayPlanMutation.mutateAsync({
-        id: editorState.selectedDayPlan.id,
-        data,
-      });
+  const getSaveErrorMessage = (error) => {
+    const message = error?.message || 'Could not save this coach plan.';
+    if (message.includes('lift_coach')) {
+      return 'Could not save lift plans because the Supabase day_plans.lift_coach column is missing. Run the latest schema SQL, then try again.';
     }
-    setEditorState({ ...editorState, coachEditor: false });
+    if (message.includes('goal_mileage')) {
+      return 'Could not save weekly mileage goals because the latest Supabase schema has not been applied yet.';
+    }
+
+    return message;
   };
-  
-  const handleSaveAthleteLog = async (data) => {
+
+  const persistCoachPlan = async (data, { closeEditor = false, showErrors = false } = {}) => {
+    try {
+      if (editorState.selectedDayPlan?.id) {
+        await updateDayPlanMutation.mutateAsync({
+          id: editorState.selectedDayPlan.id,
+          data,
+        });
+      }
+      if (closeEditor) {
+        setEditorState((current) => ({ ...current, coachEditor: false }));
+      }
+    } catch (error) {
+      if (showErrors) {
+        toast({
+          title: 'Save failed',
+          description: getSaveErrorMessage(error),
+          variant: 'destructive',
+        });
+      }
+    }
+  };
+
+  const handleSaveCoachPlan = (data) => persistCoachPlan(data, { closeEditor: true, showErrors: true });
+  const handleAutoSaveCoachPlan = (data) => persistCoachPlan(data);
+
+  const persistAthleteLog = async (data, { closeEditor = false, updateShoes = false } = {}) => {
     const dayPlan = editorState.selectedDayPlan;
     if (dayPlan?.id) {
-      // Calculate mileage difference for shoes
-      const oldAm = dayPlan.am_session || {};
-      const oldPm = dayPlan.pm_session || {};
-      const newAm = data.am_session || {};
-      const newPm = data.pm_session || {};
-      
-      // Update shoe mileage for new shoes
-      if (newAm.shoes?.length && newAm.mileage) {
-        await updateShoeMileageMutation.mutateAsync({
-          shoeIds: newAm.shoes.filter(s => !oldAm.shoes?.includes(s)),
-          mileage: newAm.mileage,
-        });
+      if (updateShoes) {
+        const oldShoeMileage = combineShoeMileageMaps(
+          getShoeMileageById(dayPlan.am_session),
+          getShoeMileageById(dayPlan.pm_session)
+        );
+        const newShoeMileage = combineShoeMileageMaps(
+          getShoeMileageById(data.am_session),
+          getShoeMileageById(data.pm_session)
+        );
+        const shoeIds = new Set([...oldShoeMileage.keys(), ...newShoeMileage.keys()]);
+
+        for (const shoeId of shoeIds) {
+          const mileageDelta = (newShoeMileage.get(shoeId) || 0) - (oldShoeMileage.get(shoeId) || 0);
+          if (mileageDelta !== 0) {
+            await updateShoeMileageMutation.mutateAsync({
+              shoeIds: [shoeId],
+              mileage: mileageDelta,
+            });
+          }
+        }
       }
-      if (newPm.shoes?.length && newPm.mileage) {
-        await updateShoeMileageMutation.mutateAsync({
-          shoeIds: newPm.shoes.filter(s => !oldPm.shoes?.includes(s)),
-          mileage: newPm.mileage,
-        });
-      }
-      
+
       await updateDayPlanMutation.mutateAsync({ id: dayPlan.id, data });
     }
-    setEditorState({ ...editorState, athleteEditor: false });
+
+    if (closeEditor) {
+      setEditorState({ ...editorState, athleteEditor: false });
+    }
   };
+
+  const handleSaveAthleteLog = (data) => persistAthleteLog(data, { closeEditor: true, updateShoes: true });
+  const handleAutoSaveAthleteLog = (data) => persistAthleteLog(data);
   
   const handleSaveSplits = async (splits) => {
     if (editorState.selectedDayPlan?.id) {
@@ -236,73 +464,173 @@ export default function TrainingLog() {
   };
   
   const loading = loadingWeek || loadingPlans;
+  const hasTrainingWeekGoal = Boolean(trainingWeek) && (
+    (trainingWeek.goal_mileage_min !== null && trainingWeek.goal_mileage_min !== undefined) ||
+    (trainingWeek.goal_mileage_max !== null && trainingWeek.goal_mileage_max !== undefined)
+  );
+  const showMileageGoal = isCoach || hasTrainingWeekGoal;
   
   if (!user) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center dark:bg-slate-950">
         <Loader2 className="w-8 h-8 animate-spin text-slate-400" />
       </div>
     );
   }
   
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100">
-      <div className="max-w-7xl mx-auto px-4 py-6">
+    <div className="btc-app-shell text-slate-900 dark:text-slate-100">
+      <div className="relative max-w-7xl mx-auto px-4 py-6">
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-              <ClipboardList className="w-6 h-6 text-blue-600" />
-              Training Log
-            </h1>
-            <p className="text-slate-500 text-sm mt-1">
-              {isCoach ? 'Coach View' : 'Athlete View'}
-            </p>
-          </div>
+        <div className="btc-rail-card mb-6 overflow-hidden rounded-2xl border border-slate-300 bg-white p-4 shadow-md backdrop-blur dark:border-slate-700 dark:bg-slate-950">
+          <div className="flex flex-col gap-4 pl-2 md:flex-row md:items-center md:justify-between">
+            <BrandMark title="Bowerman" subtitle={isCoach ? 'Coach' : 'Athlete - Training Log'} />
           
-          <div className="flex items-center gap-3">
-            <DifficultyKey />
-            <Button variant="ghost" size="sm" onClick={() => logout()}>
-              <LogOut className="mr-1.5 h-4 w-4" />
-              Sign Out
-            </Button>
-            <Link to={createPageUrl('ShoeInventory')}>
-              <Button variant="outline" size="sm">
-                👟 Shoes
+            <div className="flex flex-wrap items-center gap-3 md:justify-end">
+              {!isCoach && (
+                <Link to={createPageUrl('ShoeInventory')}>
+                  <Button className="h-11 rounded-full bg-red-700 px-5 text-sm font-semibold text-white shadow-sm hover:bg-red-800 dark:bg-red-600 dark:hover:bg-red-500">
+                    <Footprints className="mr-2 h-4 w-4" />
+                    Shoe Inventory
+                  </Button>
+                </Link>
+              )}
+              {isCoach && (
+                <Link to={createPageUrl('WeekTemplates')}>
+                  <Button className="h-11 rounded-full bg-red-700 px-5 text-sm font-semibold text-white shadow-sm hover:bg-red-800 dark:bg-red-600 dark:hover:bg-red-500">
+                    <Layers className="mr-2 h-4 w-4" />
+                    Templates
+                  </Button>
+                </Link>
+              )}
+              <Link to={createPageUrl('Account')}>
+                <Button variant="outline" className="h-11 rounded-full px-5 text-sm font-semibold">
+                  <UserCircle className="mr-2 h-4 w-4" />
+                  Account
+                </Button>
+              </Link>
+              <Button variant="ghost" size="sm" onClick={() => logout()}>
+                <LogOut className="mr-1.5 h-4 w-4" />
+                Sign Out
               </Button>
-            </Link>
+            </div>
           </div>
         </div>
         
         {/* Coach Athlete Selector */}
         {isCoach && athletes.length > 0 && (
-          <div className="mb-4 flex items-center gap-3">
-            <span className="text-sm text-slate-500 flex items-center gap-1">
-              <Users className="w-4 h-4" /> Viewing:
-            </span>
-            <div className="flex gap-2 flex-wrap">
-              {athletes.filter(a => a.role !== 'admin').map(athlete => (
-                <Badge
-                  key={athlete.id}
-                  variant={viewingAthleteId === athlete.id ? "default" : "outline"}
-                  className="cursor-pointer"
-                  onClick={() => setViewingAthleteId(athlete.id)}
-                >
-                  <User className="w-3 h-3 mr-1" />
-                  {athlete.full_name || athlete.email}
-                </Badge>
-              ))}
+          <div className="mb-4 space-y-3">
+            <div className="flex flex-wrap items-center gap-3">
+              <Label className="flex items-center gap-1 text-sm text-slate-600 dark:text-slate-300">
+                <Users className="h-4 w-4" /> Viewing
+              </Label>
+              <Popover open={athleteSelectorOpen} onOpenChange={setAthleteSelectorOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={athleteSelectorOpen}
+                    className="h-11 w-full max-w-sm justify-between border-slate-300 bg-white px-3 text-left font-normal text-slate-900 shadow-sm dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+                  >
+                    <span className="min-w-0 truncate">
+                      {selectedAthlete ? getDisplayName(selectedAthlete) : 'Select athlete'}
+                    </span>
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 text-slate-500" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent align="start" className="w-[min(calc(100vw-2rem),24rem)] p-0">
+                  <Command>
+                    <CommandInput placeholder="Search athletes..." />
+                    <CommandList>
+                      <CommandEmpty>No athletes found.</CommandEmpty>
+                      <CommandGroup>
+                        {athleteOptions.map((athlete) => {
+                          const displayName = getDisplayName(athlete);
+                          const searchValue = [
+                            displayName,
+                            athlete.email,
+                            athlete.phone_number,
+                            athlete.id,
+                          ].filter(Boolean).join(' ');
+
+                          return (
+                            <CommandItem
+                              key={athlete.id}
+                              value={searchValue}
+                              onSelect={() => {
+                                setViewingAthleteId(athlete.id);
+                                setAthleteSelectorOpen(false);
+                              }}
+                              className="gap-3"
+                            >
+                              <Avatar className="h-7 w-7">
+                                <AvatarImage src={athlete.profile_image_url} alt={displayName} className="object-cover" />
+                                <AvatarFallback className="text-xs font-semibold">
+                                  {getInitials(athlete)}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div className="min-w-0 flex-1">
+                                <div className="truncate font-medium">{displayName}</div>
+                                {athlete.email && (
+                                  <div className="truncate text-xs text-slate-500 dark:text-slate-400">
+                                    {athlete.email}
+                                  </div>
+                                )}
+                              </div>
+                              <Check
+                                className={cn(
+                                  'h-4 w-4 text-red-700 dark:text-red-300',
+                                  athlete.id === effectiveAthleteId ? 'opacity-100' : 'opacity-0'
+                                )}
+                              />
+                            </CommandItem>
+                          );
+                        })}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
             </div>
+
+            {selectedAthlete && (
+              <div className="flex flex-wrap items-center gap-3 rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm shadow-sm dark:border-slate-700 dark:bg-slate-950">
+                <Avatar className="h-10 w-10">
+                  <AvatarImage src={selectedAthlete.profile_image_url} alt={getDisplayName(selectedAthlete)} className="object-cover" />
+                  <AvatarFallback className="font-semibold">
+                    {getInitials(selectedAthlete)}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="min-w-0">
+                  <div className="font-semibold text-slate-800 dark:text-slate-100">{getDisplayName(selectedAthlete)}</div>
+                  <div className="flex flex-wrap gap-x-4 gap-y-1 text-slate-500 dark:text-slate-400">
+                    {selectedAthlete.email && (
+                      <span className="flex items-center gap-1">
+                        <Mail className="h-3.5 w-3.5" />
+                        {selectedAthlete.email}
+                      </span>
+                    )}
+                    {selectedAthlete.phone_number && (
+                      <span className="flex items-center gap-1">
+                        <Phone className="h-3.5 w-3.5" />
+                        {selectedAthlete.phone_number}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
         
         {/* View Toggle + Navigation */}
-        <div className="flex items-center gap-3 mb-4">
-          <div className="flex rounded-lg border border-slate-200 bg-white overflow-hidden shadow-sm">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex rounded-lg border border-slate-300 bg-white overflow-hidden shadow-sm dark:border-slate-700 dark:bg-slate-950">
             <Button
               variant="ghost"
               size="sm"
-              className={`rounded-none px-4 ${viewMode === 'week' ? 'bg-blue-600 text-white hover:bg-blue-700' : 'text-slate-600 hover:bg-slate-50'}`}
+              className={`rounded-none px-4 ${viewMode === 'week' ? 'bg-red-700 text-white hover:bg-red-800' : 'text-slate-600 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-900'}`}
               onClick={() => setViewMode('week')}
             >
               <CalendarDays className="w-4 h-4 mr-1.5" /> Week
@@ -310,12 +638,23 @@ export default function TrainingLog() {
             <Button
               variant="ghost"
               size="sm"
-              className={`rounded-none px-4 ${viewMode === 'month' ? 'bg-blue-600 text-white hover:bg-blue-700' : 'text-slate-600 hover:bg-slate-50'}`}
+              className={`rounded-none px-4 ${viewMode === 'month' ? 'bg-red-700 text-white hover:bg-red-800' : 'text-slate-600 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-900'}`}
               onClick={() => setViewMode('month')}
             >
               <Calendar className="w-4 h-4 mr-1.5" /> Month
             </Button>
           </div>
+          {isCoach && viewMode === 'week' && trainingWeek && (
+            <Button
+              variant="outline"
+              className="border-slate-300 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-950"
+              onClick={() => setCopyDialogOpen(true)}
+              disabled={loading || copyWeekMutation.isPending}
+            >
+              <Copy className="mr-2 h-4 w-4" />
+              Copy Week
+            </Button>
+          )}
         </div>
 
         {viewMode === 'week' && (
@@ -326,7 +665,12 @@ export default function TrainingLog() {
         )}
         
         {/* Main Content */}
-        {viewMode === 'month' ? (
+        {isCoach && !effectiveAthleteId ? (
+          <div className="mt-8 rounded-xl border border-slate-300 bg-white p-12 text-center shadow-md dark:border-slate-700 dark:bg-slate-950">
+            <h3 className="mb-2 text-lg font-medium text-slate-700 dark:text-slate-200">No athlete selected</h3>
+            <p className="text-slate-500 dark:text-slate-400">Select an athlete above to view or plan training.</p>
+          </div>
+        ) : viewMode === 'month' ? (
           loadingMonthPlans ? (
             <div className="mt-8 flex items-center justify-center py-20">
               <Loader2 className="w-8 h-8 animate-spin text-slate-400" />
@@ -347,22 +691,24 @@ export default function TrainingLog() {
             <Loader2 className="w-8 h-8 animate-spin text-slate-400" />
           </div>
         ) : !trainingWeek ? (
-          <div className="mt-8 bg-white rounded-xl border border-slate-200 p-12 text-center">
-            <h3 className="text-lg font-medium text-slate-700 mb-2">No training week found</h3>
-            <p className="text-slate-500 mb-4">Create a training week to start planning.</p>
-            <Button onClick={() => createWeekMutation.mutate()} disabled={createWeekMutation.isPending}>
-              {createWeekMutation.isPending ? (
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              ) : null}
-              Create Training Week
-            </Button>
+          <div className="mt-8 overflow-x-auto rounded-xl border border-slate-300 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-950">
+            <div className="flex min-h-[360px] min-w-[980px] w-full flex-col items-center justify-center p-12 text-center">
+              <h3 className="text-lg font-medium text-slate-800 mb-2 dark:text-slate-100">No training week found</h3>
+              <p className="text-slate-600 mb-4 dark:text-slate-300">Create a training week to start planning.</p>
+              <Button onClick={() => createWeekMutation.mutate()} disabled={createWeekMutation.isPending}>
+                {createWeekMutation.isPending ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : null}
+                Create Training Week
+              </Button>
+            </div>
           </div>
         ) : (
           <>
             {/* Weekly Grid */}
-            <div className="mt-6 bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+            <div className="mt-6 bg-white rounded-xl border border-slate-300 shadow-md overflow-hidden dark:border-slate-700 dark:bg-slate-950">
               <div className="overflow-x-auto">
-                <div className="flex min-w-[980px]">
+                <div className="flex min-w-[980px] w-full">
                   {DAYS.map((day, index) => (
                     <DayColumn
                       key={day}
@@ -378,7 +724,15 @@ export default function TrainingLog() {
             </div>
             
             {/* Weekly Totals */}
-            <div className="mt-6">
+            <div className={`mt-6 grid items-stretch gap-4 ${showMileageGoal ? 'lg:grid-cols-[280px_minmax(0,1fr)]' : ''}`}>
+              {showMileageGoal && (
+                <WeeklyMileageGoal
+                  trainingWeek={trainingWeek}
+                  isCoach={isCoach}
+                  dayPlans={dayPlans}
+                  onSave={(data) => updateWeekMutation.mutateAsync(data)}
+                />
+              )}
               <WeeklyTotals dayPlans={dayPlans} />
             </div>
             
@@ -386,7 +740,7 @@ export default function TrainingLog() {
             <div className="mt-6">
               <WeeklyReflection
                 trainingWeek={trainingWeek}
-                onSave={(data) => updateWeekMutation.mutate(data)}
+                onSave={(data) => updateWeekMutation.mutateAsync(data)}
                 isCoach={isCoach}
               />
             </div>
@@ -401,6 +755,7 @@ export default function TrainingLog() {
         dayPlan={editorState.selectedDayPlan}
         date={editorState.selectedDay}
         onSave={handleSaveCoachPlan}
+        onAutoSave={handleAutoSaveCoachPlan}
       />
       
       <AthleteLogEditor
@@ -409,6 +764,7 @@ export default function TrainingLog() {
         dayPlan={editorState.selectedDayPlan}
         date={editorState.selectedDay}
         onSave={handleSaveAthleteLog}
+        onAutoSave={handleAutoSaveAthleteLog}
         shoes={shoes}
       />
       
@@ -419,6 +775,19 @@ export default function TrainingLog() {
         date={editorState.selectedDay}
         onSave={handleSaveSplits}
       />
+
+      {isCoach && (
+        <CopyWeekToAthletesDialog
+          open={copyDialogOpen}
+          onClose={() => setCopyDialogOpen(false)}
+          athletes={athletes}
+          currentAthleteId={effectiveAthleteId}
+          currentWeekStart={currentWeekStart}
+          hasSourcePlan={hasSourceCoachPlan}
+          isSubmitting={copyWeekMutation.isPending}
+          onCopy={(payload) => copyWeekMutation.mutate(payload)}
+        />
+      )}
     </div>
   );
 }

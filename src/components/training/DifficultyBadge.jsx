@@ -11,6 +11,7 @@ const difficultyColors = {
   7: 'bg-orange-600 text-white',
   8: 'bg-red-500 text-white',
   9: 'bg-red-700 text-white',
+  10: 'bg-red-900 text-white',
 };
 
 export default function DifficultyBadge({ level, size = 'md', showLabel = true }) {
@@ -40,7 +41,7 @@ export function DifficultyKey() {
   return (
     <div className="flex items-center gap-1 flex-wrap">
       <span className="text-xs text-slate-500 mr-2">Difficulty:</span>
-      {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(level => (
+      {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(level => (
         <div
           key={level}
           className={cn(

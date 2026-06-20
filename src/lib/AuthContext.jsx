@@ -10,6 +10,15 @@ const getConfigurationError = () => ({
   message: `Missing Supabase environment variables: ${missingSupabaseConfig.join(', ')}`,
 });
 
+const withAuthTimeout = (promise) => Promise.race([
+  promise,
+  new Promise((_, reject) => {
+    window.setTimeout(() => {
+      reject(new Error('Supabase did not respond. Check VITE_SUPABASE_URL in .env.local.'));
+    }, 8000);
+  }),
+]);
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -36,7 +45,7 @@ export const AuthProvider = ({ children }) => {
     }
 
     try {
-      const currentUser = await appClient.auth.me();
+      const currentUser = await withAuthTimeout(appClient.auth.me());
       setUser(currentUser);
       setIsAuthenticated(true);
       setAuthError(null);
@@ -96,6 +105,26 @@ export const AuthProvider = ({ children }) => {
     setAuthError(null);
   };
 
+  const signInWithPassword = async (email, password) => {
+    await appClient.auth.signInWithPassword(email, password);
+    setAuthMessage(null);
+    setAuthError(null);
+    await loadCurrentUser({ showLoader: false });
+  };
+
+  const signUpWithPassword = async (email, password) => {
+    const redirectTo = appParams.appBaseUrl || window.location.origin;
+    await appClient.auth.signUpWithPassword(email, password, redirectTo);
+    setAuthMessage(`Account created for ${email}. Check your email if Supabase asks you to confirm it.`);
+    setAuthError(null);
+    await loadCurrentUser({ showLoader: false });
+  };
+
+  const signInWithGoogle = async () => {
+    const redirectTo = appParams.appBaseUrl || window.location.origin;
+    await appClient.auth.signInWithGoogle(redirectTo);
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -110,6 +139,9 @@ export const AuthProvider = ({ children }) => {
         navigateToLogin,
         checkAppState: loadCurrentUser,
         signInWithMagicLink,
+        signInWithPassword,
+        signUpWithPassword,
+        signInWithGoogle,
       }}
     >
       {children}

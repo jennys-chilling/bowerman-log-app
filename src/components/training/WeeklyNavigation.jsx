@@ -12,12 +12,12 @@ export default function WeekNavigation({ currentWeekStart, onWeekChange }) {
   const isCurrentWeek = isThisWeek(currentWeekStart, { weekStartsOn: 1 });
   
   return (
-    <div className="flex items-center justify-between bg-white rounded-xl border border-slate-200 px-4 py-3 shadow-sm">
+    <div className="flex items-center justify-between bg-white rounded-xl border border-slate-300 px-4 py-3 shadow-md dark:border-slate-700 dark:bg-slate-950">
       <Button 
         variant="ghost" 
         size="sm" 
         onClick={goToPreviousWeek}
-        className="hover:bg-slate-100"
+        className="hover:bg-slate-100 dark:hover:bg-slate-900"
       >
         <ChevronLeft className="w-4 h-4 mr-1" />
         Previous
@@ -25,11 +25,11 @@ export default function WeekNavigation({ currentWeekStart, onWeekChange }) {
       
       <div className="flex items-center gap-3">
         <div className="text-center">
-          <div className="text-lg font-semibold text-slate-900">
+          <div className="text-lg font-semibold text-slate-900 dark:text-slate-100">
             {format(currentWeekStart, 'MMM d')} – {format(weekEnd, 'MMM d, yyyy')}
           </div>
           {isCurrentWeek && (
-            <span className="text-xs text-emerald-600 font-medium">Current Week</span>
+            <span className="text-xs text-emerald-600 font-medium dark:text-emerald-400">Current Week</span>
           )}
         </div>
         
@@ -50,7 +50,7 @@ export default function WeekNavigation({ currentWeekStart, onWeekChange }) {
         variant="ghost" 
         size="sm" 
         onClick={goToNextWeek}
-        className="hover:bg-slate-100"
+        className="hover:bg-slate-100 dark:hover:bg-slate-900"
       >
         Next
         <ChevronRight className="w-4 h-4 ml-1" />

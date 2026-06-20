@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { appClient } from '@/api/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/lib/AuthContext';
+import BrandMark from '@/components/BrandMark';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,20 +11,20 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Pencil, Archive, ArrowLeft, Loader2, LogOut } from 'lucide-react';
+import { Plus, Pencil, Archive, ArrowLeft, Loader2, LogOut, UserCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 
 const SHOE_TYPES = ['Trainer', 'Workout', 'Spike', 'Trail', 'Racing Flat'];
 const SHOE_COLORS = [
-  { name: 'Blue', value: 'bg-blue-500' },
-  { name: 'Red', value: 'bg-red-500' },
-  { name: 'Green', value: 'bg-emerald-500' },
-  { name: 'Orange', value: 'bg-orange-500' },
-  { name: 'Purple', value: 'bg-purple-500' },
-  { name: 'Pink', value: 'bg-pink-500' },
-  { name: 'Gray', value: 'bg-slate-500' },
+  { name: 'Sport Red', value: 'bg-red-700' },
+  { name: 'Crimson', value: 'bg-rose-600' },
+  { name: 'Signal Orange', value: 'bg-orange-500' },
   { name: 'Black', value: 'bg-slate-900' },
+  { name: 'White', value: 'bg-white border border-slate-300' },
+  { name: 'Volt', value: 'bg-lime-400' },
+  { name: 'Track Gray', value: 'bg-slate-500' },
+  { name: 'Forest', value: 'bg-emerald-700' },
 ];
 
 const MAX_MILEAGE = 500; // Standard shoe lifespan
@@ -38,8 +39,8 @@ export default function ShoeInventory() {
     name: '',
     model: '',
     type: 'Trainer',
-    color: 'bg-blue-500',
-    current_mileage: 0,
+    color: 'bg-red-700',
+    current_mileage: '',
     status: 'Active',
   });
   
@@ -77,8 +78,8 @@ export default function ShoeInventory() {
       name: '',
       model: '',
       type: 'Trainer',
-      color: 'bg-blue-500',
-      current_mileage: 0,
+      color: 'bg-red-700',
+      current_mileage: '',
       status: 'Active',
     });
   };
@@ -89,18 +90,23 @@ export default function ShoeInventory() {
       name: shoe.name,
       model: shoe.model,
       type: shoe.type,
-      color: shoe.color || 'bg-blue-500',
-      current_mileage: shoe.current_mileage || 0,
+      color: shoe.color || 'bg-red-700',
+      current_mileage: shoe.current_mileage ? String(shoe.current_mileage) : '',
       status: shoe.status,
     });
     setShowEditor(true);
   };
   
   const handleSave = () => {
+    const data = {
+      ...formData,
+      current_mileage: parseFloat(formData.current_mileage) || 0,
+    };
+
     if (editingShoe) {
-      updateShoeMutation.mutate({ id: editingShoe.id, data: formData });
+      updateShoeMutation.mutate({ id: editingShoe.id, data });
     } else {
-      createShoeMutation.mutate(formData);
+      createShoeMutation.mutate(data);
     }
   };
   
@@ -124,37 +130,42 @@ export default function ShoeInventory() {
   
   if (!user) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center dark:bg-slate-950">
         <Loader2 className="w-8 h-8 animate-spin text-slate-400" />
       </div>
     );
   }
   
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100">
-      <div className="max-w-5xl mx-auto px-4 py-6">
+    <div className="btc-app-shell text-slate-900 dark:text-slate-100">
+      <div className="relative max-w-5xl mx-auto px-4 py-6">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <Link to={createPageUrl('TrainingLog')}>
-              <Button variant="ghost" size="icon">
-                <ArrowLeft className="w-5 h-5" />
-              </Button>
-            </Link>
-            <div>
-              <h1 className="text-2xl font-bold text-slate-900">👟 Shoe Inventory</h1>
-              <p className="text-slate-500 text-sm">Track your training shoes</p>
+        <div className="btc-rail-card mb-6 overflow-hidden rounded-2xl border border-red-900/10 bg-white/90 p-4 shadow-sm backdrop-blur dark:border-red-500/20 dark:bg-slate-950/90">
+          <div className="flex items-center justify-between gap-4 pl-2">
+            <div className="flex items-center gap-3">
+              <Link to={createPageUrl('TrainingLog')}>
+                <Button variant="ghost" size="icon">
+                  <ArrowLeft className="w-5 h-5" />
+                </Button>
+              </Link>
+              <BrandMark title="Bowerman" subtitle="Shoe Inventory" compact />
             </div>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" onClick={() => logout()}>
-              <LogOut className="mr-1.5 h-4 w-4" />
-              Sign Out
-            </Button>
-            <Button onClick={() => setShowEditor(true)}>
-              <Plus className="w-4 h-4 mr-2" /> Add Shoe
-            </Button>
+
+            <div className="flex items-center gap-2">
+              <Link to={createPageUrl('Account')}>
+                <Button variant="outline" size="sm">
+                  <UserCircle className="mr-1.5 h-4 w-4" />
+                  Account
+                </Button>
+              </Link>
+              <Button variant="ghost" size="sm" onClick={() => logout()}>
+                <LogOut className="mr-1.5 h-4 w-4" />
+                Sign Out
+              </Button>
+              <Button onClick={() => setShowEditor(true)}>
+                <Plus className="w-4 h-4 mr-2" /> Add Shoe
+              </Button>
+            </div>
           </div>
         </div>
         
@@ -174,18 +185,18 @@ export default function ShoeInventory() {
               </CardHeader>
               <CardContent>
                 {activeShoes.length === 0 ? (
-                  <p className="text-slate-500 text-center py-8">No active shoes. Add your first pair!</p>
+                  <p className="text-slate-500 text-center py-8 dark:text-slate-400">No active shoes. Add your first pair!</p>
                 ) : (
                   <div className="grid md:grid-cols-2 gap-4">
                     {activeShoes.map(shoe => (
-                      <div key={shoe.id} className="bg-slate-50 rounded-xl p-4 border border-slate-200">
+                      <div key={shoe.id} className="bg-slate-50 rounded-xl p-4 border border-slate-200 dark:border-slate-800 dark:bg-slate-900">
                         <div className="flex items-start gap-3">
-                          <div className={`w-10 h-10 rounded-lg ${shoe.color || 'bg-blue-500'} flex items-center justify-center text-white text-lg`}>
+                          <div className={`w-10 h-10 rounded-lg ${shoe.color || 'bg-red-700'} flex items-center justify-center text-lg text-white shadow-sm`}>
                             👟
                           </div>
                           <div className="flex-1 min-w-0">
-                            <h4 className="font-semibold text-slate-800 truncate">{shoe.name}</h4>
-                            <p className="text-sm text-slate-500 truncate">{shoe.model}</p>
+                            <h4 className="font-semibold text-slate-800 truncate dark:text-slate-100">{shoe.name}</h4>
+                            <p className="text-sm text-slate-500 truncate dark:text-slate-400">{shoe.model}</p>
                             <Badge variant="outline" className="mt-1 text-xs">{shoe.type}</Badge>
                           </div>
                           <div className="flex gap-1">
@@ -199,11 +210,11 @@ export default function ShoeInventory() {
                         </div>
                         
                         <div className="mt-4">
-                          <div className="flex justify-between text-xs text-slate-500 mb-1">
+                          <div className="flex justify-between text-xs text-slate-500 mb-1 dark:text-slate-400">
                             <span>Mileage</span>
                             <span>{(shoe.current_mileage || 0).toFixed(1)} / {MAX_MILEAGE} mi</span>
                           </div>
-                          <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
+                          <div className="h-2 bg-slate-200 rounded-full overflow-hidden dark:bg-slate-800">
                             <div 
                               className={`h-full ${getMileageColor(shoe.current_mileage || 0)} transition-all`}
                               style={{ width: `${getMileagePercent(shoe.current_mileage || 0)}%` }}
@@ -221,7 +232,7 @@ export default function ShoeInventory() {
             {retiredShoes.length > 0 && (
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-lg text-slate-500">
+                  <CardTitle className="flex items-center gap-2 text-lg text-slate-500 dark:text-slate-400">
                     <span className="w-2 h-2 rounded-full bg-slate-400"></span>
                     Retired Shoes ({retiredShoes.length})
                   </CardTitle>
@@ -239,7 +250,7 @@ export default function ShoeInventory() {
                     </TableHeader>
                     <TableBody>
                       {retiredShoes.map(shoe => (
-                        <TableRow key={shoe.id} className="text-slate-500">
+                        <TableRow key={shoe.id} className="text-slate-500 dark:text-slate-400">
                           <TableCell className="font-medium">{shoe.name}</TableCell>
                           <TableCell>{shoe.model}</TableCell>
                           <TableCell>{shoe.type}</TableCell>
@@ -306,8 +317,11 @@ export default function ShoeInventory() {
                 <Label>Current Mileage</Label>
                 <Input
                   type="number"
+                  min="0"
+                  step="0.1"
                   value={formData.current_mileage}
-                  onChange={(e) => setFormData({ ...formData, current_mileage: parseFloat(e.target.value) || 0 })}
+                  onChange={(e) => setFormData({ ...formData, current_mileage: e.target.value })}
+                  placeholder="0"
                 />
               </div>
             </div>
@@ -319,7 +333,7 @@ export default function ShoeInventory() {
                   <button
                     key={color.value}
                     onClick={() => setFormData({ ...formData, color: color.value })}
-                    className={`w-8 h-8 rounded-full ${color.value} ${formData.color === color.value ? 'ring-2 ring-offset-2 ring-slate-400' : ''}`}
+                    className={`w-8 h-8 rounded-full ${color.value} ${formData.color === color.value ? 'ring-2 ring-offset-2 ring-slate-400 dark:ring-offset-slate-950' : ''}`}
                     title={color.name}
                   />
                 ))}

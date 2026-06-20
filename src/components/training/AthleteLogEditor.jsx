@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import React, { useEffect, useRef, useState } from 'react';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,33 +9,64 @@ import { Slider } from "@/components/ui/slider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
-import { Sun, Moon, Dumbbell, X } from "lucide-react";
+import { Dumbbell, Moon, Plus, Sun, Trash2, X } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { getRpeColorClasses } from "./rpeColors";
+import {
+  WORKOUT_TYPES,
+  emptyAthleteActivity,
+  getAthleteActivities,
+  makeAthleteSession,
+} from "./sessionUtils";
 
-const defaultSession = {
-  session_type: 'Run',
-  duration_minutes: 0,
-  mileage: 0,
+const emptyLift = { duration_minutes: 0, lift_type: '' };
+
+const createAthleteActivity = () => ({
+  ...emptyAthleteActivity,
   shoes: [],
-  rpe: 5,
-  comments: '',
+});
+
+const sanitizeLift = (lift = {}) => {
+  const normalizedLift = {
+    duration_minutes: Number(lift.duration_minutes) || 0,
+    lift_type: lift.lift_type || '',
+  };
+
+  return normalizedLift.duration_minutes > 0 || normalizedLift.lift_type.trim()
+    ? normalizedLift
+    : {};
 };
 
-function SessionForm({ session, onChange, toggleShoe, activeShoes }) {
+const buildPayload = (formData) => ({
+  am_session: makeAthleteSession(formData.am_session),
+  pm_session: makeAthleteSession(formData.pm_session),
+  lift: sanitizeLift(formData.lift),
+});
+
+function ActivityForm({ activity, index, canRemove, onChange, onRemove, toggleShoe, activeShoes }) {
+  const rpeColors = getRpeColorClasses(activity.rpe);
+  const rpeValue = activity.rpe ?? 5;
+
   return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-3 gap-3">
+    <div className="space-y-4 rounded-lg border border-slate-200 p-3 dark:border-slate-800">
+      <div className="flex items-center justify-between gap-3">
+        <div className="text-sm font-semibold text-slate-700 dark:text-slate-200">Activity {index + 1}</div>
+        {canRemove && (
+          <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={onRemove}>
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        )}
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-3">
         <div className="space-y-1">
           <Label className="text-xs">Type</Label>
-          <Select value={session.session_type} onValueChange={(v) => onChange('session_type', v)}>
-            <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+          <Select value={activity.session_type || undefined} onValueChange={(value) => onChange('session_type', value)}>
+            <SelectTrigger className="h-9"><SelectValue placeholder="Select" /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="Easy Run">Easy Run</SelectItem>
-              <SelectItem value="Workout">Workout</SelectItem>
-              <SelectItem value="Long Run">Long Run</SelectItem>
-              <SelectItem value="Boost">Boost</SelectItem>
-              <SelectItem value="X-Train">X-Train</SelectItem>
-              <SelectItem value="Race">Race</SelectItem>
-              <SelectItem value="Off">Off</SelectItem>
+              {WORKOUT_TYPES.map((type) => (
+                <SelectItem key={type} value={type}>{type}</SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
@@ -45,8 +76,8 @@ function SessionForm({ session, onChange, toggleShoe, activeShoes }) {
           <Input
             type="number"
             className="h-9"
-            value={session.duration_minutes || ''}
-            onChange={(e) => onChange('duration_minutes', parseInt(e.target.value) || 0)}
+            value={activity.duration_minutes || ''}
+            onChange={(event) => onChange('duration_minutes', parseInt(event.target.value, 10) || 0)}
           />
         </div>
 
@@ -56,8 +87,8 @@ function SessionForm({ session, onChange, toggleShoe, activeShoes }) {
             type="number"
             step="0.1"
             className="h-9"
-            value={session.mileage || ''}
-            onChange={(e) => onChange('mileage', parseFloat(e.target.value) || 0)}
+            value={activity.mileage || ''}
+            onChange={(event) => onChange('mileage', parseFloat(event.target.value) || 0)}
           />
         </div>
       </div>
@@ -65,15 +96,15 @@ function SessionForm({ session, onChange, toggleShoe, activeShoes }) {
       <div className="space-y-1">
         <Label className="text-xs">Shoes</Label>
         <div className="flex flex-wrap gap-2">
-          {activeShoes.map(shoe => (
+          {activeShoes.map((shoe) => (
             <Badge
               key={shoe.id}
-              variant={session.shoes?.includes(shoe.id) ? "default" : "outline"}
+              variant={activity.shoes?.includes(shoe.id) ? "default" : "outline"}
               className="cursor-pointer"
               onClick={() => toggleShoe(shoe.id)}
             >
-              👟 {shoe.name}
-              {session.shoes?.includes(shoe.id) && <X className="w-3 h-3 ml-1" />}
+              {shoe.name}
+              {activity.shoes?.includes(shoe.id) && <X className="ml-1 h-3 w-3" />}
             </Badge>
           ))}
           {activeShoes.length === 0 && (
@@ -82,20 +113,33 @@ function SessionForm({ session, onChange, toggleShoe, activeShoes }) {
         </div>
       </div>
 
-      <div className="space-y-1">
-        <Label className="text-xs">RPE (1-10): {session.rpe}</Label>
+      <div className="space-y-2">
+        <div className="flex items-center justify-between gap-3">
+          <Label className="text-xs">RPE (1-10)</Label>
+          <span className={cn("rounded-full border px-2 py-0.5 text-xs font-semibold", rpeColors.badge)}>
+            {activity.rpe ?? 'Not set'}
+          </span>
+        </div>
         <Slider
-          value={[session.rpe || 5]}
-          onValueChange={([v]) => onChange('rpe', v)}
-          min={1} max={10} step={1}
+          value={[rpeValue]}
+          onValueChange={([value]) => onChange('rpe', value)}
+          min={1}
+          max={10}
+          step={1}
+          trackClassName={rpeColors.track}
+          rangeClassName={rpeColors.range}
+          thumbClassName={rpeColors.thumb}
         />
+        <div className={cn("text-xs font-medium", rpeColors.labelText)}>
+          {rpeColors.label}
+        </div>
       </div>
 
       <div className="space-y-1">
         <Label className="text-xs">Comments</Label>
         <Textarea
-          value={session.comments || ''}
-          onChange={(e) => onChange('comments', e.target.value)}
+          value={activity.comments || ''}
+          onChange={(event) => onChange('comments', event.target.value)}
           placeholder="How did it feel?"
           rows={2}
         />
@@ -104,89 +148,151 @@ function SessionForm({ session, onChange, toggleShoe, activeShoes }) {
   );
 }
 
-export default function AthleteLogEditor({ open, onClose, dayPlan, date, onSave, shoes = [] }) {
-  const [formData, setFormData] = useState({
-    am_session: { ...defaultSession },
-    pm_session: { ...defaultSession },
-    lift: { duration_minutes: 0, lift_type: '' },
-  });
-
-  useEffect(() => {
-    setFormData({
-      am_session: dayPlan?.am_session ? { ...defaultSession, ...dayPlan.am_session } : { ...defaultSession },
-      pm_session: dayPlan?.pm_session ? { ...defaultSession, ...dayPlan.pm_session } : { ...defaultSession },
-      lift: dayPlan?.lift || { duration_minutes: 0, lift_type: '' },
-    });
-  }, [dayPlan, open]);
-
-  const updateSession = (sessionKey, field, value) =>
-    setFormData(f => ({ ...f, [sessionKey]: { ...f[sessionKey], [field]: value } }));
-
-  const toggleShoe = (sessionKey, shoeId) => {
-    const currentShoes = formData[sessionKey].shoes || [];
-    const newShoes = currentShoes.includes(shoeId)
-      ? currentShoes.filter(id => id !== shoeId)
-      : [...currentShoes, shoeId];
-    updateSession(sessionKey, 'shoes', newShoes);
+function ActivitiesForm({ activities, onChange, activeShoes }) {
+  const updateActivity = (index, field, value) => {
+    onChange(activities.map((activity, activityIndex) => (
+      activityIndex === index ? { ...activity, [field]: value } : activity
+    )));
   };
 
-  const activeShoes = shoes.filter(s => s.status === 'Active');
+  const toggleShoe = (index, shoeId) => {
+    const currentShoes = activities[index].shoes || [];
+    const newShoes = currentShoes.includes(shoeId)
+      ? currentShoes.filter((id) => id !== shoeId)
+      : [...currentShoes, shoeId];
+    updateActivity(index, 'shoes', newShoes);
+  };
+
+  const addActivity = () => onChange([...activities, createAthleteActivity()]);
+  const removeActivity = (index) => onChange(activities.filter((_, activityIndex) => activityIndex !== index));
+
+  return (
+    <div className="space-y-3">
+      {activities.map((activity, index) => (
+        <ActivityForm
+          key={index}
+          activity={activity}
+          index={index}
+          canRemove={activities.length > 1}
+          onChange={(field, value) => updateActivity(index, field, value)}
+          onRemove={() => removeActivity(index)}
+          toggleShoe={(shoeId) => toggleShoe(index, shoeId)}
+          activeShoes={activeShoes}
+        />
+      ))}
+
+      <Button type="button" variant="outline" className="w-full" onClick={addActivity}>
+        <Plus className="mr-2 h-4 w-4" />
+        Add Activity
+      </Button>
+    </div>
+  );
+}
+
+export default function AthleteLogEditor({ open, onClose, dayPlan, date, onSave, onAutoSave, shoes = [] }) {
+  const [formData, setFormData] = useState({
+    am_session: [createAthleteActivity()],
+    pm_session: [createAthleteActivity()],
+    lift: { ...emptyLift },
+  });
+  const [hasUserEdited, setHasUserEdited] = useState(false);
+  const autoSaveTimer = useRef(null);
+
+  useEffect(() => {
+    const amActivities = getAthleteActivities(dayPlan?.am_session);
+    const pmActivities = getAthleteActivities(dayPlan?.pm_session);
+
+    setFormData({
+      am_session: amActivities.length ? amActivities : [createAthleteActivity()],
+      pm_session: pmActivities.length ? pmActivities : [createAthleteActivity()],
+      lift: { ...emptyLift, ...(dayPlan?.lift || {}) },
+    });
+    setHasUserEdited(false);
+  }, [dayPlan, open]);
+
+  useEffect(() => {
+    if (!open || !hasUserEdited || !onAutoSave) {
+      return undefined;
+    }
+
+    window.clearTimeout(autoSaveTimer.current);
+    autoSaveTimer.current = window.setTimeout(() => {
+      onAutoSave(buildPayload(formData));
+    }, 900);
+
+    return () => window.clearTimeout(autoSaveTimer.current);
+  }, [formData, hasUserEdited, onAutoSave, open]);
+
+  const updateActivities = (sessionKey, activities) => {
+    setHasUserEdited(true);
+    setFormData((current) => ({ ...current, [sessionKey]: activities }));
+  };
+
+  const updateLift = (updates) => {
+    setHasUserEdited(true);
+    setFormData((current) => ({ ...current, lift: { ...current.lift, ...updates } }));
+  };
+
+  const activeShoes = shoes.filter((shoe) => shoe.status === 'Active');
+
+  const handleSave = () => {
+    window.clearTimeout(autoSaveTimer.current);
+    onSave(buildPayload(formData));
+  };
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <span className="text-slate-400 text-sm">Athlete Log:</span>
+            <span className="text-sm text-slate-400">Athlete Log:</span>
             {date && format(date, 'EEEE, MMM d')}
           </DialogTitle>
         </DialogHeader>
 
         <Tabs defaultValue="am" className="py-2">
           <TabsList className="grid grid-cols-3">
-            <TabsTrigger value="am" className="text-xs"><Sun className="w-3 h-3 mr-1" /> AM</TabsTrigger>
-            <TabsTrigger value="pm" className="text-xs"><Moon className="w-3 h-3 mr-1" /> PM</TabsTrigger>
-            <TabsTrigger value="lift" className="text-xs"><Dumbbell className="w-3 h-3 mr-1" /> Lift</TabsTrigger>
+            <TabsTrigger value="am" className="text-xs"><Sun className="mr-1 h-3 w-3" /> AM</TabsTrigger>
+            <TabsTrigger value="pm" className="text-xs"><Moon className="mr-1 h-3 w-3" /> PM</TabsTrigger>
+            <TabsTrigger value="lift" className="text-xs"><Dumbbell className="mr-1 h-3 w-3" /> Lift</TabsTrigger>
           </TabsList>
 
           <TabsContent value="am" className="mt-4">
-            <SessionForm
-              session={formData.am_session}
-              onChange={(field, value) => updateSession('am_session', field, value)}
-              toggleShoe={(shoeId) => toggleShoe('am_session', shoeId)}
+            <ActivitiesForm
+              activities={formData.am_session}
+              onChange={(activities) => updateActivities('am_session', activities)}
               activeShoes={activeShoes}
             />
           </TabsContent>
 
           <TabsContent value="pm" className="mt-4">
-            <SessionForm
-              session={formData.pm_session}
-              onChange={(field, value) => updateSession('pm_session', field, value)}
-              toggleShoe={(shoeId) => toggleShoe('pm_session', shoeId)}
+            <ActivitiesForm
+              activities={formData.pm_session}
+              onChange={(activities) => updateActivities('pm_session', activities)}
               activeShoes={activeShoes}
             />
           </TabsContent>
 
           <TabsContent value="lift" className="mt-4">
             <div className="space-y-4">
-              <div className="flex items-center gap-2 text-slate-700 font-medium">
-                <Dumbbell className="w-4 h-4" />
+              <div className="flex items-center gap-2 font-medium text-slate-700 dark:text-slate-200">
+                <Dumbbell className="h-4 w-4" />
                 Lift Session
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-1">
                   <Label className="text-xs">Duration (min)</Label>
                   <Input
                     type="number"
                     value={formData.lift.duration_minutes || ''}
-                    onChange={(e) => setFormData(f => ({ ...f, lift: { ...f.lift, duration_minutes: parseInt(e.target.value) || 0 } }))}
+                    onChange={(event) => updateLift({ duration_minutes: parseInt(event.target.value, 10) || 0 })}
                   />
                 </div>
                 <div className="space-y-1">
                   <Label className="text-xs">Type</Label>
                   <Input
                     value={formData.lift.lift_type || ''}
-                    onChange={(e) => setFormData(f => ({ ...f, lift: { ...f.lift, lift_type: e.target.value } }))}
+                    onChange={(event) => updateLift({ lift_type: event.target.value })}
                     placeholder="e.g., Upper body, Core..."
                   />
                 </div>
@@ -196,8 +302,8 @@ export default function AthleteLogEditor({ open, onClose, dayPlan, date, onSave,
         </Tabs>
 
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button onClick={() => onSave(formData)}>Save Log</Button>
+          <Button variant="outline" onClick={onClose}>Close</Button>
+          <Button onClick={handleSave}>Save Log</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
