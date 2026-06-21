@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, Camera, Loader2, Save, UserCircle } from 'lucide-react';
 import { appClient } from '@/api/client';
 import { useAuth } from '@/lib/AuthContext';
@@ -20,6 +20,17 @@ const splitFullName = (fullName = '') => {
   };
 };
 
+const getNameFallback = (user = {}) => {
+  const fullName = user.full_name?.trim() || '';
+  const emailPrefix = user.email?.split('@')[0]?.trim();
+
+  if (!fullName || fullName === emailPrefix || fullName === user.email) {
+    return { firstName: '', lastName: '' };
+  }
+
+  return splitFullName(fullName);
+};
+
 const getInitials = (firstName, lastName, email) => {
   const initials = `${firstName?.[0] || ''}${lastName?.[0] || ''}`.trim();
   return (initials || email?.[0] || 'B').toUpperCase();
@@ -27,7 +38,10 @@ const getInitials = (firstName, lastName, email) => {
 
 export default function Account() {
   const { user, checkAppState } = useAuth();
-  const nameParts = useMemo(() => splitFullName(user?.full_name), [user?.full_name]);
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const nameParts = useMemo(() => getNameFallback(user), [user]);
+  const isSetupMode = searchParams.get('setup') === '1' || !user?.first_name?.trim() || !user?.last_name?.trim();
   const [formData, setFormData] = useState({
     first_name: '',
     last_name: '',
@@ -92,6 +106,11 @@ export default function Account() {
       return;
     }
 
+    if (!firstName || !lastName) {
+      setError('First and last name are required.');
+      return;
+    }
+
     setIsSaving(true);
     setError('');
 
@@ -122,7 +141,12 @@ export default function Account() {
         description: email !== user.email
           ? 'Profile saved. Check your inbox if Supabase asks you to confirm the email change.'
           : 'Your profile details were saved.',
+        duration: 3000,
       });
+
+      if (isSetupMode) {
+        navigate(createPageUrl('TrainingLog'), { replace: true });
+      }
     } catch (saveError) {
       setError(saveError.message || 'Could not save account details.');
     } finally {
@@ -150,8 +174,13 @@ export default function Account() {
           <CardHeader className="border-b border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-900">
             <CardTitle className="flex items-center gap-2 text-lg">
               <UserCircle className="h-5 w-5 text-red-700 dark:text-red-300" />
-              Profile Details
+              {isSetupMode ? 'Set Up Your Account' : 'Profile Details'}
             </CardTitle>
+            {isSetupMode && (
+              <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+                Add your name before using the training log so coaches and teammates can identify your entries.
+              </p>
+            )}
           </CardHeader>
           <CardContent className="space-y-6 p-6">
             <div className="flex flex-col gap-5 sm:flex-row sm:items-center">

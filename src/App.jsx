@@ -4,12 +4,10 @@ import { ThemeProvider } from 'next-themes'
 import { queryClientInstance } from '@/lib/query-client'
 import NavigationTracker from '@/lib/NavigationTracker'
 import { pagesConfig } from './pages.config'
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { BrowserRouter as Router, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import AuthScreen from '@/components/AuthScreen';
-import ThemeToggle from '@/components/ThemeToggle';
-import FeedbackButton from '@/components/FeedbackButton';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -19,8 +17,14 @@ const LayoutWrapper = ({ children, currentPageName }) => Layout ?
   <Layout currentPageName={currentPageName}>{children}</Layout>
   : <>{children}</>;
 
+const needsAccountSetup = (user) => {
+  if (!user) return false;
+  return !user.first_name?.trim() || !user.last_name?.trim();
+};
+
 const AuthenticatedApp = () => {
-  const { isLoadingAuth, isLoadingPublicSettings, isAuthenticated } = useAuth();
+  const { isLoadingAuth, isLoadingPublicSettings, isAuthenticated, user } = useAuth();
+  const location = useLocation();
 
   if (isLoadingPublicSettings || isLoadingAuth) {
     return (
@@ -32,6 +36,10 @@ const AuthenticatedApp = () => {
 
   if (!isAuthenticated) {
     return <AuthScreen />;
+  }
+
+  if (needsAccountSetup(user) && location.pathname.toLowerCase() !== '/account') {
+    return <Navigate to="/Account?setup=1" replace />;
   }
 
   return (
@@ -67,8 +75,6 @@ function App() {
           <Router>
             <NavigationTracker />
             <AuthenticatedApp />
-            <FeedbackButton />
-            <ThemeToggle />
           </Router>
           <Toaster />
         </QueryClientProvider>

@@ -114,6 +114,19 @@ const sanitizeRecord = (value) => {
   return value;
 };
 
+const getMetadataFullName = (authUser) => {
+  const metadata = authUser.user_metadata || {};
+  const email = authUser.email || '';
+  const emailPrefix = email.split('@')[0];
+  const candidate = (metadata.full_name || metadata.name || '').trim();
+
+  if (!candidate || candidate === email || candidate === emailPrefix) {
+    return null;
+  }
+
+  return candidate;
+};
+
 const ensureProfile = async (authUser) => {
   const supabase = assertSupabaseConfigured();
   const { data: existingProfile, error: existingProfileError } = await supabase
@@ -138,11 +151,7 @@ const ensureProfile = async (authUser) => {
     email: authUser.email,
     first_name: authUser.user_metadata?.first_name || null,
     last_name: authUser.user_metadata?.last_name || null,
-    full_name:
-      authUser.user_metadata?.full_name ||
-      authUser.user_metadata?.name ||
-      authUser.email?.split('@')[0] ||
-      '',
+    full_name: getMetadataFullName(authUser),
     role: 'athlete',
   };
 

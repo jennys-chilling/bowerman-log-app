@@ -12,49 +12,50 @@ export default function WeekNavigation({ currentWeekStart, onWeekChange }) {
   const isCurrentWeek = isThisWeek(currentWeekStart, { weekStartsOn: 1 });
   
   return (
-    <div className="flex items-center justify-between bg-white rounded-xl border border-slate-300 px-4 py-3 shadow-md dark:border-slate-700 dark:bg-slate-950">
-      <Button 
-        variant="ghost" 
-        size="sm" 
-        onClick={goToPreviousWeek}
-        className="hover:bg-slate-100 dark:hover:bg-slate-900"
-      >
-        <ChevronLeft className="w-4 h-4 mr-1" />
-        Previous
-      </Button>
-      
-      <div className="flex items-center gap-3">
-        <div className="text-center">
-          <div className="text-lg font-semibold text-slate-900 dark:text-slate-100">
-            {format(currentWeekStart, 'MMM d')} – {format(weekEnd, 'MMM d, yyyy')}
+    <div className="rounded-xl border border-slate-300 bg-white px-3 py-3 shadow-md dark:border-slate-700 dark:bg-slate-950 sm:px-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0 text-center sm:order-2 sm:flex-1">
+          <div className="whitespace-nowrap text-base font-semibold text-slate-900 dark:text-slate-100 sm:text-lg">
+            {format(currentWeekStart, 'MMM d')} - {format(weekEnd, 'MMM d, yyyy')}
           </div>
           {isCurrentWeek && (
-            <span className="text-xs text-emerald-600 font-medium dark:text-emerald-400">Current Week</span>
+            <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">Current Week</span>
           )}
         </div>
-        
-        {!isCurrentWeek && (
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={goToCurrentWeek}
-            className="text-xs"
+
+        <div className="grid grid-cols-3 gap-2 sm:contents">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={goToPreviousWeek}
+            className="h-9 px-2 hover:bg-slate-100 dark:hover:bg-slate-900 sm:order-1 sm:px-3"
           >
-            <Calendar className="w-3 h-3 mr-1" />
+            <ChevronLeft className="h-4 w-4 sm:mr-1" />
+            <span>Previous</span>
+          </Button>
+
+          <Button
+            variant={isCurrentWeek ? "ghost" : "outline"}
+            size="sm"
+            onClick={goToCurrentWeek}
+            disabled={isCurrentWeek}
+            className="h-9 px-2 text-xs sm:order-3 sm:px-3"
+          >
+            <Calendar className="mr-1 h-3.5 w-3.5" />
             Today
           </Button>
-        )}
+
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={goToNextWeek}
+            className="h-9 px-2 hover:bg-slate-100 dark:hover:bg-slate-900 sm:order-4 sm:px-3"
+          >
+            <span>Next</span>
+            <ChevronRight className="h-4 w-4 sm:ml-1" />
+          </Button>
+        </div>
       </div>
-      
-      <Button 
-        variant="ghost" 
-        size="sm" 
-        onClick={goToNextWeek}
-        className="hover:bg-slate-100 dark:hover:bg-slate-900"
-      >
-        Next
-        <ChevronRight className="w-4 h-4 ml-1" />
-      </Button>
     </div>
   );
 }

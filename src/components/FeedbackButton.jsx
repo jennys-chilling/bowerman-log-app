@@ -93,7 +93,7 @@ export default function FeedbackButton() {
     <>
       <Button
         type="button"
-        className="fixed bottom-4 right-16 z-50 h-10 rounded-full bg-red-700 px-4 text-sm font-semibold text-white shadow-sm hover:bg-red-800 dark:bg-red-600 dark:hover:bg-red-500"
+        className="h-10 w-full rounded-full bg-red-700 px-4 text-sm font-semibold text-white shadow-sm hover:bg-red-800 dark:bg-red-600 dark:hover:bg-red-500 sm:w-auto"
         onClick={() => setOpen(true)}
         aria-label="Open questions and feedback form"
       >

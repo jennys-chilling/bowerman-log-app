@@ -12,7 +12,7 @@ export default function ThemeToggle() {
       type="button"
       variant="outline"
       size="icon"
-      className="fixed bottom-4 right-4 z-50 h-10 w-10 rounded-full border-red-900/20 bg-white/90 text-red-800 shadow-sm backdrop-blur dark:border-red-500/30 dark:bg-slate-950/90 dark:text-red-200"
+      className="h-10 w-10 shrink-0 rounded-full border-red-900/20 bg-white/90 text-red-800 shadow-sm backdrop-blur dark:border-red-500/30 dark:bg-slate-950/90 dark:text-red-200"
       onClick={() => setTheme(isDark ? 'light' : 'dark')}
       aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
       title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}

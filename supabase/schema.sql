@@ -191,7 +191,7 @@ begin
     new.email,
     nullif(coalesce(new.raw_user_meta_data ->> 'first_name', ''), ''),
     nullif(coalesce(new.raw_user_meta_data ->> 'last_name', ''), ''),
-    coalesce(new.raw_user_meta_data ->> 'full_name', split_part(new.email, '@', 1)),
+    nullif(coalesce(new.raw_user_meta_data ->> 'full_name', new.raw_user_meta_data ->> 'name', ''), ''),
     'athlete'
   )
   on conflict (id) do update
@@ -215,7 +215,7 @@ select
   email,
   nullif(coalesce(raw_user_meta_data ->> 'first_name', ''), ''),
   nullif(coalesce(raw_user_meta_data ->> 'last_name', ''), ''),
-  coalesce(raw_user_meta_data ->> 'full_name', split_part(email, '@', 1)),
+  nullif(coalesce(raw_user_meta_data ->> 'full_name', raw_user_meta_data ->> 'name', ''), ''),
   'athlete'
 from auth.users
 on conflict (id) do nothing;
@@ -228,6 +228,8 @@ set
     nullif(trim(regexp_replace(coalesce(full_name, ''), '^\S+\s*', '')), '')
   )
 where full_name is not null
+  and full_name <> email
+  and full_name <> split_part(email, '@', 1)
   and (first_name is null or last_name is null);
 
 alter table public.profiles enable row level security;

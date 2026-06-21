@@ -114,6 +114,16 @@
       linear-gradient(180deg, hsl(234 46% 5%), hsl(232 40% 7%) 48%, hsl(234 50% 4%));
   }
 
+  .btc-app-shell .btc-app-shell {
+    min-height: auto;
+    background: transparent;
+  }
+
+  .btc-app-shell .btc-app-shell::before,
+  .btc-app-shell .btc-app-shell::after {
+    display: none;
+  }
+
   .btc-app-shell::before,
   .btc-auth-shell::before {
     content: "";

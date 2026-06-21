@@ -480,36 +480,36 @@ export default function TrainingLog() {
   
   return (
     <div className="btc-app-shell text-slate-900 dark:text-slate-100">
-      <div className="relative max-w-7xl mx-auto px-4 py-6">
+      <div className="relative mx-auto max-w-7xl px-3 py-4 sm:px-4 sm:py-6">
         {/* Header */}
-        <div className="btc-rail-card mb-6 overflow-hidden rounded-2xl border border-slate-300 bg-white p-4 shadow-md backdrop-blur dark:border-slate-700 dark:bg-slate-950">
-          <div className="flex flex-col gap-4 pl-2 md:flex-row md:items-center md:justify-between">
+        <div className="btc-rail-card mb-4 overflow-hidden rounded-2xl border border-slate-300 bg-white p-3 shadow-md backdrop-blur dark:border-slate-700 dark:bg-slate-950 sm:mb-6 sm:p-4">
+          <div className="flex flex-col gap-3 pl-2 md:flex-row md:items-center md:justify-between">
             <BrandMark title="Bowerman" subtitle={isCoach ? 'Coach' : 'Athlete - Training Log'} />
           
-            <div className="flex flex-wrap items-center gap-3 md:justify-end">
+            <div className="grid grid-cols-2 items-center gap-2 sm:flex sm:flex-wrap sm:gap-3 md:justify-end">
               {!isCoach && (
-                <Link to={createPageUrl('ShoeInventory')}>
-                  <Button className="h-11 rounded-full bg-red-700 px-5 text-sm font-semibold text-white shadow-sm hover:bg-red-800 dark:bg-red-600 dark:hover:bg-red-500">
+                <Link to={createPageUrl('ShoeInventory')} className="w-full">
+                  <Button className="h-10 w-full rounded-full bg-red-700 px-3 text-sm font-semibold text-white shadow-sm hover:bg-red-800 dark:bg-red-600 dark:hover:bg-red-500 sm:h-11 sm:px-5">
                     <Footprints className="mr-2 h-4 w-4" />
-                    Shoe Inventory
+                    Shoes
                   </Button>
                 </Link>
               )}
               {isCoach && (
-                <Link to={createPageUrl('WeekTemplates')}>
-                  <Button className="h-11 rounded-full bg-red-700 px-5 text-sm font-semibold text-white shadow-sm hover:bg-red-800 dark:bg-red-600 dark:hover:bg-red-500">
+                <Link to={createPageUrl('WeekTemplates')} className="w-full">
+                  <Button className="h-10 w-full rounded-full bg-red-700 px-3 text-sm font-semibold text-white shadow-sm hover:bg-red-800 dark:bg-red-600 dark:hover:bg-red-500 sm:h-11 sm:px-5">
                     <Layers className="mr-2 h-4 w-4" />
                     Templates
                   </Button>
                 </Link>
               )}
-              <Link to={createPageUrl('Account')}>
-                <Button variant="outline" className="h-11 rounded-full px-5 text-sm font-semibold">
+              <Link to={createPageUrl('Account')} className="w-full">
+                <Button variant="outline" className="h-10 w-full rounded-full px-3 text-sm font-semibold sm:h-11 sm:px-5">
                   <UserCircle className="mr-2 h-4 w-4" />
                   Account
                 </Button>
               </Link>
-              <Button variant="ghost" size="sm" onClick={() => logout()}>
+              <Button variant="ghost" size="sm" className="col-span-2 justify-center sm:col-span-1" onClick={() => logout()}>
                 <LogOut className="mr-1.5 h-4 w-4" />
                 Sign Out
               </Button>
@@ -531,7 +531,7 @@ export default function TrainingLog() {
                     variant="outline"
                     role="combobox"
                     aria-expanded={athleteSelectorOpen}
-                    className="h-11 w-full max-w-sm justify-between border-slate-300 bg-white px-3 text-left font-normal text-slate-900 shadow-sm dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+                    className="h-10 w-full max-w-sm justify-between border-slate-300 bg-white px-3 text-left font-normal text-slate-900 shadow-sm dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 sm:h-11"
                   >
                     <span className="min-w-0 truncate">
                       {selectedAthlete ? getDisplayName(selectedAthlete) : 'Select athlete'}
@@ -595,8 +595,8 @@ export default function TrainingLog() {
             </div>
 
             {selectedAthlete && (
-              <div className="flex flex-wrap items-center gap-3 rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm shadow-sm dark:border-slate-700 dark:bg-slate-950">
-                <Avatar className="h-10 w-10">
+              <div className="flex flex-wrap items-center gap-3 rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm shadow-sm dark:border-slate-700 dark:bg-slate-950 sm:px-4 sm:py-3">
+                <Avatar className="h-9 w-9 sm:h-10 sm:w-10">
                   <AvatarImage src={selectedAthlete.profile_image_url} alt={getDisplayName(selectedAthlete)} className="object-cover" />
                   <AvatarFallback className="font-semibold">
                     {getInitials(selectedAthlete)}
@@ -626,11 +626,11 @@ export default function TrainingLog() {
         
         {/* View Toggle + Navigation */}
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-          <div className="flex rounded-lg border border-slate-300 bg-white overflow-hidden shadow-sm dark:border-slate-700 dark:bg-slate-950">
+          <div className="flex overflow-hidden rounded-lg border border-slate-300 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-950">
             <Button
               variant="ghost"
               size="sm"
-              className={`rounded-none px-4 ${viewMode === 'week' ? 'bg-red-700 text-white hover:bg-red-800' : 'text-slate-600 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-900'}`}
+              className={`h-9 rounded-none px-3 sm:px-4 ${viewMode === 'week' ? 'bg-red-700 text-white hover:bg-red-800' : 'text-slate-600 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-900'}`}
               onClick={() => setViewMode('week')}
             >
               <CalendarDays className="w-4 h-4 mr-1.5" /> Week
@@ -638,7 +638,7 @@ export default function TrainingLog() {
             <Button
               variant="ghost"
               size="sm"
-              className={`rounded-none px-4 ${viewMode === 'month' ? 'bg-red-700 text-white hover:bg-red-800' : 'text-slate-600 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-900'}`}
+              className={`h-9 rounded-none px-3 sm:px-4 ${viewMode === 'month' ? 'bg-red-700 text-white hover:bg-red-800' : 'text-slate-600 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-900'}`}
               onClick={() => setViewMode('month')}
             >
               <Calendar className="w-4 h-4 mr-1.5" /> Month
@@ -647,7 +647,7 @@ export default function TrainingLog() {
           {isCoach && viewMode === 'week' && trainingWeek && (
             <Button
               variant="outline"
-              className="border-slate-300 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-950"
+              className="h-9 border-slate-300 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-950"
               onClick={() => setCopyDialogOpen(true)}
               disabled={loading || copyWeekMutation.isPending}
             >
@@ -691,24 +691,22 @@ export default function TrainingLog() {
             <Loader2 className="w-8 h-8 animate-spin text-slate-400" />
           </div>
         ) : !trainingWeek ? (
-          <div className="mt-8 overflow-x-auto rounded-xl border border-slate-300 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-950">
-            <div className="flex min-h-[360px] min-w-[980px] w-full flex-col items-center justify-center p-12 text-center">
-              <h3 className="text-lg font-medium text-slate-800 mb-2 dark:text-slate-100">No training week found</h3>
-              <p className="text-slate-600 mb-4 dark:text-slate-300">Create a training week to start planning.</p>
-              <Button onClick={() => createWeekMutation.mutate()} disabled={createWeekMutation.isPending}>
-                {createWeekMutation.isPending ? (
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                ) : null}
-                Create Training Week
-              </Button>
-            </div>
+          <div className="mt-5 rounded-xl border border-slate-300 bg-white p-5 text-center shadow-md dark:border-slate-700 dark:bg-slate-950 sm:mt-8 sm:p-12">
+            <h3 className="mb-2 text-base font-semibold text-slate-800 dark:text-slate-100 sm:text-lg">No training week found</h3>
+            <p className="mb-4 text-sm text-slate-600 dark:text-slate-300 sm:text-base">Create a training week to start planning.</p>
+            <Button className="w-full sm:w-auto" onClick={() => createWeekMutation.mutate()} disabled={createWeekMutation.isPending}>
+              {createWeekMutation.isPending ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : null}
+              Create Training Week
+            </Button>
           </div>
         ) : (
           <>
             {/* Weekly Grid */}
-            <div className="mt-6 bg-white rounded-xl border border-slate-300 shadow-md overflow-hidden dark:border-slate-700 dark:bg-slate-950">
+            <div className="mt-5 overflow-hidden rounded-xl border border-slate-300 bg-white shadow-md dark:border-slate-700 dark:bg-slate-950 sm:mt-6">
               <div className="overflow-x-auto">
-                <div className="flex min-w-[980px] w-full">
+                <div className="flex min-w-[756px] w-full sm:min-w-[896px] lg:min-w-[980px]">
                   {DAYS.map((day, index) => (
                     <DayColumn
                       key={day}
@@ -724,7 +722,7 @@ export default function TrainingLog() {
             </div>
             
             {/* Weekly Totals */}
-            <div className={`mt-6 grid items-stretch gap-4 ${showMileageGoal ? 'lg:grid-cols-[280px_minmax(0,1fr)]' : ''}`}>
+            <div className={`mt-4 grid items-stretch gap-3 sm:mt-6 sm:gap-4 ${showMileageGoal ? 'lg:grid-cols-[280px_minmax(0,1fr)]' : ''}`}>
               {showMileageGoal && (
                 <WeeklyMileageGoal
                   trainingWeek={trainingWeek}
@@ -737,7 +735,7 @@ export default function TrainingLog() {
             </div>
             
             {/* Weekly Reflection */}
-            <div className="mt-6">
+            <div className="mt-4 sm:mt-6">
               <WeeklyReflection
                 trainingWeek={trainingWeek}
                 onSave={(data) => updateWeekMutation.mutateAsync(data)}

@@ -19,6 +19,14 @@ const MONTHS = [
 ];
 
 const YEARS = Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - 2 + i);
+const MONTH_GRID_TEMPLATE = 'repeat(7, minmax(7.25rem, 1fr)) minmax(5.75rem, 6.5rem)';
+const MONTH_GRID_MIN_WIDTH = '58rem';
+
+const COMPACT_SESSION_TYPES = {
+  'Easy Run': 'Easy',
+  'Long Run': 'Long',
+  'X-Train': 'XT',
+};
 
 function getWeeksInMonth(monthDate) {
   const year = monthDate.getFullYear();
@@ -54,6 +62,13 @@ const formatMinutes = (minutes) => {
   if (remainingMinutes === 0) return `${hours}h`;
   return `${hours}h ${remainingMinutes}m`;
 };
+
+const compactSessionType = (sessionType = 'Session') => (
+  sessionType
+    .split(/\s+OR\s+/i)
+    .map((type) => COMPACT_SESSION_TYPES[type] || type)
+    .join(' / ')
+);
 
 const getWeekStats = (days, allDayPlans) => {
   let mileage = 0;
@@ -98,34 +113,44 @@ function AthleteActivitySummary({ label, activity, index, total }) {
   const mileage = Number(activity.mileage) || 0;
   const minutes = Number(activity.duration_minutes) || 0;
   const sessionType = activity.session_type || 'Session';
+  const metricItems = [];
   const rpeColors = getRpeColorClasses(activity.rpe);
 
+  if (sessionType !== 'Off' && mileage > 0) {
+    metricItems.push(`${formatNumber(mileage)} mi`);
+  }
+
+  if (sessionType !== 'Off' && minutes > 0) {
+    metricItems.push(formatMinutes(minutes));
+  }
+
   return (
-    <div className="rounded-md border border-slate-200 bg-white px-1.5 py-1 shadow-sm dark:border-slate-700 dark:bg-slate-950">
-      <div className="flex min-w-0 items-center gap-1">
-        <span className="shrink-0 text-[9px] font-semibold uppercase text-slate-400 dark:text-slate-500">
+    <div className="rounded-lg border border-slate-200 bg-white px-2 py-1.5 shadow-sm dark:border-slate-700 dark:bg-slate-950">
+      <div className="flex min-w-0 items-center justify-between gap-1.5">
+        <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
           {label}{total > 1 ? index + 1 : ''}
         </span>
         <span className={cn(
-          'min-w-0 truncate rounded border px-1.5 py-0.5 text-[10px] font-medium leading-none',
+          'min-w-0 truncate rounded border px-1.5 py-0.5 text-[10px] font-semibold leading-none',
           neutralWorkoutBadgeClass
-        )}>
-          {sessionType}
+        )}
+          title={sessionType}
+        >
+          {compactSessionType(sessionType)}
         </span>
       </div>
 
-      <div className="mt-1 flex flex-wrap gap-x-1.5 gap-y-0.5 text-[10px] font-medium text-slate-600 dark:text-slate-300">
-        {sessionType !== 'Off' && mileage > 0 && <span>{formatNumber(mileage)} mi</span>}
-        {sessionType !== 'Off' && minutes > 0 && <span>{minutes} min</span>}
+      <div className="mt-1 flex flex-wrap items-center gap-1 text-[11px] font-medium leading-tight text-slate-700 dark:text-slate-300">
+        {metricItems.length > 0 && <span>{metricItems.join(' · ')}</span>}
         {activity.rpe !== null && activity.rpe !== undefined && (
-          <span className={cn("rounded border px-1 py-0.5 text-[9px] font-bold leading-none", rpeColors.badge)}>
+          <span className={cn("rounded border px-1.5 py-0.5 text-[9px] font-bold leading-none", rpeColors.badge)}>
             RPE {activity.rpe}
           </span>
         )}
       </div>
 
       {activity.comments?.trim() && (
-        <div className="mt-0.5 truncate text-[9px] italic text-slate-400 dark:text-slate-500">
+        <div className="mt-1 hidden truncate text-[9px] italic text-slate-400 dark:text-slate-500 sm:block">
           {activity.comments.trim()}
         </div>
       )}
@@ -153,7 +178,10 @@ function WeekRow({ weekStart, allDayPlans, currentMonth, onWeekClick }) {
   const avgRpeColors = getRpeColorClasses(weekStats.avgRpe ? Math.round(weekStats.avgRpe) : null);
 
   return (
-    <div className="group grid grid-cols-8 border-b border-slate-100 last:border-b-0 dark:border-slate-800">
+    <div
+      className="group grid border-b border-slate-200 last:border-b-0 dark:border-slate-800"
+      style={{ gridTemplateColumns: MONTH_GRID_TEMPLATE, minWidth: MONTH_GRID_MIN_WIDTH }}
+    >
       {days.map((day) => {
         const dateStr = format(day, 'yyyy-MM-dd');
         const plan = allDayPlans[dateStr];
@@ -169,28 +197,42 @@ function WeekRow({ weekStart, allDayPlans, currentMonth, onWeekClick }) {
           <div
             key={dateStr}
             className={cn(
-              'min-h-[118px] border-r border-slate-100 p-2 last:border-r-0 dark:border-slate-800',
-              !inMonth && 'opacity-30',
+              'min-h-[132px] border-r border-slate-200 bg-white p-2 dark:border-slate-800 dark:bg-slate-950 sm:min-h-[148px] sm:p-2.5',
+              !inMonth && 'bg-slate-50/70 text-slate-400 dark:bg-slate-900/60 dark:text-slate-500',
               today && 'bg-amber-50 dark:bg-amber-950/30',
             )}
           >
-            <div className={cn(
-              'mb-1 text-xs font-semibold',
-              today ? 'text-amber-600 dark:text-amber-300' : 'text-slate-500 dark:text-slate-400'
-            )}>
-              {format(day, 'd')}
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <div className={cn(
+                'text-sm font-bold',
+                today ? 'text-amber-700 dark:text-amber-300' : 'text-slate-600 dark:text-slate-300'
+              )}>
+                {format(day, 'd')}
+              </div>
+              {today && (
+                <span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-amber-700 dark:bg-amber-900/60 dark:text-amber-200">
+                  Today
+                </span>
+              )}
             </div>
 
-            <div className="space-y-1">
+            <div className="space-y-1.5">
               {athleteSessions.map(([label, session]) => (
                 <AthleteSessionSummary key={label} label={label} session={session} />
               ))}
 
               {hasLift(lift) && (
-                <div className="rounded-md border border-slate-100 bg-slate-50 px-1.5 py-1 text-[10px] text-slate-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300">
-                  <span className="font-semibold">Lift</span>
-                  {Number(lift.duration_minutes) > 0 && <span> {lift.duration_minutes} min</span>}
-                  {lift.lift_type?.trim() && <span className="text-slate-400 dark:text-slate-500"> - {lift.lift_type.trim()}</span>}
+                <div className="rounded-lg border border-slate-200 bg-slate-50 px-2 py-1.5 text-[11px] leading-tight text-slate-600 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300">
+                  <div className="font-semibold">Lift</div>
+                  <div>
+                    {Number(lift.duration_minutes) > 0 && <span>{formatMinutes(lift.duration_minutes)}</span>}
+                    {lift.lift_type?.trim() && (
+                      <span className="text-slate-500 dark:text-slate-400">
+                        {Number(lift.duration_minutes) > 0 ? ' · ' : ''}
+                        {lift.lift_type.trim()}
+                      </span>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
@@ -199,12 +241,15 @@ function WeekRow({ weekStart, allDayPlans, currentMonth, onWeekClick }) {
       })}
 
       <div
-        className="flex min-h-[118px] cursor-pointer flex-col items-center justify-center gap-1 bg-slate-50 p-2 text-center transition-colors hover:bg-slate-100 dark:bg-slate-900 dark:hover:bg-slate-800"
+        className="sticky right-0 z-10 flex min-h-[132px] cursor-pointer flex-col items-center justify-center gap-1 border-l border-slate-300 bg-slate-100 p-2 text-center transition-colors hover:bg-slate-200 dark:border-slate-700 dark:bg-slate-900 dark:hover:bg-slate-800 sm:min-h-[148px]"
         onClick={() => onWeekClick(weekStart)}
         title="Open this week"
       >
         {weekStats.mileage > 0 && (
-          <div className="text-sm font-bold text-slate-800 dark:text-slate-100">{weekStats.mileage.toFixed(1)} mi</div>
+          <div className="text-base font-extrabold leading-tight text-slate-900 dark:text-slate-100">
+            {weekStats.mileage.toFixed(1)}
+            <span className="block text-xs font-bold">mi</span>
+          </div>
         )}
         {weekStats.avgRpe !== null && (
           <div className={cn("rounded border px-1.5 py-0.5 text-[10px] font-bold leading-none", avgRpeColors.badge)}>
@@ -234,7 +279,7 @@ function WeekRow({ weekStart, allDayPlans, currentMonth, onWeekClick }) {
 
 export default function MonthView({ currentMonth, onMonthChange, allDayPlans, onWeekClick }) {
   const weeks = getWeeksInMonth(currentMonth);
-  const dayHeaders = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun', 'Total'];
+  const dayHeaders = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
   const goToPrev = () => {
     const d = new Date(currentMonth);
@@ -250,12 +295,8 @@ export default function MonthView({ currentMonth, onMonthChange, allDayPlans, on
 
   return (
     <div className="overflow-hidden rounded-xl border border-slate-300 bg-white shadow-md dark:border-slate-700 dark:bg-slate-950">
-      <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-800 dark:bg-slate-900">
-        <Button variant="ghost" size="sm" onClick={goToPrev}>
-          <ChevronLeft className="mr-1 h-4 w-4" /> Prev
-        </Button>
-
-        <div className="flex items-center gap-2">
+      <div className="flex flex-col gap-3 border-b border-slate-200 bg-slate-50 px-3 py-3 dark:border-slate-800 dark:bg-slate-900 sm:flex-row sm:items-center sm:justify-between sm:px-4">
+        <div className="order-1 grid grid-cols-2 gap-2 sm:order-2 sm:flex sm:items-center">
           <Select
             value={String(currentMonth.getMonth())}
             onValueChange={(value) => {
@@ -264,7 +305,7 @@ export default function MonthView({ currentMonth, onMonthChange, allDayPlans, on
               onMonthChange(d);
             }}
           >
-            <SelectTrigger className="h-8 w-32 text-sm font-semibold">
+            <SelectTrigger className="h-8 w-full text-sm font-semibold sm:w-32">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -282,7 +323,7 @@ export default function MonthView({ currentMonth, onMonthChange, allDayPlans, on
               onMonthChange(d);
             }}
           >
-            <SelectTrigger className="h-8 w-24 text-sm font-semibold">
+            <SelectTrigger className="h-8 w-full text-sm font-semibold sm:w-24">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -293,28 +334,42 @@ export default function MonthView({ currentMonth, onMonthChange, allDayPlans, on
           </Select>
         </div>
 
-        <Button variant="ghost" size="sm" onClick={goToNext}>
-          Next <ChevronRight className="ml-1 h-4 w-4" />
-        </Button>
+        <div className="order-2 grid grid-cols-2 gap-2 sm:contents">
+          <Button variant="ghost" size="sm" className="justify-center sm:order-1" onClick={goToPrev}>
+            <ChevronLeft className="mr-1 h-4 w-4" /> Prev
+          </Button>
+
+          <Button variant="ghost" size="sm" className="justify-center sm:order-3" onClick={goToNext}>
+            Next <ChevronRight className="ml-1 h-4 w-4" />
+          </Button>
+        </div>
       </div>
 
-      <div className="grid grid-cols-8 border-b border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-900">
-        {dayHeaders.map((dayHeader) => (
-          <div key={dayHeader} className="border-r border-slate-100 py-2 text-center text-xs font-medium uppercase tracking-wide text-slate-500 last:border-r-0 dark:border-slate-800 dark:text-slate-400">
-            {dayHeader}
+      <div className="overflow-x-auto overscroll-x-contain [-webkit-overflow-scrolling:touch]">
+        <div
+          className="grid border-b border-slate-200 bg-slate-100 dark:border-slate-800 dark:bg-slate-900"
+          style={{ gridTemplateColumns: MONTH_GRID_TEMPLATE, minWidth: MONTH_GRID_MIN_WIDTH }}
+        >
+          {dayHeaders.map((dayHeader) => (
+            <div key={dayHeader} className="border-r border-slate-200 py-2.5 text-center text-xs font-bold uppercase tracking-wide text-slate-600 dark:border-slate-800 dark:text-slate-300">
+              {dayHeader}
+            </div>
+          ))}
+          <div className="sticky right-0 z-20 border-l border-slate-300 bg-slate-200 py-2.5 text-center text-xs font-bold uppercase tracking-wide text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200">
+            Total
           </div>
+        </div>
+
+        {weeks.map((weekStart) => (
+          <WeekRow
+            key={format(weekStart, 'yyyy-MM-dd')}
+            weekStart={weekStart}
+            allDayPlans={allDayPlans}
+            currentMonth={currentMonth}
+            onWeekClick={onWeekClick}
+          />
         ))}
       </div>
-
-      {weeks.map((weekStart) => (
-        <WeekRow
-          key={format(weekStart, 'yyyy-MM-dd')}
-          weekStart={weekStart}
-          allDayPlans={allDayPlans}
-          currentMonth={currentMonth}
-          onWeekClick={onWeekClick}
-        />
-      ))}
     </div>
   );
 }
