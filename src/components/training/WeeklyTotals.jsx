@@ -92,7 +92,10 @@ function WeeklyTotalsShell({ totals, StatCard }) {
     <Collapsible
       open={isOpen}
       onOpenChange={setIsOpen}
-      className="h-full rounded-xl border border-slate-300 bg-white p-3 shadow-md dark:border-slate-700 dark:bg-slate-950 sm:p-4"
+      className={cn(
+        "w-full rounded-xl border border-slate-300 bg-white p-3 shadow-md dark:border-slate-700 dark:bg-slate-950 sm:p-4",
+        isOpen ? "h-full self-stretch" : "self-start"
+      )}
     >
       <CollapsibleTrigger asChild>
         <button

@@ -3,6 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Save, MessageSquare, CheckCircle } from "lucide-react";
+import FeedbackButton from "@/components/FeedbackButton";
+import ThemeToggle from "@/components/ThemeToggle";
 
 export default function WeeklyReflection({ trainingWeek, onSave, isCoach }) {
   const [reflection, setReflection] = useState('');
@@ -95,14 +97,18 @@ export default function WeeklyReflection({ trainingWeek, onSave, isCoach }) {
         </CardContent>
       </Card>
       
-      <div className="md:col-span-2 flex justify-end">
+      <div className="md:col-span-2 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <FeedbackButton />
+          <ThemeToggle />
+        </div>
         <Button onClick={handleSave} disabled={saving}>
           {saved ? (
             <><CheckCircle className="w-4 h-4 mr-2" /> Saved</>
           ) : saving ? (
             'Saving...'
           ) : (
-            <><Save className="w-4 h-4 mr-2" /> Save Reflections</>
+            <><Save className="w-4 h-4 mr-2" /> Save</>
           )}
         </Button>
       </div>

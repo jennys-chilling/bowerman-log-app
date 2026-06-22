@@ -118,7 +118,10 @@ export default function WeeklyMileageGoal({ trainingWeek, isCoach, onSave, dayPl
     <Collapsible
       open={isOpen}
       onOpenChange={setIsOpen}
-      className="flex h-full flex-col rounded-xl border border-slate-300 bg-white p-3 shadow-md dark:border-slate-700 dark:bg-slate-950 sm:min-h-[168px] sm:p-4"
+      className={cn(
+        "flex w-full flex-col rounded-xl border border-slate-300 bg-white p-3 shadow-md dark:border-slate-700 dark:bg-slate-950 sm:p-4",
+        isOpen ? "h-full self-stretch sm:min-h-[168px]" : "self-start"
+      )}
     >
       <CollapsibleTrigger asChild>
         <button

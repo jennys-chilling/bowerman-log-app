@@ -827,20 +827,20 @@ export default function WeekTemplates() {
 
   return (
     <div className="btc-app-shell min-h-screen text-slate-900 dark:text-slate-100">
-      <div className="relative mx-auto w-full max-w-7xl px-4 py-6">
-        <div className="btc-rail-card mb-6 overflow-hidden rounded-2xl border border-slate-300 bg-white p-4 shadow-md backdrop-blur dark:border-slate-700 dark:bg-slate-950">
-          <div className="flex flex-col gap-4 pl-2 md:flex-row md:items-center md:justify-between">
-            <BrandMark title="Bowerman" subtitle="Templates" />
+      <div className="relative mx-auto w-full max-w-[1800px] px-4 py-6 2xl:px-8">
+        <div className="btc-rail-card mb-6 overflow-hidden rounded-2xl border border-slate-300 bg-white p-2.5 shadow-md backdrop-blur dark:border-slate-700 dark:bg-slate-950 sm:p-3">
+          <div className="flex flex-col gap-3 pl-2 lg:flex-row lg:items-center lg:justify-between">
+            <BrandMark title="Bowerman Training Log" subtitle="Templates" compact />
 
-            <div className="flex flex-wrap items-center gap-3 md:justify-end">
+            <div className="flex flex-wrap items-center gap-2 lg:flex-nowrap lg:justify-end">
               <Link to={createPageUrl('TrainingLog')}>
-                <Button variant="outline" className="h-11 rounded-full px-5 text-sm font-semibold">
+                <Button variant="outline" className="h-9 rounded-full px-4 text-sm font-semibold">
                   <ArrowLeft className="mr-2 h-4 w-4" />
                   Log
                 </Button>
               </Link>
               <Link to={createPageUrl('Account')}>
-                <Button variant="outline" className="h-11 rounded-full px-5 text-sm font-semibold">
+                <Button variant="outline" className="h-9 rounded-full px-4 text-sm font-semibold">
                   <UserCircle className="mr-2 h-4 w-4" />
                   Account
                 </Button>
@@ -849,7 +849,7 @@ export default function WeekTemplates() {
           </div>
         </div>
 
-        <div className="grid min-w-0 gap-5 lg:grid-cols-[300px_minmax(0,1fr)]">
+        <div className="grid min-w-0 gap-5 lg:grid-cols-[300px_minmax(0,1fr)] 2xl:grid-cols-[340px_minmax(0,1fr)]">
           <aside className="min-w-0 space-y-4">
             <div className="rounded-xl border border-slate-300 bg-white p-4 shadow-md dark:border-slate-700 dark:bg-slate-950">
               <div className="mb-3 flex items-center justify-between gap-3">

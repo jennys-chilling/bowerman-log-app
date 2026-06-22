@@ -480,36 +480,36 @@ export default function TrainingLog() {
   
   return (
     <div className="btc-app-shell text-slate-900 dark:text-slate-100">
-      <div className="relative mx-auto max-w-7xl px-3 py-4 sm:px-4 sm:py-6">
+      <div className="relative mx-auto w-full max-w-[1800px] px-3 py-4 sm:px-4 sm:py-6 2xl:px-8">
         {/* Header */}
-        <div className="btc-rail-card mb-4 overflow-hidden rounded-2xl border border-slate-300 bg-white p-3 shadow-md backdrop-blur dark:border-slate-700 dark:bg-slate-950 sm:mb-6 sm:p-4">
-          <div className="flex flex-col gap-3 pl-2 md:flex-row md:items-center md:justify-between">
-            <BrandMark title="Bowerman" subtitle={isCoach ? 'Coach' : 'Athlete - Training Log'} />
+        <div className="btc-rail-card mb-4 overflow-hidden rounded-2xl border border-slate-300 bg-white p-2.5 shadow-md backdrop-blur dark:border-slate-700 dark:bg-slate-950 sm:mb-6 sm:p-3">
+          <div className="flex flex-col gap-3 pl-2 lg:flex-row lg:items-center lg:justify-between">
+            <BrandMark title="Bowerman Training Log" subtitle={isCoach ? 'Coach' : 'Athlete'} compact />
           
-            <div className="grid grid-cols-2 items-center gap-2 sm:flex sm:flex-wrap sm:gap-3 md:justify-end">
+            <div className="grid grid-cols-2 items-center gap-2 sm:flex sm:flex-nowrap sm:gap-2 lg:justify-end">
               {!isCoach && (
-                <Link to={createPageUrl('ShoeInventory')} className="w-full">
-                  <Button className="h-10 w-full rounded-full bg-red-700 px-3 text-sm font-semibold text-white shadow-sm hover:bg-red-800 dark:bg-red-600 dark:hover:bg-red-500 sm:h-11 sm:px-5">
+                <Link to={createPageUrl('ShoeInventory')} className="w-full sm:w-auto">
+                  <Button className="h-9 w-full rounded-full bg-red-700 px-3 text-sm font-semibold text-white shadow-sm hover:bg-red-800 dark:bg-red-600 dark:hover:bg-red-500 sm:w-auto sm:px-4">
                     <Footprints className="mr-2 h-4 w-4" />
                     Shoes
                   </Button>
                 </Link>
               )}
               {isCoach && (
-                <Link to={createPageUrl('WeekTemplates')} className="w-full">
-                  <Button className="h-10 w-full rounded-full bg-red-700 px-3 text-sm font-semibold text-white shadow-sm hover:bg-red-800 dark:bg-red-600 dark:hover:bg-red-500 sm:h-11 sm:px-5">
+                <Link to={createPageUrl('WeekTemplates')} className="w-full sm:w-auto">
+                  <Button className="h-9 w-full rounded-full bg-red-700 px-3 text-sm font-semibold text-white shadow-sm hover:bg-red-800 dark:bg-red-600 dark:hover:bg-red-500 sm:w-auto sm:px-4">
                     <Layers className="mr-2 h-4 w-4" />
                     Templates
                   </Button>
                 </Link>
               )}
-              <Link to={createPageUrl('Account')} className="w-full">
-                <Button variant="outline" className="h-10 w-full rounded-full px-3 text-sm font-semibold sm:h-11 sm:px-5">
+              <Link to={createPageUrl('Account')} className="w-full sm:w-auto">
+                <Button variant="outline" className="h-9 w-full rounded-full px-3 text-sm font-semibold sm:w-auto sm:px-4">
                   <UserCircle className="mr-2 h-4 w-4" />
                   Account
                 </Button>
               </Link>
-              <Button variant="ghost" size="sm" className="col-span-2 justify-center sm:col-span-1" onClick={() => logout()}>
+              <Button variant="ghost" size="sm" className="col-span-2 h-9 justify-center sm:col-span-1" onClick={() => logout()}>
                 <LogOut className="mr-1.5 h-4 w-4" />
                 Sign Out
               </Button>

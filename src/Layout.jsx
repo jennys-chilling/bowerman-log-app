@@ -1,6 +1,5 @@
 import React from 'react';
 import { Analytics } from '@vercel/analytics/react';
-import AppFooter from '@/components/AppFooter';
 
 export default function Layout({ children }) {
   return (
@@ -8,7 +7,6 @@ export default function Layout({ children }) {
       <main className="relative z-10 flex-1">
         {children}
       </main>
-      <AppFooter />
       <Analytics />
     </div>
   );
