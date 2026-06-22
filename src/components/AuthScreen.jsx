@@ -138,11 +138,11 @@ export default function AuthScreen() {
           <CardHeader className="space-y-3">
             <BrandMark title="Bowerman" subtitle="Training Log" />
             <div>
-              <CardTitle className="text-xl text-slate-900 dark:text-slate-100">
-                Sign in to Bowerman Training Log
+              <CardTitle className="text-xl font-medium text-slate-900 dark:text-slate-100">
+                Sign in to the <strong className="font-extrabold">NEW</strong> Bowerman Training Log
               </CardTitle>
               <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
-                Use email and password, a magic link, or Google once the provider is enabled in Supabase.
+                Continue with Google, email and password, or use a magic link.
               </p>
             </div>
           </CardHeader>
