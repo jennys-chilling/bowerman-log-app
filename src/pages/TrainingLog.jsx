@@ -447,6 +447,7 @@ export default function TrainingLog() {
 
   const handleSaveAthleteLog = (data) => persistAthleteLog(data, { closeEditor: true, updateShoes: true });
   const handleAutoSaveAthleteLog = (data) => persistAthleteLog(data);
+  const handleDeleteAthleteLogEntry = (data) => persistAthleteLog(data, { updateShoes: true });
   
   const handleSaveSplits = async (splits) => {
     if (editorState.selectedDayPlan?.id) {
@@ -763,6 +764,7 @@ export default function TrainingLog() {
         date={editorState.selectedDay}
         onSave={handleSaveAthleteLog}
         onAutoSave={handleAutoSaveAthleteLog}
+        onDeleteEntry={handleDeleteAthleteLogEntry}
         shoes={shoes}
       />
       

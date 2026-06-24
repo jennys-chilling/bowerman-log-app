@@ -16,6 +16,7 @@ import {
   WORKOUT_TYPES,
   emptyAthleteActivity,
   getAthleteActivities,
+  hasAthleteActivityData,
   makeAthleteSession,
 } from "./sessionUtils";
 
@@ -37,13 +38,18 @@ const sanitizeLift = (lift = {}) => {
     : {};
 };
 
+const hasLiftData = (lift = {}) => (
+  Number(lift.duration_minutes) > 0 ||
+  Boolean(lift.lift_type?.trim())
+);
+
 const buildPayload = (formData) => ({
   am_session: makeAthleteSession(formData.am_session),
   pm_session: makeAthleteSession(formData.pm_session),
   lift: sanitizeLift(formData.lift),
 });
 
-function ActivityForm({ activity, index, canRemove, onChange, onRemove, toggleShoe, activeShoes }) {
+function ActivityForm({ activity, index, canDelete, onChange, onDelete, toggleShoe, activeShoes }) {
   const rpeColors = getRpeColorClasses(activity.rpe);
   const rpeValue = activity.rpe ?? 5;
 
@@ -51,8 +57,16 @@ function ActivityForm({ activity, index, canRemove, onChange, onRemove, toggleSh
     <div className="space-y-4 rounded-lg border border-slate-200 p-3 dark:border-slate-800">
       <div className="flex items-center justify-between gap-3">
         <div className="text-sm font-semibold text-slate-700 dark:text-slate-200">Activity {index + 1}</div>
-        {canRemove && (
-          <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={onRemove}>
+        {canDelete && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 text-slate-500 hover:text-red-700 dark:text-slate-400 dark:hover:text-red-300"
+            onClick={onDelete}
+            aria-label={`Delete activity ${index + 1}`}
+            title="Delete activity"
+          >
             <Trash2 className="h-4 w-4" />
           </Button>
         )}
@@ -148,7 +162,7 @@ function ActivityForm({ activity, index, canRemove, onChange, onRemove, toggleSh
   );
 }
 
-function ActivitiesForm({ activities, onChange, activeShoes }) {
+function ActivitiesForm({ activities, onChange, onDeleteActivity, activeShoes }) {
   const updateActivity = (index, field, value) => {
     onChange(activities.map((activity, activityIndex) => (
       activityIndex === index ? { ...activity, [field]: value } : activity
@@ -164,7 +178,13 @@ function ActivitiesForm({ activities, onChange, activeShoes }) {
   };
 
   const addActivity = () => onChange([...activities, createAthleteActivity()]);
-  const removeActivity = (index) => onChange(activities.filter((_, activityIndex) => activityIndex !== index));
+  const deleteActivity = (index) => {
+    const nextActivities = activities.length > 1
+      ? activities.filter((_, activityIndex) => activityIndex !== index)
+      : [createAthleteActivity()];
+
+    onDeleteActivity(nextActivities, activities[index]);
+  };
 
   return (
     <div className="space-y-3">
@@ -173,9 +193,9 @@ function ActivitiesForm({ activities, onChange, activeShoes }) {
           key={index}
           activity={activity}
           index={index}
-          canRemove={activities.length > 1}
+          canDelete={activities.length > 1 || hasAthleteActivityData(activity)}
           onChange={(field, value) => updateActivity(index, field, value)}
-          onRemove={() => removeActivity(index)}
+          onDelete={() => deleteActivity(index)}
           toggleShoe={(shoeId) => toggleShoe(index, shoeId)}
           activeShoes={activeShoes}
         />
@@ -189,7 +209,7 @@ function ActivitiesForm({ activities, onChange, activeShoes }) {
   );
 }
 
-export default function AthleteLogEditor({ open, onClose, dayPlan, date, onSave, onAutoSave, shoes = [] }) {
+export default function AthleteLogEditor({ open, onClose, dayPlan, date, onSave, onAutoSave, onDeleteEntry, shoes = [] }) {
   const [formData, setFormData] = useState({
     am_session: [createAthleteActivity()],
     pm_session: [createAthleteActivity()],
@@ -228,9 +248,46 @@ export default function AthleteLogEditor({ open, onClose, dayPlan, date, onSave,
     setFormData((current) => ({ ...current, [sessionKey]: activities }));
   };
 
+  const commitDeletedEntry = async (nextFormData) => {
+    window.clearTimeout(autoSaveTimer.current);
+    setFormData(nextFormData);
+    setHasUserEdited(false);
+
+    if (onDeleteEntry) {
+      await onDeleteEntry(buildPayload(nextFormData));
+    } else if (onAutoSave) {
+      await onAutoSave(buildPayload(nextFormData));
+    }
+  };
+
+  const deleteActivity = (sessionKey, nextActivities, removedActivity) => {
+    const shouldConfirm = hasAthleteActivityData(removedActivity);
+
+    if (shouldConfirm && !window.confirm('Delete this log activity?')) {
+      return;
+    }
+
+    const nextFormData = { ...formData, [sessionKey]: nextActivities };
+
+    if (!shouldConfirm) {
+      updateActivities(sessionKey, nextActivities);
+      return;
+    }
+
+    void commitDeletedEntry(nextFormData);
+  };
+
   const updateLift = (updates) => {
     setHasUserEdited(true);
     setFormData((current) => ({ ...current, lift: { ...current.lift, ...updates } }));
+  };
+
+  const deleteLift = () => {
+    if (hasLiftData(formData.lift) && !window.confirm('Delete this lift log?')) {
+      return;
+    }
+
+    void commitDeletedEntry({ ...formData, lift: { ...emptyLift } });
   };
 
   const activeShoes = shoes.filter((shoe) => shoe.status === 'Active');
@@ -261,6 +318,7 @@ export default function AthleteLogEditor({ open, onClose, dayPlan, date, onSave,
             <ActivitiesForm
               activities={formData.am_session}
               onChange={(activities) => updateActivities('am_session', activities)}
+              onDeleteActivity={(activities, removedActivity) => deleteActivity('am_session', activities, removedActivity)}
               activeShoes={activeShoes}
             />
           </TabsContent>
@@ -269,15 +327,30 @@ export default function AthleteLogEditor({ open, onClose, dayPlan, date, onSave,
             <ActivitiesForm
               activities={formData.pm_session}
               onChange={(activities) => updateActivities('pm_session', activities)}
+              onDeleteActivity={(activities, removedActivity) => deleteActivity('pm_session', activities, removedActivity)}
               activeShoes={activeShoes}
             />
           </TabsContent>
 
           <TabsContent value="lift" className="mt-4">
             <div className="space-y-4">
-              <div className="flex items-center gap-2 font-medium text-slate-700 dark:text-slate-200">
-                <Dumbbell className="h-4 w-4" />
-                Lift Session
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2 font-medium text-slate-700 dark:text-slate-200">
+                  <Dumbbell className="h-4 w-4" />
+                  Lift Session
+                </div>
+                {hasLiftData(formData.lift) && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 px-2 text-slate-500 hover:text-red-700 dark:text-slate-400 dark:hover:text-red-300"
+                    onClick={deleteLift}
+                  >
+                    <Trash2 className="mr-1.5 h-4 w-4" />
+                    Delete
+                  </Button>
+                )}
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-1">
