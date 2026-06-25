@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { appClient } from '@/api/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { startOfWeek, addDays, format, startOfMonth, parseISO } from 'date-fns';
+import { startOfWeek, addDays, format, parseISO } from 'date-fns';
 import WeekNavigation from '@/components/training/WeeklyNavigation';
 import { useAuth } from '@/lib/AuthContext';
 import DayColumn from '@/components/training/DayColumn';
@@ -26,7 +26,7 @@ import {
 } from '@/components/ui/command';
 import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Loader2, Users, CalendarDays, Calendar, LogOut, Footprints, UserCircle, Mail, Phone, Copy, Layers, Check, ChevronsUpDown } from 'lucide-react';
+import { Loader2, Users, CalendarDays, Calendar, LogOut, Footprints, UserCircle, Mail, Phone, Copy, Layers, Check, ChevronsUpDown, Activity } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { toast } from '@/components/ui/use-toast';
@@ -67,6 +67,17 @@ const getShoeMileageById = (session = {}) => {
     const mileage = Number(activity.mileage) || 0;
     if (activity.session_type === 'Off' || mileage === 0) return;
 
+    const splits = Object.entries(activity.shoe_mileage || {})
+      .map(([shoeId, shoeMileage]) => [shoeId, Number(shoeMileage) || 0])
+      .filter(([, shoeMileage]) => shoeMileage > 0);
+
+    if (splits.length > 0) {
+      splits.forEach(([shoeId, shoeMileage]) => {
+        mileageByShoe.set(shoeId, (mileageByShoe.get(shoeId) || 0) + shoeMileage);
+      });
+      return;
+    }
+
     (activity.shoes || []).forEach((shoeId) => {
       mileageByShoe.set(shoeId, (mileageByShoe.get(shoeId) || 0) + mileage);
     });
@@ -94,7 +105,8 @@ export default function TrainingLog() {
     startOfWeek(new Date(), { weekStartsOn: 1 })
   );
   const [viewMode, setViewMode] = useState('week'); // 'week' | 'month'
-  const [currentMonth, setCurrentMonth] = useState(startOfMonth(new Date()));
+  const [rangeStart, setRangeStart] = useState(startOfWeek(new Date(), { weekStartsOn: 1 }));
+  const [rangeWeeks, setRangeWeeks] = useState(5);
   const [user, setUser] = useState(null);
   const [viewingAthleteId, setViewingAthleteId] = useState(null);
   const [athleteSelectorOpen, setAthleteSelectorOpen] = useState(false);
@@ -158,14 +170,14 @@ export default function TrainingLog() {
   });
   const hasSourceCoachPlan = dayPlans.some(hasCoachDayContent);
   
-  // Fetch all day plans for the month
+  const rangeEnd = React.useMemo(() => addDays(rangeStart, (rangeWeeks * 7) - 1), [rangeStart, rangeWeeks]);
+
+  // Fetch all day plans for the selected week range
   const { data: monthDayPlans = [], isLoading: loadingMonthPlans } = useQuery({
-    queryKey: ['monthDayPlans', effectiveAthleteId, format(currentMonth, 'yyyy-MM')],
+    queryKey: ['monthDayPlans', effectiveAthleteId, format(rangeStart, 'yyyy-MM-dd'), rangeWeeks],
     queryFn: async () => {
-      const year = currentMonth.getFullYear();
-      const month = currentMonth.getMonth();
-      const startStr = format(new Date(year, month - 1, 22), 'yyyy-MM-dd');
-      const endStr = format(new Date(year, month + 1, 10), 'yyyy-MM-dd');
+      const startStr = format(rangeStart, 'yyyy-MM-dd');
+      const endStr = format(rangeEnd, 'yyyy-MM-dd');
       const allWeeks = await appClient.entities.TrainingWeek.filter({ athlete_id: effectiveAthleteId });
       const relevantWeeks = allWeeks.filter(w => w.week_start_date >= startStr && w.week_start_date <= endStr);
       const plansArrays = await Promise.all(
@@ -504,6 +516,12 @@ export default function TrainingLog() {
                   </Button>
                 </Link>
               )}
+              <Link to={createPageUrl('Workouts')} className="w-full sm:w-auto">
+                <Button className="h-9 w-full rounded-full bg-red-700 px-3 text-sm font-semibold text-white shadow-sm hover:bg-red-800 dark:bg-red-600 dark:hover:bg-red-500 sm:w-auto sm:px-4">
+                  <Activity className="mr-2 h-4 w-4" />
+                  Workouts
+                </Button>
+              </Link>
               <Link to={createPageUrl('Account')} className="w-full sm:w-auto">
                 <Button variant="outline" className="h-9 w-full rounded-full px-3 text-sm font-semibold sm:w-auto sm:px-4">
                   <UserCircle className="mr-2 h-4 w-4" />
@@ -678,8 +696,10 @@ export default function TrainingLog() {
             </div>
           ) : (
             <MonthView
-              currentMonth={currentMonth}
-              onMonthChange={setCurrentMonth}
+              rangeStart={rangeStart}
+              rangeWeeks={rangeWeeks}
+              onRangeStartChange={setRangeStart}
+              onRangeWeeksChange={setRangeWeeks}
               allDayPlans={monthDayPlanMap}
               onWeekClick={(weekStart) => {
                 setCurrentWeekStart(weekStart);

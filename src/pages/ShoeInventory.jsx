@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Pencil, Archive, ArrowLeft, Loader2, LogOut, UserCircle } from 'lucide-react';
+import { Plus, Pencil, Archive, ArrowLeft, Loader2, LogOut, UserCircle, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 
@@ -19,7 +19,15 @@ const SHOE_TYPES = ['Trainer', 'Workout', 'Spike', 'Trail', 'Racing Flat'];
 const SHOE_COLORS = [
   { name: 'Sport Red', value: 'bg-red-700' },
   { name: 'Crimson', value: 'bg-rose-600' },
+  { name: 'Pink', value: 'bg-pink-500' },
+  { name: 'Purple', value: 'bg-purple-600' },
+  { name: 'Indigo', value: 'bg-indigo-600' },
+  { name: 'Blue', value: 'bg-blue-600' },
+  { name: 'Sky', value: 'bg-sky-500' },
+  { name: 'Teal', value: 'bg-teal-500' },
+  { name: 'Green', value: 'bg-green-600' },
   { name: 'Signal Orange', value: 'bg-orange-500' },
+  { name: 'Gold', value: 'bg-yellow-500' },
   { name: 'Black', value: 'bg-slate-900' },
   { name: 'White', value: 'bg-white border border-slate-300' },
   { name: 'Volt', value: 'bg-lime-400' },
@@ -27,7 +35,7 @@ const SHOE_COLORS = [
   { name: 'Forest', value: 'bg-emerald-700' },
 ];
 
-const MAX_MILEAGE = 500; // Standard shoe lifespan
+const DEFAULT_MAX_MILEAGE = 500;
 
 export default function ShoeInventory() {
   const queryClient = useQueryClient();
@@ -41,6 +49,7 @@ export default function ShoeInventory() {
     type: 'Trainer',
     color: 'bg-red-700',
     current_mileage: '',
+    max_mileage: String(DEFAULT_MAX_MILEAGE),
     status: 'Active',
   });
   
@@ -71,6 +80,11 @@ export default function ShoeInventory() {
       resetForm();
     },
   });
+
+  const deleteShoeMutation = useMutation({
+    mutationFn: (id) => appClient.entities.Shoe.delete(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['shoes'] }),
+  });
   
   const resetForm = () => {
     setEditingShoe(null);
@@ -80,6 +94,7 @@ export default function ShoeInventory() {
       type: 'Trainer',
       color: 'bg-red-700',
       current_mileage: '',
+      max_mileage: String(DEFAULT_MAX_MILEAGE),
       status: 'Active',
     });
   };
@@ -92,6 +107,7 @@ export default function ShoeInventory() {
       type: shoe.type,
       color: shoe.color || 'bg-red-700',
       current_mileage: shoe.current_mileage ? String(shoe.current_mileage) : '',
+      max_mileage: String(shoe.max_mileage || DEFAULT_MAX_MILEAGE),
       status: shoe.status,
     });
     setShowEditor(true);
@@ -101,6 +117,7 @@ export default function ShoeInventory() {
     const data = {
       ...formData,
       current_mileage: parseFloat(formData.current_mileage) || 0,
+      max_mileage: parseFloat(formData.max_mileage) || DEFAULT_MAX_MILEAGE,
     };
 
     if (editingShoe) {
@@ -116,13 +133,19 @@ export default function ShoeInventory() {
       data: { status: shoe.status === 'Active' ? 'Retired' : 'Active' },
     });
   };
+
+  const handleDelete = (shoe) => {
+    if (!window.confirm(`Permanently delete ${shoe.name}? This cannot be undone.`)) return;
+    deleteShoeMutation.mutate(shoe.id);
+  };
   
   const activeShoes = shoes.filter(s => s.status === 'Active');
   const retiredShoes = shoes.filter(s => s.status === 'Retired');
   
-  const getMileagePercent = (mileage) => Math.min((mileage / MAX_MILEAGE) * 100, 100);
-  const getMileageColor = (mileage) => {
-    const percent = getMileagePercent(mileage);
+  const getMaxMileage = (shoe) => Number(shoe.max_mileage) || DEFAULT_MAX_MILEAGE;
+  const getMileagePercent = (shoe) => Math.min(((shoe.current_mileage || 0) / getMaxMileage(shoe)) * 100, 100);
+  const getMileageColor = (shoe) => {
+    const percent = getMileagePercent(shoe);
     if (percent < 50) return 'bg-emerald-500';
     if (percent < 75) return 'bg-amber-500';
     return 'bg-red-500';
@@ -206,18 +229,21 @@ export default function ShoeInventory() {
                             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleRetire(shoe)}>
                               <Archive className="w-4 h-4" />
                             </Button>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-500 hover:text-red-700 dark:text-slate-400 dark:hover:text-red-300" onClick={() => handleDelete(shoe)}>
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
                           </div>
                         </div>
                         
                         <div className="mt-4">
                           <div className="flex justify-between text-xs text-slate-500 mb-1 dark:text-slate-400">
                             <span>Mileage</span>
-                            <span>{(shoe.current_mileage || 0).toFixed(1)} / {MAX_MILEAGE} mi</span>
+                            <span>{(shoe.current_mileage || 0).toFixed(1)} / {getMaxMileage(shoe).toFixed(0)} mi</span>
                           </div>
                           <div className="h-2 bg-slate-200 rounded-full overflow-hidden dark:bg-slate-800">
                             <div 
-                              className={`h-full ${getMileageColor(shoe.current_mileage || 0)} transition-all`}
-                              style={{ width: `${getMileagePercent(shoe.current_mileage || 0)}%` }}
+                              className={`h-full ${getMileageColor(shoe)} transition-all`}
+                              style={{ width: `${getMileagePercent(shoe)}%` }}
                             />
                           </div>
                         </div>
@@ -256,9 +282,14 @@ export default function ShoeInventory() {
                           <TableCell>{shoe.type}</TableCell>
                           <TableCell>{(shoe.current_mileage || 0).toFixed(1)} mi</TableCell>
                           <TableCell>
-                            <Button variant="ghost" size="sm" onClick={() => handleRetire(shoe)}>
-                              Reactivate
-                            </Button>
+                            <div className="flex justify-end gap-1">
+                              <Button variant="ghost" size="sm" onClick={() => handleRetire(shoe)}>
+                                Reactivate
+                              </Button>
+                              <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-500 hover:text-red-700 dark:text-slate-400 dark:hover:text-red-300" onClick={() => handleDelete(shoe)}>
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))}
@@ -324,6 +355,18 @@ export default function ShoeInventory() {
                   placeholder="0"
                 />
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Max Mileage</Label>
+              <Input
+                type="number"
+                min="1"
+                step="1"
+                value={formData.max_mileage}
+                onChange={(e) => setFormData({ ...formData, max_mileage: e.target.value })}
+                placeholder="500"
+              />
             </div>
             
             <div className="space-y-2">

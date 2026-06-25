@@ -376,6 +376,16 @@ export const appClient = {
 
       return data;
     },
+    async updatePassword(password) {
+      const supabase = assertSupabaseConfigured();
+      const { data, error } = await supabase.auth.updateUser({ password });
+
+      if (error) {
+        throw normalizeSupabaseError(error, 'Failed to update password');
+      }
+
+      return data;
+    },
     async logout() {
       const supabase = assertSupabaseConfigured();
       const { error } = await supabase.auth.signOut();

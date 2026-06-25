@@ -1,47 +1,29 @@
 import React from 'react';
-import { addDays, format, isSameMonth, isToday, startOfWeek } from 'date-fns';
+import { addDays, format, isToday, parseISO, startOfWeek } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { getRpeColorClasses } from './rpeColors';
 import {
   getAthleteActivities,
+  getCoachActivities,
   getSessionMileage,
   hasAthleteActivityData,
   hasAthleteSessionData,
+  hasCoachSessionData,
   neutralWorkoutBadgeClass,
 } from './sessionUtils';
 
-const MONTHS = [
-  'January','February','March','April','May','June',
-  'July','August','September','October','November','December'
-];
-
-const YEARS = Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - 2 + i);
-const MONTH_GRID_TEMPLATE = 'repeat(7, minmax(7.25rem, 1fr)) minmax(5.75rem, 6.5rem)';
-const MONTH_GRID_MIN_WIDTH = '58rem';
+const MONTH_GRID_TEMPLATE = 'repeat(7, minmax(10rem, 1fr)) minmax(5.75rem, 6.5rem)';
+const MONTH_GRID_MIN_WIDTH = '76rem';
 
 const COMPACT_SESSION_TYPES = {
   'Easy Run': 'Easy',
   'Long Run': 'Long',
   'X-Train': 'XT',
 };
-
-function getWeeksInMonth(monthDate) {
-  const year = monthDate.getFullYear();
-  const month = monthDate.getMonth();
-  const firstDay = new Date(year, month, 1);
-  const lastDay = new Date(year, month + 1, 0);
-  const firstWeekStart = startOfWeek(firstDay, { weekStartsOn: 1 });
-  const weeks = [];
-  let current = firstWeekStart;
-  while (current <= lastDay) {
-    weeks.push(current);
-    current = addDays(current, 7);
-  }
-  return weeks;
-}
 
 const hasLift = (lift = {}) => (
   Number(lift.duration_minutes) > 0 ||
@@ -125,13 +107,13 @@ function AthleteActivitySummary({ label, activity, index, total }) {
   }
 
   return (
-    <div className="rounded-lg border border-slate-200 bg-white px-2 py-1.5 shadow-sm dark:border-slate-700 dark:bg-slate-950">
+    <div className={cn("rounded-lg border px-2 py-1.5 shadow-sm", rpeColors.surface)}>
       <div className="flex min-w-0 items-center justify-between gap-1.5">
-        <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
+        <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide opacity-75">
           {label}{total > 1 ? index + 1 : ''}
         </span>
         <span className={cn(
-          'min-w-0 truncate rounded border px-1.5 py-0.5 text-[10px] font-semibold leading-none',
+          'min-w-0 rounded border px-1.5 py-0.5 text-[10px] font-semibold leading-none',
           neutralWorkoutBadgeClass
         )}
           title={sessionType}
@@ -140,7 +122,7 @@ function AthleteActivitySummary({ label, activity, index, total }) {
         </span>
       </div>
 
-      <div className="mt-1 flex flex-wrap items-center gap-1 text-[11px] font-medium leading-tight text-slate-700 dark:text-slate-300">
+      <div className="mt-1 flex flex-wrap items-center gap-1 text-[11px] font-medium leading-tight">
         {metricItems.length > 0 && <span>{metricItems.join(' · ')}</span>}
         {activity.rpe !== null && activity.rpe !== undefined && (
           <span className={cn("rounded border px-1.5 py-0.5 text-[9px] font-bold leading-none", rpeColors.badge)}>
@@ -150,7 +132,7 @@ function AthleteActivitySummary({ label, activity, index, total }) {
       </div>
 
       {activity.comments?.trim() && (
-        <div className="mt-1 hidden truncate text-[9px] italic text-slate-400 dark:text-slate-500 sm:block">
+        <div className="mt-1 hidden whitespace-pre-wrap text-[9px] italic opacity-80 sm:block">
           {activity.comments.trim()}
         </div>
       )}
@@ -172,7 +154,48 @@ function AthleteSessionSummary({ label, session }) {
   ));
 }
 
-function WeekRow({ weekStart, allDayPlans, currentMonth, onWeekClick }) {
+function CoachActivitySummary({ label, activity, index, total }) {
+  const rpeColors = getRpeColorClasses(activity.planned_difficulty);
+  const workoutType = activity.workout_type || 'Plan';
+
+  return (
+    <div className={cn("rounded-lg border px-2 py-1.5 shadow-sm", rpeColors.surface)}>
+      <div className="flex min-w-0 items-center justify-between gap-1.5">
+        <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide opacity-75">
+          {label}{total > 1 ? index + 1 : ''}
+        </span>
+        <span className={cn('min-w-0 rounded border px-1.5 py-0.5 text-[10px] font-semibold leading-none', neutralWorkoutBadgeClass)}>
+          {compactSessionType(workoutType)}
+        </span>
+      </div>
+      {activity.planned_difficulty !== null && activity.planned_difficulty !== undefined && (
+        <div className="mt-1 text-[10px] font-bold leading-none">RPE {activity.planned_difficulty}</div>
+      )}
+      {activity.prescription?.trim() && (
+        <div className="mt-1 whitespace-pre-wrap text-[10px] leading-snug">{activity.prescription.trim()}</div>
+      )}
+      {activity.coach_notes?.trim() && (
+        <div className="mt-1 border-t border-current/15 pt-1 whitespace-pre-wrap text-[9px] italic opacity-80">{activity.coach_notes.trim()}</div>
+      )}
+    </div>
+  );
+}
+
+function CoachSessionSummary({ label, session }) {
+  const activities = getCoachActivities(session);
+
+  return activities.map((activity, index) => (
+    <CoachActivitySummary
+      key={`${label}-${index}`}
+      label={label}
+      activity={activity}
+      index={index}
+      total={activities.length}
+    />
+  ));
+}
+
+function WeekRow({ weekStart, allDayPlans, onWeekClick }) {
   const days = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
   const weekStats = getWeekStats(days, allDayPlans);
   const avgRpeColors = getRpeColorClasses(weekStats.avgRpe ? Math.round(weekStats.avgRpe) : null);
@@ -185,8 +208,11 @@ function WeekRow({ weekStart, allDayPlans, currentMonth, onWeekClick }) {
       {days.map((day) => {
         const dateStr = format(day, 'yyyy-MM-dd');
         const plan = allDayPlans[dateStr];
-        const inMonth = isSameMonth(day, currentMonth);
         const today = isToday(day);
+        const coachSessions = [
+          ['AM', plan?.am_coach],
+          ['PM', plan?.pm_coach],
+        ].filter(([, session]) => hasCoachSessionData(session));
         const athleteSessions = [
           ['AM', plan?.am_session],
           ['PM', plan?.pm_session],
@@ -197,8 +223,7 @@ function WeekRow({ weekStart, allDayPlans, currentMonth, onWeekClick }) {
           <div
             key={dateStr}
             className={cn(
-              'min-h-[132px] border-r border-slate-200 bg-white p-2 dark:border-slate-800 dark:bg-slate-950 sm:min-h-[148px] sm:p-2.5',
-              !inMonth && 'bg-slate-50/70 text-slate-400 dark:bg-slate-900/60 dark:text-slate-500',
+              'min-h-[220px] border-r border-slate-200 bg-white p-2 dark:border-slate-800 dark:bg-slate-950 sm:min-h-[260px] sm:p-2.5',
               today && 'bg-amber-50 dark:bg-amber-950/30',
             )}
           >
@@ -216,10 +241,24 @@ function WeekRow({ weekStart, allDayPlans, currentMonth, onWeekClick }) {
               )}
             </div>
 
-            <div className="space-y-1.5">
-              {athleteSessions.map(([label, session]) => (
-                <AthleteSessionSummary key={label} label={label} session={session} />
-              ))}
+            <div className="space-y-2">
+              {coachSessions.length > 0 && (
+                <div className="space-y-1.5 rounded-lg bg-slate-100/80 p-1.5 dark:bg-slate-800/80">
+                  <div className="text-[9px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-200">Coach</div>
+                  {coachSessions.map(([label, session]) => (
+                    <CoachSessionSummary key={label} label={label} session={session} />
+                  ))}
+                </div>
+              )}
+
+              {athleteSessions.length > 0 && (
+                <div className="space-y-1.5 rounded-lg bg-white p-1.5 ring-1 ring-slate-200 dark:bg-slate-950 dark:ring-slate-700">
+                  <div className="text-[9px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-200">Athlete</div>
+                  {athleteSessions.map(([label, session]) => (
+                    <AthleteSessionSummary key={label} label={label} session={session} />
+                  ))}
+                </div>
+              )}
 
               {hasLift(lift) && (
                 <div className="rounded-lg border border-slate-200 bg-slate-50 px-2 py-1.5 text-[11px] leading-tight text-slate-600 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300">
@@ -241,7 +280,7 @@ function WeekRow({ weekStart, allDayPlans, currentMonth, onWeekClick }) {
       })}
 
       <div
-        className="sticky right-0 z-10 flex min-h-[132px] cursor-pointer flex-col items-center justify-center gap-1 border-l border-slate-300 bg-slate-100 p-2 text-center transition-colors hover:bg-slate-200 dark:border-slate-700 dark:bg-slate-900 dark:hover:bg-slate-800 sm:min-h-[148px]"
+        className="sticky right-0 z-10 flex min-h-[220px] cursor-pointer flex-col items-center justify-center gap-1 border-l border-slate-300 bg-slate-100 p-2 text-center transition-colors hover:bg-slate-200 dark:border-slate-700 dark:bg-slate-900 dark:hover:bg-slate-800 sm:min-h-[260px]"
         onClick={() => onWeekClick(weekStart)}
         title="Open this week"
       >
@@ -277,61 +316,51 @@ function WeekRow({ weekStart, allDayPlans, currentMonth, onWeekClick }) {
   );
 }
 
-export default function MonthView({ currentMonth, onMonthChange, allDayPlans, onWeekClick }) {
-  const weeks = getWeeksInMonth(currentMonth);
+export default function MonthView({ rangeStart, rangeWeeks, onRangeStartChange, onRangeWeeksChange, allDayPlans, onWeekClick }) {
+  const weeks = Array.from({ length: rangeWeeks }, (_, i) => addDays(rangeStart, i * 7));
   const dayHeaders = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const rangeEnd = addDays(rangeStart, (rangeWeeks * 7) - 1);
 
   const goToPrev = () => {
-    const d = new Date(currentMonth);
-    d.setMonth(d.getMonth() - 1);
-    onMonthChange(d);
+    onRangeStartChange(addDays(rangeStart, rangeWeeks * -7));
   };
 
   const goToNext = () => {
-    const d = new Date(currentMonth);
-    d.setMonth(d.getMonth() + 1);
-    onMonthChange(d);
+    onRangeStartChange(addDays(rangeStart, rangeWeeks * 7));
   };
 
   return (
     <div className="overflow-hidden rounded-xl border border-slate-300 bg-white shadow-md dark:border-slate-700 dark:bg-slate-950">
       <div className="flex flex-col gap-3 border-b border-slate-200 bg-slate-50 px-3 py-3 dark:border-slate-800 dark:bg-slate-900 sm:flex-row sm:items-center sm:justify-between sm:px-4">
-        <div className="order-1 grid grid-cols-2 gap-2 sm:order-2 sm:flex sm:items-center">
-          <Select
-            value={String(currentMonth.getMonth())}
-            onValueChange={(value) => {
-              const d = new Date(currentMonth);
-              d.setMonth(parseInt(value, 10));
-              onMonthChange(d);
-            }}
-          >
-            <SelectTrigger className="h-8 w-full text-sm font-semibold sm:w-32">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {MONTHS.map((month, index) => (
-                <SelectItem key={month} value={String(index)}>{month}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <Select
-            value={String(currentMonth.getFullYear())}
-            onValueChange={(value) => {
-              const d = new Date(currentMonth);
-              d.setFullYear(parseInt(value, 10));
-              onMonthChange(d);
-            }}
-          >
-            <SelectTrigger className="h-8 w-full text-sm font-semibold sm:w-24">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {YEARS.map((year) => (
-                <SelectItem key={year} value={String(year)}>{year}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <div className="order-1 grid gap-2 sm:order-2 sm:flex sm:items-end">
+          <div className="space-y-1">
+            <Label htmlFor="range-start" className="text-[10px] uppercase tracking-wide text-slate-500 dark:text-slate-300">Start Week</Label>
+            <Input
+              id="range-start"
+              type="date"
+              value={format(rangeStart, 'yyyy-MM-dd')}
+              onChange={(event) => {
+                const parsed = parseISO(event.target.value);
+                onRangeStartChange(startOfWeek(parsed, { weekStartsOn: 1 }));
+              }}
+              className="h-8 text-sm font-semibold sm:w-40"
+            />
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="range-weeks" className="text-[10px] uppercase tracking-wide text-slate-500 dark:text-slate-300">Weeks</Label>
+            <Input
+              id="range-weeks"
+              type="number"
+              min="1"
+              max="16"
+              value={rangeWeeks}
+              onChange={(event) => onRangeWeeksChange(Math.max(1, Math.min(16, parseInt(event.target.value, 10) || 1)))}
+              className="h-8 text-sm font-semibold sm:w-24"
+            />
+          </div>
+          <div className="pb-1 text-xs font-medium text-slate-600 dark:text-slate-200">
+            {format(rangeStart, 'MMM d')} - {format(rangeEnd, 'MMM d, yyyy')}
+          </div>
         </div>
 
         <div className="order-2 grid grid-cols-2 gap-2 sm:contents">
@@ -365,7 +394,6 @@ export default function MonthView({ currentMonth, onMonthChange, allDayPlans, on
             key={format(weekStart, 'yyyy-MM-dd')}
             weekStart={weekStart}
             allDayPlans={allDayPlans}
-            currentMonth={currentMonth}
             onWeekClick={onWeekClick}
           />
         ))}

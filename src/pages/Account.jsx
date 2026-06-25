@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, Camera, Loader2, Save, UserCircle } from 'lucide-react';
+import { ArrowLeft, Camera, KeyRound, Loader2, Save, UserCircle } from 'lucide-react';
 import { appClient } from '@/api/client';
 import { useAuth } from '@/lib/AuthContext';
 import BrandMark from '@/components/BrandMark';
@@ -52,7 +52,12 @@ export default function Account() {
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
   const [error, setError] = useState('');
+  const [passwordData, setPasswordData] = useState({
+    newPassword: '',
+    confirmPassword: '',
+  });
 
   useEffect(() => {
     setFormData({
@@ -151,6 +156,38 @@ export default function Account() {
       setError(saveError.message || 'Could not save account details.');
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handlePasswordSave = async () => {
+    const newPassword = passwordData.newPassword.trim();
+    const confirmPassword = passwordData.confirmPassword.trim();
+
+    if (newPassword.length < 6) {
+      setError('Password must be at least 6 characters.');
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setError('Passwords do not match.');
+      return;
+    }
+
+    setIsUpdatingPassword(true);
+    setError('');
+
+    try {
+      await appClient.auth.updatePassword(newPassword);
+      setPasswordData({ newPassword: '', confirmPassword: '' });
+      toast({
+        title: 'Password updated',
+        description: 'Your new password is ready for the next sign in.',
+        duration: 3000,
+      });
+    } catch (passwordError) {
+      setError(passwordError.message || 'Could not update password.');
+    } finally {
+      setIsUpdatingPassword(false);
     }
   };
 
@@ -269,6 +306,48 @@ export default function Account() {
               <Button onClick={handleSave} disabled={isSaving}>
                 {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                 Save Account
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="mt-6 overflow-hidden border-slate-200 shadow-sm dark:border-slate-800">
+          <CardHeader className="border-b border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-900">
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <KeyRound className="h-5 w-5 text-red-700 dark:text-red-300" />
+              Password
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4 p-6">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="new-password">New Password</Label>
+                <Input
+                  id="new-password"
+                  type="password"
+                  autoComplete="new-password"
+                  value={passwordData.newPassword}
+                  onChange={(event) => setPasswordData((current) => ({ ...current, newPassword: event.target.value }))}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="confirm-password">Confirm Password</Label>
+                <Input
+                  id="confirm-password"
+                  type="password"
+                  autoComplete="new-password"
+                  value={passwordData.confirmPassword}
+                  onChange={(event) => setPasswordData((current) => ({ ...current, confirmPassword: event.target.value }))}
+                />
+              </div>
+            </div>
+            <div className="flex justify-end">
+              <Button
+                onClick={handlePasswordSave}
+                disabled={isUpdatingPassword || !passwordData.newPassword || !passwordData.confirmPassword}
+              >
+                {isUpdatingPassword ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <KeyRound className="mr-2 h-4 w-4" />}
+                Update Password
               </Button>
             </div>
           </CardContent>

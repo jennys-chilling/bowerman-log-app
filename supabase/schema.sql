@@ -87,11 +87,15 @@ create table if not exists public.shoes (
   model text not null,
   type text not null check (type in ('Trainer', 'Workout', 'Spike', 'Trail', 'Racing Flat')),
   current_mileage numeric not null default 0,
+  max_mileage numeric not null default 500,
   status text not null default 'Active' check (status in ('Active', 'Retired')),
   color text,
   created_at timestamptz not null default timezone('utc', now()),
   updated_at timestamptz not null default timezone('utc', now())
 );
+
+alter table public.shoes
+  add column if not exists max_mileage numeric not null default 500;
 
 create table if not exists public.feedback_submissions (
   id uuid primary key default gen_random_uuid(),

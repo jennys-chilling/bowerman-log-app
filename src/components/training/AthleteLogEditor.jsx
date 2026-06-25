@@ -25,6 +25,7 @@ const emptyLift = { duration_minutes: 0, lift_type: '' };
 const createAthleteActivity = () => ({
   ...emptyAthleteActivity,
   shoes: [],
+  shoe_mileage: {},
 });
 
 const sanitizeLift = (lift = {}) => {
@@ -43,15 +44,52 @@ const hasLiftData = (lift = {}) => (
   Boolean(lift.lift_type?.trim())
 );
 
+const normalizeActivityShoeMileage = (activity = {}) => {
+  const mileage = Number(activity.mileage) || 0;
+  const shoes = activity.shoes || [];
+  const existingSplits = Object.fromEntries(
+    Object.entries(activity.shoe_mileage || {})
+      .filter(([shoeId]) => shoes.includes(shoeId))
+      .map(([shoeId, shoeMileage]) => [shoeId, Number(shoeMileage) || 0])
+      .filter(([, shoeMileage]) => shoeMileage > 0)
+  );
+
+  if (shoes.length === 0 || mileage <= 0 || activity.session_type === 'Off') {
+    return { ...activity, shoe_mileage: {} };
+  }
+
+  if (Object.keys(existingSplits).length === 0) {
+    if (shoes.length === 1) {
+      return { ...activity, shoe_mileage: { [shoes[0]]: mileage } };
+    }
+
+    const evenSplit = Math.floor((mileage / shoes.length) * 10) / 10;
+    const shoeMileage = Object.fromEntries(shoes.map((shoeId) => [shoeId, evenSplit]));
+    const remainder = Number((mileage - (evenSplit * shoes.length)).toFixed(1));
+    shoeMileage[shoes[shoes.length - 1]] = Number((shoeMileage[shoes[shoes.length - 1]] + remainder).toFixed(1));
+    return { ...activity, shoe_mileage: shoeMileage };
+  }
+
+  return { ...activity, shoe_mileage: existingSplits };
+};
+
+const normalizeActivities = (activities = []) => activities.map(normalizeActivityShoeMileage);
+
 const buildPayload = (formData) => ({
-  am_session: makeAthleteSession(formData.am_session),
-  pm_session: makeAthleteSession(formData.pm_session),
+  am_session: makeAthleteSession(normalizeActivities(formData.am_session)),
+  pm_session: makeAthleteSession(normalizeActivities(formData.pm_session)),
   lift: sanitizeLift(formData.lift),
 });
 
-function ActivityForm({ activity, index, canDelete, onChange, onDelete, toggleShoe, activeShoes }) {
+function ActivityForm({ activity, index, canDelete, onChange, onDelete, toggleShoe, updateShoeMileage, activeShoes }) {
   const rpeColors = getRpeColorClasses(activity.rpe);
   const rpeValue = activity.rpe ?? 5;
+  const selectedShoes = activeShoes.filter((shoe) => activity.shoes?.includes(shoe.id));
+  const splitTotal = Object.entries(activity.shoe_mileage || {})
+    .filter(([shoeId]) => activity.shoes?.includes(shoeId))
+    .reduce((sum, [, mileage]) => sum + (Number(mileage) || 0), 0);
+  const activityMileage = Number(activity.mileage) || 0;
+  const hasSplitMismatch = selectedShoes.length > 0 && activityMileage > 0 && Math.abs(splitTotal - activityMileage) > 0.05;
 
   return (
     <div className="space-y-4 rounded-lg border border-slate-200 p-3 dark:border-slate-800">
@@ -125,6 +163,30 @@ function ActivityForm({ activity, index, canDelete, onChange, onDelete, toggleSh
             <span className="text-xs text-slate-400">No active shoes. Add them in Shoe Inventory.</span>
           )}
         </div>
+        {selectedShoes.length > 0 && activityMileage > 0 && (
+          <div className="mt-3 space-y-2 rounded-lg border border-slate-200 bg-slate-50 p-2 dark:border-slate-700 dark:bg-slate-900">
+            {selectedShoes.map((shoe) => (
+              <div key={shoe.id} className="grid grid-cols-[minmax(0,1fr)_6rem] items-center gap-2">
+                <div className="min-w-0 text-xs font-medium text-slate-700 dark:text-slate-200">{shoe.name}</div>
+                <Input
+                  type="number"
+                  min="0"
+                  step="0.1"
+                  className="h-8"
+                  value={activity.shoe_mileage?.[shoe.id] ?? ''}
+                  onChange={(event) => updateShoeMileage(shoe.id, parseFloat(event.target.value) || 0)}
+                  placeholder="mi"
+                />
+              </div>
+            ))}
+            <div className={cn(
+              "text-xs",
+              hasSplitMismatch ? "text-red-700 dark:text-red-300" : "text-slate-500 dark:text-slate-300"
+            )}>
+              Shoe total: {splitTotal.toFixed(1)} / {activityMileage.toFixed(1)} mi
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="space-y-2">
@@ -165,16 +227,41 @@ function ActivityForm({ activity, index, canDelete, onChange, onDelete, toggleSh
 function ActivitiesForm({ activities, onChange, onDeleteActivity, activeShoes }) {
   const updateActivity = (index, field, value) => {
     onChange(activities.map((activity, activityIndex) => (
-      activityIndex === index ? { ...activity, [field]: value } : activity
+      activityIndex === index
+        ? {
+            ...activity,
+            [field]: value,
+            ...(field === 'mileage' && activity.shoes?.length === 1
+              ? { shoe_mileage: { [activity.shoes[0]]: Number(value) || 0 } }
+              : {}),
+          }
+        : activity
     )));
   };
 
   const toggleShoe = (index, shoeId) => {
     const currentShoes = activities[index].shoes || [];
+    const currentSplits = activities[index].shoe_mileage || {};
     const newShoes = currentShoes.includes(shoeId)
       ? currentShoes.filter((id) => id !== shoeId)
       : [...currentShoes, shoeId];
-    updateActivity(index, 'shoes', newShoes);
+    const newSplits = Object.fromEntries(
+      Object.entries(currentSplits).filter(([id]) => newShoes.includes(id))
+    );
+    if (!currentShoes.includes(shoeId)) {
+      const mileage = Number(activities[index].mileage) || 0;
+      newSplits[shoeId] = newShoes.length === 1 ? mileage : 0;
+    }
+    onChange(activities.map((activity, activityIndex) => (
+      activityIndex === index ? { ...activity, shoes: newShoes, shoe_mileage: newSplits } : activity
+    )));
+  };
+
+  const updateShoeMileage = (index, shoeId, mileage) => {
+    updateActivity(index, 'shoe_mileage', {
+      ...(activities[index].shoe_mileage || {}),
+      [shoeId]: mileage,
+    });
   };
 
   const addActivity = () => onChange([...activities, createAthleteActivity()]);
@@ -197,6 +284,7 @@ function ActivitiesForm({ activities, onChange, onDeleteActivity, activeShoes })
           onChange={(field, value) => updateActivity(index, field, value)}
           onDelete={() => deleteActivity(index)}
           toggleShoe={(shoeId) => toggleShoe(index, shoeId)}
+          updateShoeMileage={(shoeId, mileage) => updateShoeMileage(index, shoeId, mileage)}
           activeShoes={activeShoes}
         />
       ))}

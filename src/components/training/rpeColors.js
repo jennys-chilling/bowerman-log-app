@@ -2,6 +2,7 @@ export const rpeColorScale = {
   1: {
     label: 'Very easy',
     badge: 'border-emerald-200 bg-emerald-100 text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-200',
+    surface: 'border-emerald-300 bg-emerald-50 text-emerald-950 dark:border-emerald-500/70 dark:bg-emerald-950/80 dark:text-emerald-50',
     labelText: 'text-emerald-700 dark:text-emerald-300',
     range: 'bg-emerald-500',
     track: 'bg-emerald-100 dark:bg-emerald-950',
@@ -10,6 +11,7 @@ export const rpeColorScale = {
   2: {
     label: 'Easy',
     badge: 'border-emerald-200 bg-emerald-100 text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-200',
+    surface: 'border-emerald-300 bg-emerald-50 text-emerald-950 dark:border-emerald-500/70 dark:bg-emerald-950/80 dark:text-emerald-50',
     labelText: 'text-emerald-700 dark:text-emerald-300',
     range: 'bg-emerald-500',
     track: 'bg-emerald-100 dark:bg-emerald-950',
@@ -18,6 +20,7 @@ export const rpeColorScale = {
   3: {
     label: 'Controlled',
     badge: 'border-lime-200 bg-lime-100 text-lime-800 dark:border-lime-900 dark:bg-lime-950 dark:text-lime-200',
+    surface: 'border-lime-300 bg-lime-50 text-lime-950 dark:border-lime-500/70 dark:bg-lime-950/80 dark:text-lime-50',
     labelText: 'text-lime-700 dark:text-lime-300',
     range: 'bg-lime-500',
     track: 'bg-lime-100 dark:bg-lime-950',
@@ -26,6 +29,7 @@ export const rpeColorScale = {
   4: {
     label: 'Moderate',
     badge: 'border-yellow-200 bg-yellow-100 text-yellow-800 dark:border-yellow-900 dark:bg-yellow-950 dark:text-yellow-200',
+    surface: 'border-yellow-300 bg-yellow-50 text-yellow-950 dark:border-yellow-500/70 dark:bg-yellow-950/80 dark:text-yellow-50',
     labelText: 'text-yellow-700 dark:text-yellow-300',
     range: 'bg-yellow-500',
     track: 'bg-yellow-100 dark:bg-yellow-950',
@@ -34,6 +38,7 @@ export const rpeColorScale = {
   5: {
     label: 'Steady',
     badge: 'border-amber-200 bg-amber-100 text-amber-800 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-200',
+    surface: 'border-amber-300 bg-amber-50 text-amber-950 dark:border-amber-500/70 dark:bg-amber-950/80 dark:text-amber-50',
     labelText: 'text-amber-700 dark:text-amber-300',
     range: 'bg-amber-500',
     track: 'bg-amber-100 dark:bg-amber-950',
@@ -42,6 +47,7 @@ export const rpeColorScale = {
   6: {
     label: 'Working',
     badge: 'border-orange-200 bg-orange-100 text-orange-800 dark:border-orange-900 dark:bg-orange-950 dark:text-orange-200',
+    surface: 'border-orange-300 bg-orange-50 text-orange-950 dark:border-orange-500/70 dark:bg-orange-950/80 dark:text-orange-50',
     labelText: 'text-orange-700 dark:text-orange-300',
     range: 'bg-orange-500',
     track: 'bg-orange-100 dark:bg-orange-950',
@@ -50,6 +56,7 @@ export const rpeColorScale = {
   7: {
     label: 'Hard',
     badge: 'border-orange-300 bg-orange-100 text-orange-900 dark:border-orange-900 dark:bg-orange-950 dark:text-orange-200',
+    surface: 'border-orange-400 bg-orange-100 text-orange-950 dark:border-orange-400/80 dark:bg-orange-950/90 dark:text-orange-50',
     labelText: 'text-orange-800 dark:text-orange-300',
     range: 'bg-orange-600',
     track: 'bg-orange-100 dark:bg-orange-950',
@@ -58,6 +65,7 @@ export const rpeColorScale = {
   8: {
     label: 'Very hard',
     badge: 'border-red-200 bg-red-100 text-red-800 dark:border-red-900 dark:bg-red-950 dark:text-red-200',
+    surface: 'border-red-300 bg-red-50 text-red-950 dark:border-red-500/80 dark:bg-red-950/85 dark:text-red-50',
     labelText: 'text-red-700 dark:text-red-300',
     range: 'bg-red-500',
     track: 'bg-red-100 dark:bg-red-950',
@@ -66,6 +74,7 @@ export const rpeColorScale = {
   9: {
     label: 'Near max',
     badge: 'border-red-700 bg-red-700 text-white dark:border-red-700 dark:bg-red-900 dark:text-white',
+    surface: 'border-red-700 bg-red-700 text-white dark:border-red-500 dark:bg-red-900 dark:text-white',
     labelText: 'text-red-700 dark:text-red-300',
     range: 'bg-red-700',
     track: 'bg-red-100 dark:bg-red-950',
@@ -74,6 +83,7 @@ export const rpeColorScale = {
   10: {
     label: 'Max',
     badge: 'border-red-900 bg-red-900 text-white dark:border-red-800 dark:bg-red-950 dark:text-white',
+    surface: 'border-red-900 bg-red-900 text-white dark:border-red-400 dark:bg-red-950 dark:text-white',
     labelText: 'text-red-900 dark:text-red-200',
     range: 'bg-red-900',
     track: 'bg-red-100 dark:bg-red-950',
@@ -84,6 +94,7 @@ export const rpeColorScale = {
 export const neutralRpeColor = {
   label: 'Not set',
   badge: 'border-slate-200 bg-slate-100 text-slate-500 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400',
+  surface: 'border-slate-300 bg-white text-slate-900 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100',
   labelText: 'text-slate-500 dark:text-slate-400',
   range: 'bg-slate-400',
   track: 'bg-slate-200 dark:bg-slate-800',

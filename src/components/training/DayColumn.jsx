@@ -54,11 +54,13 @@ export default function DayColumn({ date, dayPlan, onEdit, isCoach, shoes = [] }
   const dayName = format(date, 'EEE');
   const dayNum = format(date, 'd');
 
-  const getShoeNames = (shoeIds) => {
+  const getShoeNames = (activity) => {
+    const shoeIds = activity?.shoes || [];
     if (!shoeIds?.length) return null;
     return shoeIds.map((id) => {
       const shoe = shoes.find((shoeRecord) => shoeRecord.id === id);
-      return shoe?.name || 'Unknown';
+      const splitMileage = Number(activity.shoe_mileage?.[id]) || 0;
+      return splitMileage > 0 ? `${shoe?.name || 'Unknown'} ${formatNumber(splitMileage)} mi` : shoe?.name || 'Unknown';
     }).join(', ');
   };
 
@@ -68,13 +70,14 @@ export default function DayColumn({ date, dayPlan, onEdit, isCoach, shoes = [] }
     const activities = getAthleteActivities(session).filter(hasAthleteActivityData);
 
     return activities.map((activity, index) => {
-      const shoeNames = getShoeNames(activity.shoes);
+      const shoeNames = getShoeNames(activity);
       const mileage = Number(activity.mileage) || 0;
       const minutes = Number(activity.duration_minutes) || 0;
+      const rpeColors = getRpeColorClasses(activity.rpe);
 
       return (
-        <div key={`${label}-${index}`} className="space-y-1 rounded-lg border border-slate-200 bg-white p-1.5 shadow-sm dark:border-slate-700 dark:bg-slate-900 sm:p-2">
-          <div className="flex items-center justify-between gap-2 text-xs text-slate-500 dark:text-slate-400">
+        <div key={`${label}-${index}`} className={cn("space-y-1 rounded-lg border p-1.5 shadow-sm sm:p-2", rpeColors.surface)}>
+          <div className="flex items-center justify-between gap-2 text-xs opacity-75">
             <span className="flex items-center gap-1">
               <Icon className="h-3 w-3" />
               {label}
@@ -99,12 +102,12 @@ export default function DayColumn({ date, dayPlan, onEdit, isCoach, shoes = [] }
           </div>
 
           {shoeNames && (
-            <div className="truncate text-[10px] text-slate-400 dark:text-slate-500">
+            <div className="text-[10px] opacity-75">
               {shoeNames}
             </div>
           )}
           {activity.comments?.trim() && (
-            <p className="line-clamp-2 text-[10px] italic text-slate-500 dark:text-slate-400">{activity.comments.trim()}</p>
+            <p className="whitespace-pre-wrap text-[10px] italic opacity-80">{activity.comments.trim()}</p>
           )}
         </div>
       );
@@ -116,9 +119,12 @@ export default function DayColumn({ date, dayPlan, onEdit, isCoach, shoes = [] }
 
     const activities = getCoachActivities(session);
 
-    return activities.map((activity, index) => (
-      <div key={`${label}-${index}`} className="space-y-1 rounded-lg border border-slate-200 bg-white p-1.5 shadow-sm dark:border-slate-700 dark:bg-slate-950 sm:p-2">
-        <div className="flex items-center justify-between gap-2 text-xs text-slate-500 dark:text-slate-400">
+    return activities.map((activity, index) => {
+      const rpeColors = getRpeColorClasses(activity.planned_difficulty);
+
+      return (
+      <div key={`${label}-${index}`} className={cn("space-y-1 rounded-lg border p-1.5 shadow-sm sm:p-2", rpeColors.surface)}>
+        <div className="flex items-center justify-between gap-2 text-xs opacity-75">
           <span className="flex items-center gap-1">
             <Icon className="h-3 w-3" />
             {label}
@@ -134,13 +140,14 @@ export default function DayColumn({ date, dayPlan, onEdit, isCoach, shoes = [] }
         </div>
 
         {activity.prescription?.trim() && (
-          <p className="text-[10px] leading-snug text-slate-700 dark:text-slate-300">{activity.prescription.trim()}</p>
+          <p className="whitespace-pre-wrap text-[10px] leading-snug">{activity.prescription.trim()}</p>
         )}
         {activity.coach_notes?.trim() && (
-          <p className="border-t border-slate-100 pt-1 text-[10px] italic text-slate-400 dark:border-slate-800 dark:text-slate-500">{activity.coach_notes.trim()}</p>
+          <p className="border-t border-current/15 pt-1 whitespace-pre-wrap text-[10px] italic opacity-80">{activity.coach_notes.trim()}</p>
         )}
       </div>
-    ));
+      );
+    });
   };
 
   const CoachLiftBlock = ({ lift }) => {

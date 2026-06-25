@@ -27,6 +27,7 @@ export const emptyAthleteActivity = {
   duration_minutes: 0,
   mileage: 0,
   shoes: [],
+  shoe_mileage: {},
   rpe: null,
   comments: '',
 };
@@ -75,6 +76,11 @@ export const sanitizeAthleteActivity = (activity = {}) => ({
   duration_minutes: Number(activity.duration_minutes) || 0,
   mileage: Number(activity.mileage) || 0,
   shoes: activity.shoes || [],
+  shoe_mileage: Object.fromEntries(
+    Object.entries(activity.shoe_mileage || {})
+      .map(([shoeId, mileage]) => [shoeId, Number(mileage) || 0])
+      .filter(([, mileage]) => mileage > 0)
+  ),
   rpe: activity.rpe === null || activity.rpe === undefined ? null : Number(activity.rpe),
   comments: activity.comments || '',
 });
