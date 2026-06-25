@@ -15,6 +15,7 @@ import {
   emptyCoachActivity,
   emptyCoachLift,
   getCoachActivities,
+  hasCoachActivityData,
   hasCoachLiftData,
   makeCoachSession,
   sanitizeCoachLift,
@@ -106,7 +107,7 @@ function ActivityForm({ activity, index, canRemove, onChange, onRemove }) {
   );
 }
 
-function ActivitiesForm({ activities, onChange }) {
+function ActivitiesForm({ activities, onChange, onDeleteActivity }) {
   const updateActivity = (index, field, value) => {
     onChange(activities.map((activity, activityIndex) => (
       activityIndex === index ? { ...activity, [field]: value } : activity
@@ -114,7 +115,10 @@ function ActivitiesForm({ activities, onChange }) {
   };
 
   const addActivity = () => onChange([...activities, createCoachActivity()]);
-  const removeActivity = (index) => onChange(activities.filter((_, activityIndex) => activityIndex !== index));
+  const removeActivity = (index) => {
+    const nextActivities = activities.filter((_, activityIndex) => activityIndex !== index);
+    onDeleteActivity(nextActivities, activities[index]);
+  };
 
   return (
     <div className="space-y-3">
@@ -123,7 +127,7 @@ function ActivitiesForm({ activities, onChange }) {
           key={index}
           activity={activity}
           index={index}
-          canRemove={activities.length > 1}
+          canRemove={activities.length > 1 || hasCoachActivityData(activity)}
           onChange={(field, value) => updateActivity(index, field, value)}
           onRemove={() => removeActivity(index)}
         />
@@ -173,12 +177,45 @@ export default function CoachPlanEditor({ open, onClose, dayPlan, date, onSave, 
     setFormData((current) => ({ ...current, [sessionKey]: activities }));
   };
 
+  const commitDeletedEntry = async (nextFormData) => {
+    window.clearTimeout(autoSaveTimer.current);
+    setFormData(nextFormData);
+    setHasUserEdited(false);
+
+    if (onAutoSave) {
+      await onAutoSave(buildPayload(nextFormData, dayPlan));
+    } else {
+      await onSave(buildPayload(nextFormData, dayPlan));
+    }
+  };
+
+  const deleteActivity = (sessionKey, nextActivities, removedActivity) => {
+    const shouldPersistImmediately = hasCoachActivityData(removedActivity);
+    const normalizedActivities = nextActivities.length > 0 ? nextActivities : [createCoachActivity()];
+    const nextFormData = { ...formData, [sessionKey]: normalizedActivities };
+
+    if (!shouldPersistImmediately) {
+      updateActivities(sessionKey, normalizedActivities);
+      return;
+    }
+
+    void commitDeletedEntry(nextFormData);
+  };
+
   const updateLift = (updates) => {
     setHasUserEdited(true);
     setFormData((current) => ({
       ...current,
       lift_coach: { ...current.lift_coach, ...updates },
     }));
+  };
+
+  const deleteLift = () => {
+    if (!hasCoachLiftData(formData.lift_coach)) {
+      return;
+    }
+
+    void commitDeletedEntry({ ...formData, lift_coach: { ...emptyCoachLift } });
   };
 
   const handleSave = () => {
@@ -213,6 +250,7 @@ export default function CoachPlanEditor({ open, onClose, dayPlan, date, onSave, 
             <ActivitiesForm
               activities={formData.am_coach}
               onChange={(activities) => updateActivities('am_coach', activities)}
+              onDeleteActivity={(activities, removedActivity) => deleteActivity('am_coach', activities, removedActivity)}
             />
           </TabsContent>
 
@@ -220,11 +258,30 @@ export default function CoachPlanEditor({ open, onClose, dayPlan, date, onSave, 
             <ActivitiesForm
               activities={formData.pm_coach}
               onChange={(activities) => updateActivities('pm_coach', activities)}
+              onDeleteActivity={(activities, removedActivity) => deleteActivity('pm_coach', activities, removedActivity)}
             />
           </TabsContent>
 
           <TabsContent value="lift" className="mt-4">
             <div className="space-y-4 rounded-lg border border-slate-200 p-3 dark:border-slate-800">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2 font-medium text-slate-700 dark:text-slate-200">
+                  <Dumbbell className="h-4 w-4" />
+                  Lift Plan
+                </div>
+                {hasCoachLiftData(formData.lift_coach) && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 px-2 text-slate-500 hover:text-red-700 dark:text-slate-400 dark:hover:text-red-300"
+                    onClick={deleteLift}
+                  >
+                    <Trash2 className="mr-1.5 h-4 w-4" />
+                    Delete
+                  </Button>
+                )}
+              </div>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label>Lift Type</Label>
