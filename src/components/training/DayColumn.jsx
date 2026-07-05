@@ -5,7 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dumbbell, Moon, Pencil, Sun } from "lucide-react";
 import { getRpeColorClasses } from "./rpeColors";
+import { getTrainingFactorEntries } from "./trainingFactors";
 import {
+  allowsActivityMileage,
+  countsAsRunMileage,
+  displayWorkoutTypes,
   getAthleteActivities,
   getCoachActivities,
   hasAthleteActivityData,
@@ -53,6 +57,7 @@ export default function DayColumn({ date, dayPlan, onEdit, isCoach, shoes = [] }
   const today = isToday(date);
   const dayName = format(date, 'EEE');
   const dayNum = format(date, 'd');
+  const trainingFactorEntries = getTrainingFactorEntries(dayPlan?.training_factors);
 
   const getShoeNames = (activity) => {
     const shoeIds = activity?.shoes || [];
@@ -70,7 +75,7 @@ export default function DayColumn({ date, dayPlan, onEdit, isCoach, shoes = [] }
     const activities = getAthleteActivities(session).filter(hasAthleteActivityData);
 
     return activities.map((activity, index) => {
-      const shoeNames = getShoeNames(activity);
+      const shoeNames = countsAsRunMileage(activity.session_type) ? getShoeNames(activity) : null;
       const mileage = Number(activity.mileage) || 0;
       const minutes = Number(activity.duration_minutes) || 0;
       const rpeColors = getRpeColorClasses(activity.rpe);
@@ -88,12 +93,13 @@ export default function DayColumn({ date, dayPlan, onEdit, isCoach, shoes = [] }
           </div>
 
           <div className="flex flex-wrap items-center gap-1.5">
-            <TypeBadge>{activity.session_type}</TypeBadge>
+            <TypeBadge>{displayWorkoutTypes(activity.session_type)}</TypeBadge>
+            {activity.strides && <TypeBadge>Strides</TypeBadge>}
             <RpeChip value={activity.rpe} />
           </div>
 
           <div className="flex flex-wrap gap-x-2 gap-y-1 text-xs">
-            {activity.session_type !== 'Off' && mileage > 0 && (
+            {allowsActivityMileage(activity.session_type) && mileage > 0 && (
               <span className="font-semibold text-slate-800 dark:text-slate-100">{formatNumber(mileage)} mi</span>
             )}
             {activity.session_type !== 'Off' && minutes > 0 && (
@@ -135,7 +141,8 @@ export default function DayColumn({ date, dayPlan, onEdit, isCoach, shoes = [] }
         </div>
 
         <div className="flex flex-wrap items-center gap-1.5">
-          <TypeBadge>{activity.workout_type}</TypeBadge>
+          <TypeBadge>{displayWorkoutTypes(activity.workout_type)}</TypeBadge>
+          {activity.strides && <TypeBadge>Strides</TypeBadge>}
           <RpeChip value={activity.planned_difficulty} />
         </div>
 
@@ -171,6 +178,28 @@ export default function DayColumn({ date, dayPlan, onEdit, isCoach, shoes = [] }
         {lift.coach_notes?.trim() && (
           <p className="border-t border-slate-100 pt-1 text-[10px] italic text-slate-400 dark:border-slate-800 dark:text-slate-500">{lift.coach_notes.trim()}</p>
         )}
+      </div>
+    );
+  };
+
+  const TrainingFactorsBlock = () => {
+    if (trainingFactorEntries.length === 0) return null;
+
+    return (
+      <div className="rounded-lg border border-slate-200 bg-slate-50 p-1.5 shadow-sm dark:border-slate-700 dark:bg-slate-900 sm:p-2">
+        <div className="mb-1 text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+          Factors
+        </div>
+        <div className="flex flex-wrap gap-1">
+          {trainingFactorEntries.map((entry) => (
+            <span
+              key={entry.key}
+              className="rounded border border-slate-200 bg-white px-1.5 py-0.5 text-[10px] font-semibold leading-tight text-slate-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200"
+            >
+              {entry.shortLabel}: {entry.value}
+            </span>
+          ))}
+        </div>
       </div>
     );
   };
@@ -219,6 +248,7 @@ export default function DayColumn({ date, dayPlan, onEdit, isCoach, shoes = [] }
         </div>
 
         <div className="space-y-1.5 sm:space-y-2">
+          <TrainingFactorsBlock />
           <AthleteSessionBlock session={dayPlan?.am_session} label="AM" icon={Sun} />
           <AthleteSessionBlock session={dayPlan?.pm_session} label="PM" icon={Moon} />
 

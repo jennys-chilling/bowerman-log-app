@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { ChevronDown, Target } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
+import { usePersistentBoolean } from "@/hooks/usePersistentBoolean";
 import { getSessionMileage } from "./sessionUtils";
 
 const formatGoalValue = (value) => {
@@ -79,7 +80,7 @@ const getMilesLeftLabel = ({ goalMin, goalMax }, currentMileage) => {
 };
 
 export default function WeeklyMileageGoal({ trainingWeek, isCoach, onSave, dayPlans = [] }) {
-  const [isOpen, setIsOpen] = useState(true);
+  const [isOpen, setIsOpen] = usePersistentBoolean('btc.weeklyMileageGoal.open', true);
   const [goalText, setGoalText] = useState('');
   const [hasUserEdited, setHasUserEdited] = useState(false);
   const saveTimer = useRef(null);

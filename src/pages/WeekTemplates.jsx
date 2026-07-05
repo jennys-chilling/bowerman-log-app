@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { addDays, format, startOfWeek } from 'date-fns';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   ArrowLeft,
@@ -37,6 +37,7 @@ import { cn } from '@/lib/utils';
 import { createPageUrl } from '@/utils';
 import { getRpeColorClasses } from '@/components/training/rpeColors';
 import {
+  canHaveStrides,
   emptyCoachActivity,
   emptyCoachLift,
   getCoachActivities,
@@ -178,7 +179,13 @@ function SessionEditor({ title, icon: Icon, session, onChange, onRemove }) {
 
   const updateActivity = (index, field, value) => {
     updateActivities(visibleActivities.map((activity, activityIndex) => (
-      activityIndex === index ? { ...activity, [field]: value } : activity
+      activityIndex === index
+        ? {
+            ...activity,
+            [field]: value,
+            ...(field === 'workout_type' && !canHaveStrides(value) ? { strides: false } : {}),
+          }
+        : activity
     )));
   };
 
@@ -220,6 +227,7 @@ function SessionEditor({ title, icon: Icon, session, onChange, onRemove }) {
                   onChange={(value) => updateActivity(index, 'workout_type', value)}
                   triggerClassName="h-9"
                 />
+                <div className="text-[11px] text-slate-500 dark:text-slate-400">Select multiple for OR.</div>
               </div>
 
               <div className="space-y-1">
@@ -250,6 +258,16 @@ function SessionEditor({ title, icon: Icon, session, onChange, onRemove }) {
                 </Button>
               </div>
             </div>
+
+            {canHaveStrides(activity.workout_type) && (
+              <label className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200">
+                <Checkbox
+                  checked={Boolean(activity.strides)}
+                  onCheckedChange={(checked) => updateActivity(index, 'strides', Boolean(checked))}
+                />
+                Add strides
+              </label>
+            )}
 
             <div className="space-y-1">
               <Label className="text-xs">Prescription</Label>
@@ -519,7 +537,7 @@ function ApplyTemplateDialog({
             <div>
               <Label htmlFor="template-overwrite">Overwrite Existing Coach Plans</Label>
               {overwriteExisting && (
-                <p className="mt-1 text-xs text-red-700 dark:text-red-300">Existing target coach workouts will be replaced.</p>
+                <p className="mt-1 text-xs text-red-700 dark:text-red-300">Existing target coach workouts and week coach feedback will be replaced.</p>
               )}
             </div>
             <Switch id="template-overwrite" checked={overwriteExisting} onCheckedChange={setOverwriteExisting} />
@@ -544,7 +562,10 @@ function ApplyTemplateDialog({
 export default function WeekTemplates() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  const location = useLocation();
   const isCoach = user?.role === 'admin';
+  const trainingLogUrl = `${createPageUrl('TrainingLog')}${location.search}`;
+  const accountUrl = `${createPageUrl('Account')}${location.search}`;
   const [selectedTemplateId, setSelectedTemplateId] = useState(null);
   const [draft, setDraft] = useState(null);
   const [isDirty, setIsDirty] = useState(false);
@@ -677,8 +698,11 @@ export default function WeekTemplates() {
         goal_mileage_min: template.goal_mileage_min ?? null,
         goal_mileage_max: template.goal_mileage_max ?? null,
       };
+      const templateCoachFeedback = template.description?.trim() || '';
       const hasGoal = templateGoal.goal_mileage_min !== null || templateGoal.goal_mileage_max !== null;
+      const hasCoachFeedback = Boolean(templateCoachFeedback);
       let updatedDays = 0;
+      let updatedWeeks = 0;
 
       const ensureTargetWeek = async (athleteId) => {
         const existingWeeks = await appClient.entities.TrainingWeek.filter({
@@ -690,20 +714,41 @@ export default function WeekTemplates() {
           athlete_id: athleteId,
           week_start_date: weekStartDate,
           ...templateGoal,
+          ...(hasCoachFeedback ? { coach_feedback: templateCoachFeedback } : {}),
         });
 
-        if (
-          existingWeeks[0] &&
-          hasGoal &&
-          (
-            overwriteExisting ||
+        if (existingWeeks[0]) {
+          const weekUpdates = {};
+
+          if (
+            hasGoal &&
             (
-              (week.goal_mileage_min === null || week.goal_mileage_min === undefined) &&
-              (week.goal_mileage_max === null || week.goal_mileage_max === undefined)
+              overwriteExisting ||
+              (
+                (week.goal_mileage_min === null || week.goal_mileage_min === undefined) &&
+                (week.goal_mileage_max === null || week.goal_mileage_max === undefined)
+              )
             )
-          )
-        ) {
-          await appClient.entities.TrainingWeek.update(week.id, templateGoal);
+          ) {
+            Object.assign(weekUpdates, templateGoal);
+          }
+
+          if (
+            hasCoachFeedback &&
+            (
+              overwriteExisting ||
+              !week.coach_feedback?.trim()
+            )
+          ) {
+            weekUpdates.coach_feedback = templateCoachFeedback;
+          }
+
+          if (Object.keys(weekUpdates).length > 0) {
+            await appClient.entities.TrainingWeek.update(week.id, weekUpdates);
+            updatedWeeks += 1;
+          }
+        } else if (hasGoal || hasCoachFeedback) {
+          updatedWeeks += 1;
         }
 
         const existingDayPlans = await appClient.entities.DayPlan.filter({ training_week_id: week.id });
@@ -759,15 +804,17 @@ export default function WeekTemplates() {
         }
       }
 
-      return { athleteCount: athleteIds.length, updatedDays };
+      return { athleteCount: athleteIds.length, updatedDays, updatedWeeks };
     },
-    onSuccess: ({ athleteCount, updatedDays }) => {
+    onSuccess: ({ athleteCount, updatedDays, updatedWeeks }) => {
       queryClient.invalidateQueries({ queryKey: ['trainingWeek'] });
       queryClient.invalidateQueries({ queryKey: ['dayPlans'] });
+      queryClient.invalidateQueries({ queryKey: ['monthWeeks'] });
+      queryClient.invalidateQueries({ queryKey: ['monthDayPlans'] });
       setApplyOpen(false);
       toast({
         title: 'Template applied',
-        description: `${athleteCount} athlete${athleteCount === 1 ? '' : 's'}, ${updatedDays} day${updatedDays === 1 ? '' : 's'} updated.`,
+        description: `${athleteCount} athlete${athleteCount === 1 ? '' : 's'}, ${updatedDays} day${updatedDays === 1 ? '' : 's'} updated${updatedWeeks > 0 ? `, ${updatedWeeks} week detail update${updatedWeeks === 1 ? '' : 's'}` : ''}.`,
       });
     },
     onError: (error) => {
@@ -813,7 +860,7 @@ export default function WeekTemplates() {
           <div className="rounded-xl border border-slate-300 bg-white p-8 text-center shadow-md dark:border-slate-700 dark:bg-slate-950">
             <h1 className="text-xl font-semibold">Coach Access Only</h1>
             <div className="mt-5">
-              <Link to={createPageUrl('TrainingLog')}>
+              <Link to={trainingLogUrl}>
                 <Button>Back to Log</Button>
               </Link>
             </div>
@@ -833,13 +880,13 @@ export default function WeekTemplates() {
             <BrandMark title="Bowerman Training Log" subtitle="Templates" compact />
 
             <div className="flex flex-wrap items-center gap-2 lg:flex-nowrap lg:justify-end">
-              <Link to={createPageUrl('TrainingLog')}>
+              <Link to={trainingLogUrl}>
                 <Button variant="outline" className="h-9 rounded-full px-4 text-sm font-semibold">
                   <ArrowLeft className="mr-2 h-4 w-4" />
                   Log
                 </Button>
               </Link>
-              <Link to={createPageUrl('Account')}>
+              <Link to={accountUrl}>
                 <Button variant="outline" className="h-9 rounded-full px-4 text-sm font-semibold">
                   <UserCircle className="mr-2 h-4 w-4" />
                   Account
@@ -935,7 +982,7 @@ export default function WeekTemplates() {
                   </div>
 
                   <div className="mt-4 space-y-2">
-                    <Label>Notes</Label>
+                    <Label>Week Coach Notes</Label>
                     <Textarea
                       value={draft.description || ''}
                       onChange={(event) => updateDraft({ description: event.target.value })}

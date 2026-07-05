@@ -1,22 +1,43 @@
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
-import { Dumbbell, Moon, Plus, Sun, Trash2, X } from "lucide-react";
+import { Check, ChevronsUpDown, Dumbbell, Moon, Plus, Sun, Trash2, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getRpeColorClasses } from "./rpeColors";
 import {
-  WORKOUT_TYPES,
+  getVisibleTrainingFactorOptions,
+  sanitizeTrainingFactors,
+} from "./trainingFactors";
+import {
+  LEGACY_WORKOUT_TYPES,
+  WORKOUT_TYPE_MENU,
+  allowsActivityMileage,
+  canHaveStrides,
+  countsAsRunMileage,
+  displayWorkoutTypes,
   emptyAthleteActivity,
   getAthleteActivities,
   hasAthleteActivityData,
+  isBikeType,
+  isXTrainType,
   makeAthleteSession,
 } from "./sessionUtils";
 
@@ -54,7 +75,7 @@ const normalizeActivityShoeMileage = (activity = {}) => {
       .filter(([, shoeMileage]) => shoeMileage > 0)
   );
 
-  if (shoes.length === 0 || mileage <= 0 || activity.session_type === 'Off') {
+  if (shoes.length === 0 || mileage <= 0 || !countsAsRunMileage(activity.session_type)) {
     return { ...activity, shoe_mileage: {} };
   }
 
@@ -75,15 +96,102 @@ const normalizeActivityShoeMileage = (activity = {}) => {
 
 const normalizeActivities = (activities = []) => activities.map(normalizeActivityShoeMileage);
 
-const buildPayload = (formData) => ({
-  am_session: makeAthleteSession(normalizeActivities(formData.am_session)),
-  pm_session: makeAthleteSession(normalizeActivities(formData.pm_session)),
-  lift: sanitizeLift(formData.lift),
-});
+const buildPayload = (formData) => {
+  const payload = {
+    am_session: makeAthleteSession(normalizeActivities(formData.am_session)),
+    pm_session: makeAthleteSession(normalizeActivities(formData.pm_session)),
+    lift: sanitizeLift(formData.lift),
+  };
+  const trainingFactors = sanitizeTrainingFactors(formData.training_factors);
+
+  if (Object.keys(trainingFactors).length > 0 || Object.keys(formData.training_factors || {}).length > 0) {
+    payload.training_factors = trainingFactors;
+  }
+
+  return payload;
+};
+
+function WorkoutTypeSinglePicker({ value, onChange }) {
+  const chooseType = (nextValue) => {
+    onChange(nextValue);
+  };
+
+  const renderMenuItem = (item) => {
+    if (item.options?.length) {
+      const selectedOption = item.options.find((option) => option.value === value);
+      const label = selectedOption ? `${item.label} (${selectedOption.label})` : item.label;
+
+      return (
+        <DropdownMenuSub key={item.label}>
+          <DropdownMenuSubTrigger className={cn(selectedOption && "font-semibold text-red-700 dark:text-red-200")}>
+            <span className="min-w-0 truncate">{label}</span>
+          </DropdownMenuSubTrigger>
+          <DropdownMenuSubContent className="w-52">
+            {item.options.map((option) => (
+              <DropdownMenuItem
+                key={option.value}
+                className={cn(value === option.value && "font-semibold text-red-700 dark:text-red-200")}
+                onClick={() => chooseType(option.value)}
+              >
+                <span className="min-w-0 flex-1">{option.label}</span>
+                {value === option.value && <Check className="h-4 w-4" />}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuSubContent>
+        </DropdownMenuSub>
+      );
+    }
+
+    return (
+      <DropdownMenuItem
+        key={item.value}
+        className={cn(value === item.value && "font-semibold text-red-700 dark:text-red-200")}
+        onClick={() => chooseType(item.value)}
+      >
+        <span className="min-w-0 flex-1">{item.label}</span>
+        {value === item.value && <Check className="h-4 w-4" />}
+      </DropdownMenuItem>
+    );
+  };
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          type="button"
+          variant="outline"
+          className="h-9 w-full justify-between gap-2 px-3 font-normal"
+        >
+          <span className={cn("min-w-0 truncate text-left", !value && "text-slate-500 dark:text-slate-400")}>
+            {displayWorkoutTypes(value) || 'Select type'}
+          </span>
+          <ChevronsUpDown className="h-4 w-4 shrink-0 text-slate-500" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="w-56">
+        {WORKOUT_TYPE_MENU.map(renderMenuItem)}
+        {LEGACY_WORKOUT_TYPES.includes(value) && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => chooseType(value)}>
+              <span className="min-w-0 flex-1">{value}</span>
+              <Check className="h-4 w-4" />
+            </DropdownMenuItem>
+          </>
+        )}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
 
 function ActivityForm({ activity, index, canDelete, onChange, onDelete, toggleShoe, updateShoeMileage, activeShoes }) {
   const rpeColors = getRpeColorClasses(activity.rpe);
   const rpeValue = activity.rpe ?? 5;
+  const mileageAllowed = allowsActivityMileage(activity.session_type);
+  const showShoePicker = countsAsRunMileage(activity.session_type);
+  const showStrides = canHaveStrides(activity.session_type);
+  const isXTrain = isXTrainType(activity.session_type);
+  const isBike = isBikeType(activity.session_type);
   const selectedShoes = activeShoes.filter((shoe) => activity.shoes?.includes(shoe.id));
   const splitTotal = Object.entries(activity.shoe_mileage || {})
     .filter(([shoeId]) => activity.shoes?.includes(shoeId))
@@ -113,14 +221,10 @@ function ActivityForm({ activity, index, canDelete, onChange, onDelete, toggleSh
       <div className="grid gap-3 sm:grid-cols-3">
         <div className="space-y-1">
           <Label className="text-xs">Type</Label>
-          <Select value={activity.session_type || undefined} onValueChange={(value) => onChange('session_type', value)}>
-            <SelectTrigger className="h-9"><SelectValue placeholder="Select" /></SelectTrigger>
-            <SelectContent>
-              {WORKOUT_TYPES.map((type) => (
-                <SelectItem key={type} value={type}>{type}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <WorkoutTypeSinglePicker
+            value={activity.session_type}
+            onChange={(value) => onChange('session_type', value)}
+          />
         </div>
 
         <div className="space-y-1">
@@ -134,60 +238,83 @@ function ActivityForm({ activity, index, canDelete, onChange, onDelete, toggleSh
         </div>
 
         <div className="space-y-1">
-          <Label className="text-xs">Mileage</Label>
+          <Label className="text-xs">{isBike ? 'Bike Mileage' : 'Mileage'}</Label>
           <Input
             type="number"
             step="0.1"
             className="h-9"
+            disabled={!mileageAllowed}
             value={activity.mileage || ''}
             onChange={(event) => onChange('mileage', parseFloat(event.target.value) || 0)}
+            placeholder={mileageAllowed ? undefined : 'No mileage'}
           />
+          {!mileageAllowed && (
+            <div className="text-[11px] text-slate-500 dark:text-slate-400">Mileage is not tracked for this activity type.</div>
+          )}
         </div>
       </div>
 
-      <div className="space-y-1">
-        <Label className="text-xs">Shoes</Label>
-        <div className="flex flex-wrap gap-2">
-          {activeShoes.map((shoe) => (
-            <Badge
-              key={shoe.id}
-              variant={activity.shoes?.includes(shoe.id) ? "default" : "outline"}
-              className="cursor-pointer"
-              onClick={() => toggleShoe(shoe.id)}
-            >
-              {shoe.name}
-              {activity.shoes?.includes(shoe.id) && <X className="ml-1 h-3 w-3" />}
-            </Badge>
-          ))}
-          {activeShoes.length === 0 && (
-            <span className="text-xs text-slate-400">No active shoes. Add them in Shoe Inventory.</span>
+      {showStrides && (
+        <label className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
+          <Checkbox
+            checked={Boolean(activity.strides)}
+            onCheckedChange={(checked) => onChange('strides', Boolean(checked))}
+          />
+          Add strides
+        </label>
+      )}
+
+      {showShoePicker && (
+        <div className="space-y-1">
+          <Label className="text-xs">Shoes</Label>
+          <div className="flex flex-wrap gap-2">
+            {activeShoes.map((shoe) => (
+              <Badge
+                key={shoe.id}
+                variant={activity.shoes?.includes(shoe.id) ? "default" : "outline"}
+                className="cursor-pointer"
+                onClick={() => toggleShoe(shoe.id)}
+              >
+                {shoe.name}
+                {activity.shoes?.includes(shoe.id) && <X className="ml-1 h-3 w-3" />}
+              </Badge>
+            ))}
+            {activeShoes.length === 0 && (
+              <span className="text-xs text-slate-400">No active shoes. Add them in Shoe Inventory.</span>
+            )}
+          </div>
+          {selectedShoes.length > 0 && activityMileage > 0 && (
+            <div className="mt-3 space-y-2 rounded-lg border border-slate-200 bg-slate-50 p-2 dark:border-slate-700 dark:bg-slate-900">
+              {selectedShoes.map((shoe) => (
+                <div key={shoe.id} className="grid grid-cols-[minmax(0,1fr)_6rem] items-center gap-2">
+                  <div className="min-w-0 text-xs font-medium text-slate-700 dark:text-slate-200">{shoe.name}</div>
+                  <Input
+                    type="number"
+                    min="0"
+                    step="0.1"
+                    className="h-8"
+                    value={activity.shoe_mileage?.[shoe.id] ?? ''}
+                    onChange={(event) => updateShoeMileage(shoe.id, parseFloat(event.target.value) || 0)}
+                    placeholder="mi"
+                  />
+                </div>
+              ))}
+              <div className={cn(
+                "text-xs",
+                hasSplitMismatch ? "text-red-700 dark:text-red-300" : "text-slate-500 dark:text-slate-300"
+              )}>
+                Shoe total: {splitTotal.toFixed(1)} / {activityMileage.toFixed(1)} mi
+              </div>
+            </div>
           )}
         </div>
-        {selectedShoes.length > 0 && activityMileage > 0 && (
-          <div className="mt-3 space-y-2 rounded-lg border border-slate-200 bg-slate-50 p-2 dark:border-slate-700 dark:bg-slate-900">
-            {selectedShoes.map((shoe) => (
-              <div key={shoe.id} className="grid grid-cols-[minmax(0,1fr)_6rem] items-center gap-2">
-                <div className="min-w-0 text-xs font-medium text-slate-700 dark:text-slate-200">{shoe.name}</div>
-                <Input
-                  type="number"
-                  min="0"
-                  step="0.1"
-                  className="h-8"
-                  value={activity.shoe_mileage?.[shoe.id] ?? ''}
-                  onChange={(event) => updateShoeMileage(shoe.id, parseFloat(event.target.value) || 0)}
-                  placeholder="mi"
-                />
-              </div>
-            ))}
-            <div className={cn(
-              "text-xs",
-              hasSplitMismatch ? "text-red-700 dark:text-red-300" : "text-slate-500 dark:text-slate-300"
-            )}>
-              Shoe total: {splitTotal.toFixed(1)} / {activityMileage.toFixed(1)} mi
-            </div>
-          </div>
-        )}
-      </div>
+      )}
+
+      {isXTrain && !showShoePicker && (
+        <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400">
+          X-train activities do not add shoe mileage.
+        </div>
+      )}
 
       <div className="space-y-2">
         <div className="flex items-center justify-between gap-3">
@@ -228,13 +355,28 @@ function ActivitiesForm({ activities, onChange, onDeleteActivity, activeShoes })
   const updateActivity = (index, field, value) => {
     onChange(activities.map((activity, activityIndex) => (
       activityIndex === index
-        ? {
-            ...activity,
-            [field]: value,
-            ...(field === 'mileage' && activity.shoes?.length === 1
-              ? { shoe_mileage: { [activity.shoes[0]]: Number(value) || 0 } }
-              : {}),
-          }
+        ? (() => {
+            const nextActivity = { ...activity, [field]: value };
+
+            if (field === 'session_type') {
+              if (!allowsActivityMileage(value)) {
+                nextActivity.mileage = 0;
+              }
+              if (!countsAsRunMileage(value)) {
+                nextActivity.shoes = [];
+                nextActivity.shoe_mileage = {};
+              }
+              if (!canHaveStrides(value)) {
+                nextActivity.strides = false;
+              }
+            }
+
+            if (field === 'mileage' && countsAsRunMileage(nextActivity.session_type) && activity.shoes?.length === 1) {
+              nextActivity.shoe_mileage = { [activity.shoes[0]]: Number(value) || 0 };
+            }
+
+            return nextActivity;
+          })()
         : activity
     )));
   };
@@ -297,11 +439,58 @@ function ActivitiesForm({ activities, onChange, onDeleteActivity, activeShoes })
   );
 }
 
-export default function AthleteLogEditor({ open, onClose, dayPlan, date, onSave, onAutoSave, onDeleteEntry, shoes = [] }) {
+function TrainingFactorsForm({ values, activeOptions, onChange }) {
+  const visibleOptions = getVisibleTrainingFactorOptions(
+    activeOptions.map((option) => option.key),
+    values
+  );
+
+  if (visibleOptions.length === 0) {
+    return null;
+  }
+
+  return (
+    <section className="rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-900/80">
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <div>
+          <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">Training Factors</h3>
+          <p className="text-xs text-slate-500 dark:text-slate-400">Daily context</p>
+        </div>
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2">
+        {visibleOptions.map((option) => (
+          <div key={option.key} className="space-y-1">
+            <Label htmlFor={`training-factor-${option.key}`} className="text-xs">
+              {option.label}
+            </Label>
+            <Input
+              id={`training-factor-${option.key}`}
+              value={values?.[option.key] || ''}
+              onChange={(event) => onChange(option.key, event.target.value)}
+            />
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+export default function AthleteLogEditor({
+  open,
+  onClose,
+  dayPlan,
+  date,
+  onSave,
+  onAutoSave,
+  onDeleteEntry,
+  shoes = [],
+  trainingFactorOptions = [],
+}) {
   const [formData, setFormData] = useState({
     am_session: [createAthleteActivity()],
     pm_session: [createAthleteActivity()],
     lift: { ...emptyLift },
+    training_factors: {},
   });
   const [hasUserEdited, setHasUserEdited] = useState(false);
   const autoSaveTimer = useRef(null);
@@ -314,6 +503,7 @@ export default function AthleteLogEditor({ open, onClose, dayPlan, date, onSave,
       am_session: amActivities.length ? amActivities : [createAthleteActivity()],
       pm_session: pmActivities.length ? pmActivities : [createAthleteActivity()],
       lift: { ...emptyLift, ...(dayPlan?.lift || {}) },
+      training_factors: { ...(dayPlan?.training_factors || {}) },
     });
     setHasUserEdited(false);
   }, [dayPlan, open]);
@@ -370,6 +560,17 @@ export default function AthleteLogEditor({ open, onClose, dayPlan, date, onSave,
     setFormData((current) => ({ ...current, lift: { ...current.lift, ...updates } }));
   };
 
+  const updateTrainingFactor = (key, value) => {
+    setHasUserEdited(true);
+    setFormData((current) => ({
+      ...current,
+      training_factors: {
+        ...(current.training_factors || {}),
+        [key]: value,
+      },
+    }));
+  };
+
   const deleteLift = () => {
     if (hasLiftData(formData.lift) && !window.confirm('Delete this lift log?')) {
       return;
@@ -394,6 +595,12 @@ export default function AthleteLogEditor({ open, onClose, dayPlan, date, onSave,
             {date && format(date, 'EEEE, MMM d')}
           </DialogTitle>
         </DialogHeader>
+
+        <TrainingFactorsForm
+          values={formData.training_factors}
+          activeOptions={trainingFactorOptions}
+          onChange={updateTrainingFactor}
+        />
 
         <Tabs defaultValue="am" className="py-2">
           <TabsList className="grid grid-cols-3">

@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, Camera, KeyRound, Loader2, Save, UserCircle } from 'lucide-react';
 import { appClient } from '@/api/client';
 import { useAuth } from '@/lib/AuthContext';
@@ -39,7 +39,12 @@ const getInitials = (firstName, lastName, email) => {
 export default function Account() {
   const { user, checkAppState } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
+  const logSearchParams = new URLSearchParams(location.search);
+  logSearchParams.delete('setup');
+  const logSearch = logSearchParams.toString();
+  const trainingLogUrl = `${createPageUrl('TrainingLog')}${logSearch ? `?${logSearch}` : ''}`;
   const nameParts = useMemo(() => getNameFallback(user), [user]);
   const isSetupMode = searchParams.get('setup') === '1' || !user?.first_name?.trim() || !user?.last_name?.trim();
   const [formData, setFormData] = useState({
@@ -150,7 +155,7 @@ export default function Account() {
       });
 
       if (isSetupMode) {
-        navigate(createPageUrl('TrainingLog'), { replace: true });
+        navigate(trainingLogUrl, { replace: true });
       }
     } catch (saveError) {
       setError(saveError.message || 'Could not save account details.');
@@ -197,7 +202,7 @@ export default function Account() {
         <div className="btc-rail-card mb-6 overflow-hidden rounded-2xl border border-red-900/10 bg-white/90 p-4 shadow-sm backdrop-blur dark:border-red-500/20 dark:bg-slate-950/90">
           <div className="flex items-center justify-between gap-4 pl-2">
             <div className="flex items-center gap-3">
-              <Link to={createPageUrl('TrainingLog')}>
+              <Link to={trainingLogUrl}>
                 <Button variant="ghost" size="icon">
                   <ArrowLeft className="h-5 w-5" />
                 </Button>

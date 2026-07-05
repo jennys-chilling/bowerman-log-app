@@ -1,18 +1,21 @@
 import React from 'react';
 import { addDays, format, isToday, parseISO, startOfWeek } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, MessageSquare, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { getRpeColorClasses } from './rpeColors';
+import { getTrainingFactorEntries } from './trainingFactors';
 import {
+  allowsActivityMileage,
   getAthleteActivities,
   getCoachActivities,
   getSessionMileage,
   hasAthleteActivityData,
   hasAthleteSessionData,
   hasCoachSessionData,
+  isXTrainType,
   neutralWorkoutBadgeClass,
 } from './sessionUtils';
 
@@ -22,7 +25,20 @@ const MONTH_GRID_MIN_WIDTH = '76rem';
 const COMPACT_SESSION_TYPES = {
   'Easy Run': 'Easy',
   'Long Run': 'Long',
+  'Long Run > Specific LR': 'Specific LR',
+  'Long Run > Structured LR': 'Structured LR',
+  'Long Run > Regular LR': 'Regular LR',
+  'Workout > Hills': 'Hills',
+  'Workout > Tempo': 'Tempo',
+  'Workout > Tempo Repeats': 'Tempo Reps',
+  'Workout > Intervals': 'Intervals',
+  'Workout > Fartlek': 'Fartlek',
+  'Workout > Track Fartlek': 'Track Fartlek',
   'X-Train': 'XT',
+  'X-Train > Elliptical': 'Elliptical',
+  'X-Train > Swim': 'Swim',
+  'X-Train > Bike': 'Bike',
+  'X-Train > Ski': 'Ski',
 };
 
 const hasLift = (lift = {}) => (
@@ -52,6 +68,8 @@ const compactSessionType = (sessionType = 'Session') => (
     .join(' / ')
 );
 
+const hasText = (value) => Boolean(String(value || '').trim());
+
 const getWeekStats = (days, allDayPlans) => {
   let mileage = 0;
   let xTrainMinutes = 0;
@@ -68,7 +86,7 @@ const getWeekStats = (days, allDayPlans) => {
 
     [plan.am_session, plan.pm_session].forEach((session) => {
       getAthleteActivities(session).forEach((activity) => {
-        if (activity.session_type === 'X-Train') {
+        if (isXTrainType(activity.session_type)) {
           xTrainMinutes += Number(activity.duration_minutes) || 0;
         }
         if (activity.rpe !== null && activity.rpe !== undefined) {
@@ -98,7 +116,7 @@ function AthleteActivitySummary({ label, activity, index, total }) {
   const metricItems = [];
   const rpeColors = getRpeColorClasses(activity.rpe);
 
-  if (sessionType !== 'Off' && mileage > 0) {
+  if (allowsActivityMileage(sessionType) && mileage > 0) {
     metricItems.push(`${formatNumber(mileage)} mi`);
   }
 
@@ -129,6 +147,11 @@ function AthleteActivitySummary({ label, activity, index, total }) {
             RPE {activity.rpe}
           </span>
         )}
+        {activity.strides && (
+          <span className="rounded border border-slate-300 bg-white px-1.5 py-0.5 text-[9px] font-bold leading-none text-slate-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200">
+            Strides
+          </span>
+        )}
       </div>
 
       {activity.comments?.trim() && (
@@ -154,6 +177,28 @@ function AthleteSessionSummary({ label, session }) {
   ));
 }
 
+function TrainingFactorSummary({ factors }) {
+  const entries = getTrainingFactorEntries(factors);
+
+  if (entries.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="flex flex-wrap gap-1">
+      {entries.map((entry) => (
+        <span
+          key={entry.key}
+          className="rounded border border-slate-200 bg-white px-1.5 py-0.5 text-[9px] font-semibold leading-none text-slate-600 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200"
+          title={entry.label}
+        >
+          {entry.shortLabel}: {entry.value}
+        </span>
+      ))}
+    </div>
+  );
+}
+
 function CoachActivitySummary({ label, activity, index, total }) {
   const rpeColors = getRpeColorClasses(activity.planned_difficulty);
   const workoutType = activity.workout_type || 'Plan';
@@ -170,6 +215,9 @@ function CoachActivitySummary({ label, activity, index, total }) {
       </div>
       {activity.planned_difficulty !== null && activity.planned_difficulty !== undefined && (
         <div className="mt-1 text-[10px] font-bold leading-none">RPE {activity.planned_difficulty}</div>
+      )}
+      {activity.strides && (
+        <div className="mt-1 text-[10px] font-bold leading-none">Strides</div>
       )}
       {activity.prescription?.trim() && (
         <div className="mt-1 whitespace-pre-wrap text-[10px] leading-snug">{activity.prescription.trim()}</div>
@@ -195,10 +243,80 @@ function CoachSessionSummary({ label, session }) {
   ));
 }
 
-function WeekRow({ weekStart, allDayPlans, onWeekClick }) {
+function FeedbackPanel({ label, value, tone }) {
+  const text = String(value || '').trim();
+
+  if (!text) {
+    return null;
+  }
+
+  const toneClasses = {
+    athlete: 'border-red-200 bg-red-50/70 text-red-900 dark:border-red-900/50 dark:bg-red-950/25 dark:text-red-100',
+    coach: 'border-emerald-200 bg-emerald-50/80 text-emerald-950 dark:border-emerald-900/50 dark:bg-emerald-950/25 dark:text-emerald-100',
+  };
+
+  return (
+    <div className={cn('rounded-lg border px-3 py-2 shadow-sm', toneClasses[tone])}>
+      <div className="mb-1 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide opacity-80">
+        <MessageSquare className="h-3 w-3" />
+        {label}
+      </div>
+      <div className="max-h-24 overflow-y-auto whitespace-pre-wrap text-[11px] leading-snug sm:text-xs">
+        {text}
+      </div>
+    </div>
+  );
+}
+
+function WeekFeedbackRow({ trainingWeek, onWeekClick }) {
+  const hasAthleteReflection = hasText(trainingWeek?.athlete_reflection);
+  const hasCoachFeedback = hasText(trainingWeek?.coach_feedback);
+  const panelCount = Number(hasAthleteReflection) + Number(hasCoachFeedback);
+
+  if (!hasAthleteReflection && !hasCoachFeedback) {
+    return null;
+  }
+
+  return (
+    <div
+      className="grid border-b border-slate-200 bg-slate-50/80 dark:border-slate-800 dark:bg-slate-900/70"
+      style={{ gridTemplateColumns: MONTH_GRID_TEMPLATE, minWidth: MONTH_GRID_MIN_WIDTH }}
+    >
+      <div
+        className="border-r border-slate-200 p-2 dark:border-slate-800 sm:p-2.5"
+        style={{ gridColumn: '1 / span 7' }}
+      >
+        <div className={cn('grid gap-2', panelCount > 1 ? 'md:grid-cols-2' : 'md:grid-cols-1')}>
+          <FeedbackPanel
+            label="Athlete Reflection"
+            value={trainingWeek?.athlete_reflection}
+            tone="athlete"
+          />
+          <FeedbackPanel
+            label="Coach Feedback"
+            value={trainingWeek?.coach_feedback}
+            tone="coach"
+          />
+        </div>
+      </div>
+      <button
+        type="button"
+        className="sticky right-0 z-10 flex min-h-16 flex-col items-center justify-center gap-1 border-l border-slate-300 bg-slate-100 px-2 text-center text-[10px] font-bold uppercase tracking-wide text-slate-500 transition-colors hover:bg-slate-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
+        onClick={() => onWeekClick(trainingWeek.week_start_date ? parseISO(trainingWeek.week_start_date) : new Date())}
+        title="Open this week"
+      >
+        <MessageSquare className="h-3.5 w-3.5 text-red-600 dark:text-red-300" />
+        Feedback
+      </button>
+    </div>
+  );
+}
+
+function WeekRow({ weekStart, allDayPlans, onWeekClick, onDayClick, selectedDate }) {
   const days = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
   const weekStats = getWeekStats(days, allDayPlans);
   const avgRpeColors = getRpeColorClasses(weekStats.avgRpe ? Math.round(weekStats.avgRpe) : null);
+  const selectedDateStr = selectedDate ? format(selectedDate, 'yyyy-MM-dd') : null;
 
   return (
     <div
@@ -209,6 +327,7 @@ function WeekRow({ weekStart, allDayPlans, onWeekClick }) {
         const dateStr = format(day, 'yyyy-MM-dd');
         const plan = allDayPlans[dateStr];
         const today = isToday(day);
+        const selected = selectedDateStr === dateStr;
         const coachSessions = [
           ['AM', plan?.am_coach],
           ['PM', plan?.pm_coach],
@@ -217,14 +336,25 @@ function WeekRow({ weekStart, allDayPlans, onWeekClick }) {
           ['AM', plan?.am_session],
           ['PM', plan?.pm_session],
         ].filter(([, session]) => hasAthleteSessionData(session));
+        const trainingFactorEntries = getTrainingFactorEntries(plan?.training_factors);
         const lift = plan?.lift;
 
         return (
           <div
             key={dateStr}
+            role={onDayClick ? 'button' : undefined}
+            tabIndex={onDayClick ? 0 : undefined}
+            onClick={() => onDayClick?.({ date: day, dayPlan: plan })}
+            onKeyDown={(event) => {
+              if (!onDayClick || !['Enter', ' '].includes(event.key)) return;
+              event.preventDefault();
+              onDayClick({ date: day, dayPlan: plan });
+            }}
             className={cn(
-              'min-h-[220px] border-r border-slate-200 bg-white p-2 dark:border-slate-800 dark:bg-slate-950 sm:min-h-[260px] sm:p-2.5',
+              'min-h-[220px] border-r border-slate-200 bg-white p-2 outline-none dark:border-slate-800 dark:bg-slate-950 sm:min-h-[260px] sm:p-2.5',
+              onDayClick && 'cursor-pointer transition-colors hover:bg-red-50/60 focus-visible:ring-2 focus-visible:ring-red-600 focus-visible:ring-inset dark:hover:bg-red-950/20',
               today && 'bg-amber-50 dark:bg-amber-950/30',
+              selected && 'bg-red-50 ring-2 ring-inset ring-red-700 dark:bg-red-950/30 dark:ring-red-400',
             )}
           >
             <div className="mb-2 flex items-center justify-between gap-2">
@@ -239,6 +369,12 @@ function WeekRow({ weekStart, allDayPlans, onWeekClick }) {
                   Today
                 </span>
               )}
+              {onDayClick && !today && (
+                <Pencil className={cn(
+                  "h-3.5 w-3.5 text-slate-400 opacity-0 transition-opacity group-hover:opacity-100 dark:text-slate-500",
+                  selected && "text-red-700 opacity-100 dark:text-red-300"
+                )} />
+              )}
             </div>
 
             <div className="space-y-2">
@@ -251,9 +387,12 @@ function WeekRow({ weekStart, allDayPlans, onWeekClick }) {
                 </div>
               )}
 
-              {athleteSessions.length > 0 && (
+              {(athleteSessions.length > 0 || trainingFactorEntries.length > 0) && (
                 <div className="space-y-1.5 rounded-lg bg-white p-1.5 ring-1 ring-slate-200 dark:bg-slate-950 dark:ring-slate-700">
                   <div className="text-[9px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-200">Athlete</div>
+                  {trainingFactorEntries.length > 0 && (
+                    <TrainingFactorSummary factors={plan?.training_factors} />
+                  )}
                   {athleteSessions.map(([label, session]) => (
                     <AthleteSessionSummary key={label} label={label} session={session} />
                   ))}
@@ -316,10 +455,22 @@ function WeekRow({ weekStart, allDayPlans, onWeekClick }) {
   );
 }
 
-export default function MonthView({ rangeStart, rangeWeeks, onRangeStartChange, onRangeWeeksChange, allDayPlans, onWeekClick }) {
+export default function MonthView({
+  rangeStart,
+  rangeWeeks,
+  onRangeStartChange,
+  onRangeWeeksChange,
+  allDayPlans,
+  trainingWeeksByStart = {},
+  onWeekClick,
+  onDayClick,
+  selectedDate,
+  inlineEditor,
+}) {
   const weeks = Array.from({ length: rangeWeeks }, (_, i) => addDays(rangeStart, i * 7));
   const dayHeaders = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   const rangeEnd = addDays(rangeStart, (rangeWeeks * 7) - 1);
+  const selectedWeekKey = selectedDate ? format(startOfWeek(selectedDate, { weekStartsOn: 1 }), 'yyyy-MM-dd') : null;
 
   const goToPrev = () => {
     onRangeStartChange(addDays(rangeStart, rangeWeeks * -7));
@@ -389,14 +540,34 @@ export default function MonthView({ rangeStart, rangeWeeks, onRangeStartChange, 
           </div>
         </div>
 
-        {weeks.map((weekStart) => (
-          <WeekRow
-            key={format(weekStart, 'yyyy-MM-dd')}
-            weekStart={weekStart}
-            allDayPlans={allDayPlans}
-            onWeekClick={onWeekClick}
-          />
-        ))}
+        {weeks.map((weekStart) => {
+          const weekKey = format(weekStart, 'yyyy-MM-dd');
+          const showInlineEditor = inlineEditor && selectedWeekKey === weekKey;
+          const trainingWeek = trainingWeeksByStart[weekKey];
+
+          return (
+            <React.Fragment key={weekKey}>
+              {showInlineEditor && (
+                <div
+                  className="border-b border-slate-200 bg-slate-50/90 dark:border-slate-800 dark:bg-slate-900/75"
+                  style={{ minWidth: MONTH_GRID_MIN_WIDTH }}
+                >
+                  <div className="sticky left-0 mx-auto w-[min(calc(100vw-2rem),82rem)] max-w-full p-3 sm:p-4">
+                    {inlineEditor}
+                  </div>
+                </div>
+              )}
+              <WeekRow
+                weekStart={weekStart}
+                allDayPlans={allDayPlans}
+                onWeekClick={onWeekClick}
+                onDayClick={onDayClick}
+                selectedDate={selectedDate}
+              />
+              <WeekFeedbackRow trainingWeek={trainingWeek} onWeekClick={onWeekClick} />
+            </React.Fragment>
+          );
+        })}
       </div>
     </div>
   );

@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Plus, Pencil, Archive, ArrowLeft, Loader2, LogOut, UserCircle, Trash2 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 
 const SHOE_TYPES = ['Trainer', 'Workout', 'Spike', 'Trail', 'Racing Flat'];
@@ -40,6 +40,9 @@ const DEFAULT_MAX_MILEAGE = 500;
 export default function ShoeInventory() {
   const queryClient = useQueryClient();
   const { logout } = useAuth();
+  const location = useLocation();
+  const trainingLogUrl = `${createPageUrl('TrainingLog')}${location.search}`;
+  const accountUrl = `${createPageUrl('Account')}${location.search}`;
   const [user, setUser] = useState(null);
   const [showEditor, setShowEditor] = useState(false);
   const [editingShoe, setEditingShoe] = useState(null);
@@ -166,7 +169,7 @@ export default function ShoeInventory() {
         <div className="btc-rail-card mb-6 overflow-hidden rounded-2xl border border-red-900/10 bg-white/90 p-4 shadow-sm backdrop-blur dark:border-red-500/20 dark:bg-slate-950/90">
           <div className="flex items-center justify-between gap-4 pl-2">
             <div className="flex items-center gap-3">
-              <Link to={createPageUrl('TrainingLog')}>
+              <Link to={trainingLogUrl}>
                 <Button variant="ghost" size="icon">
                   <ArrowLeft className="w-5 h-5" />
                 </Button>
@@ -175,7 +178,7 @@ export default function ShoeInventory() {
             </div>
 
             <div className="flex items-center gap-2">
-              <Link to={createPageUrl('Account')}>
+              <Link to={accountUrl}>
                 <Button variant="outline" size="sm">
                   <UserCircle className="mr-1.5 h-4 w-4" />
                   Account

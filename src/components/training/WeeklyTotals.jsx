@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Activity, Bike, ChevronDown, Clock, Dumbbell, Footprints, TrendingUp } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
-import { getAthleteActivities } from "./sessionUtils";
+import { usePersistentBoolean } from "@/hooks/usePersistentBoolean";
+import { countsAsRunMileage, getAthleteActivities, isXTrainType } from "./sessionUtils";
 
 export default function WeeklyTotals({ dayPlans }) {
   const calculateTotals = () => {
@@ -23,9 +24,9 @@ export default function WeeklyTotals({ dayPlans }) {
           const duration = Number(activityRecord.duration_minutes) || 0;
           const mileage = Number(activityRecord.mileage) || 0;
 
-          if (activityRecord.session_type === 'X-Train') {
+          if (isXTrainType(activityRecord.session_type)) {
             totalXTrainMinutes += duration;
-          } else if (activityRecord.session_type !== 'Off') {
+          } else if (countsAsRunMileage(activityRecord.session_type)) {
             totalMileage += mileage;
             totalRunMinutes += duration;
           }
@@ -86,7 +87,7 @@ export default function WeeklyTotals({ dayPlans }) {
 }
 
 function WeeklyTotalsShell({ totals, StatCard }) {
-  const [isOpen, setIsOpen] = useState(true);
+  const [isOpen, setIsOpen] = usePersistentBoolean('btc.weeklyTotals.open', true);
 
   return (
     <Collapsible

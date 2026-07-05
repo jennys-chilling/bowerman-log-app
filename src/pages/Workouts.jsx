@@ -1,14 +1,24 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { addDays, format, startOfWeek } from 'date-fns';
 import { useQuery } from '@tanstack/react-query';
-import { Activity, ArrowLeft, Loader2, Mail } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Activity, ArrowLeft, Check, Filter, Loader2, Mail, Plus, X } from 'lucide-react';
+import { Link, useLocation } from 'react-router-dom';
 import { appClient } from '@/api/client';
 import BrandMark from '@/components/BrandMark';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -19,12 +29,25 @@ import { getRpeColorClasses } from '@/components/training/rpeColors';
 import {
   getAthleteActivities,
   getCoachActivities,
+  displayWorkoutTypes,
+  displayWorkoutType,
   hasAthleteActivityData,
   hasCoachActivityData,
+  matchesWorkoutTypeFilters,
+  WORKOUT_TYPE_MENU,
 } from '@/components/training/sessionUtils';
 
 const today = new Date();
 const defaultStart = startOfWeek(addDays(today, -28), { weekStartsOn: 1 });
+const DEFAULT_TYPE_FILTERS = ['Workout'];
+
+const CATEGORY_FILTER_LABELS = {
+  Workout: 'All Workouts',
+  'Long Run': 'All Long Runs',
+  'X-Train': 'All X-Train',
+};
+
+const getTypeFilterLabel = (filter = '') => CATEGORY_FILTER_LABELS[filter] || displayWorkoutType(filter);
 
 const getDisplayName = (athlete = {}) => {
   const structuredName = `${athlete.first_name || ''} ${athlete.last_name || ''}`.trim();
@@ -41,16 +64,14 @@ const formatNumber = (value) => {
   return Number.isInteger(number) ? String(number) : number.toFixed(1).replace(/\.0$/, '');
 };
 
-const isWorkoutLabel = (value = '') => value.split(/\s+OR\s+/i).some((type) => type.trim() === 'Workout');
-
-const collectWorkouts = (dayPlans = []) => dayPlans.flatMap((dayPlan) => {
+const collectWorkouts = (dayPlans = [], typeFilters = DEFAULT_TYPE_FILTERS) => dayPlans.flatMap((dayPlan) => {
   const athleteWorkouts = [
     ['AM', dayPlan.am_session],
     ['PM', dayPlan.pm_session],
   ].flatMap(([label, session]) => (
     getAthleteActivities(session)
       .filter(hasAthleteActivityData)
-      .filter((activity) => isWorkoutLabel(activity.session_type))
+      .filter((activity) => matchesWorkoutTypeFilters(activity.session_type, typeFilters))
       .map((activity) => ({ label, activity }))
   ));
 
@@ -60,7 +81,7 @@ const collectWorkouts = (dayPlans = []) => dayPlans.flatMap((dayPlan) => {
   ].flatMap(([label, session]) => (
     getCoachActivities(session)
       .filter(hasCoachActivityData)
-      .filter((activity) => isWorkoutLabel(activity.workout_type))
+      .filter((activity) => matchesWorkoutTypeFilters(activity.workout_type, typeFilters))
       .map((activity) => ({ label, activity }))
   ));
 
@@ -72,11 +93,75 @@ const collectWorkouts = (dayPlans = []) => dayPlans.flatMap((dayPlan) => {
   }));
 });
 
+function WorkoutTypeFilterMenu({ selectedFilters, onToggleFilter }) {
+  const renderFilterItem = ({ label, value }) => {
+    const selected = selectedFilters.includes(value);
+
+    return (
+      <DropdownMenuItem
+        key={value}
+        className={cn(selected && "font-semibold text-red-700 dark:text-red-200")}
+        onSelect={(event) => {
+          event.preventDefault();
+          onToggleFilter(value);
+        }}
+      >
+        <span className="min-w-0 flex-1 truncate">{label}</span>
+        {selected && <Check className="h-4 w-4 text-red-600 dark:text-red-300" />}
+      </DropdownMenuItem>
+    );
+  };
+
+  const renderMenuItem = (item) => {
+    if (item.options?.length) {
+      const categoryValue = item.label;
+      const categorySelected = selectedFilters.includes(categoryValue);
+      const selectedOptions = item.options.filter((option) => selectedFilters.includes(option.value));
+      const label = selectedOptions.length
+        ? `${item.label} (${selectedOptions.map((option) => option.label).join(' OR ')})`
+        : item.label;
+
+      return (
+        <DropdownMenuSub key={item.label}>
+          <DropdownMenuSubTrigger className={cn((categorySelected || selectedOptions.length > 0) && "font-semibold text-red-700 dark:text-red-200")}>
+            <span className="min-w-0 truncate">{categorySelected ? getTypeFilterLabel(categoryValue) : label}</span>
+          </DropdownMenuSubTrigger>
+          <DropdownMenuSubContent className="w-56">
+            {renderFilterItem({ label: getTypeFilterLabel(categoryValue), value: categoryValue })}
+            <DropdownMenuSeparator />
+            {item.options.map((option) => renderFilterItem(option))}
+          </DropdownMenuSubContent>
+        </DropdownMenuSub>
+      );
+    }
+
+    return renderFilterItem(item);
+  };
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button type="button" variant="outline" className="h-9">
+          <Plus className="mr-2 h-4 w-4" />
+          Add Type
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="w-72">
+        {WORKOUT_TYPE_MENU.map(renderMenuItem)}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
 export default function Workouts() {
+  const location = useLocation();
+  const logSearchParams = new URLSearchParams(location.search);
+  const initialAthleteId = logSearchParams.get('athlete');
   const [user, setUser] = useState(null);
-  const [athleteId, setAthleteId] = useState(null);
+  const [athleteId, setAthleteId] = useState(() => initialAthleteId);
   const [startDate, setStartDate] = useState(format(defaultStart, 'yyyy-MM-dd'));
   const [endDate, setEndDate] = useState(format(today, 'yyyy-MM-dd'));
+  const [typeFilters, setTypeFilters] = useState(DEFAULT_TYPE_FILTERS);
 
   useEffect(() => {
     appClient.auth.me().then((currentUser) => {
@@ -88,6 +173,7 @@ export default function Workouts() {
   }, []);
 
   const isCoach = user?.role === 'admin';
+  const trainingLogUrl = `${createPageUrl('TrainingLog')}${location.search}`;
 
   const { data: athletes = [] } = useQuery({
     queryKey: ['athletes'],
@@ -95,10 +181,15 @@ export default function Workouts() {
     enabled: isCoach,
   });
 
-  const athleteOptions = athletes.filter((athlete) => athlete.role !== 'admin');
+  const athleteOptions = useMemo(
+    () => athletes.filter((athlete) => athlete.role !== 'admin'),
+    [athletes]
+  );
 
   useEffect(() => {
-    if (!isCoach || athleteId || athleteOptions.length === 0) return;
+    if (!isCoach || athleteOptions.length === 0) return;
+    if (athleteId && athleteOptions.some((athlete) => athlete.id === athleteId)) return;
+
     setAthleteId(athleteOptions[0].id);
   }, [athleteId, athleteOptions, isCoach]);
 
@@ -120,7 +211,7 @@ export default function Workouts() {
     enabled: !!athleteId && !!startDate && !!endDate,
   });
 
-  const workouts = useMemo(() => collectWorkouts(dayPlans), [dayPlans]);
+  const workouts = useMemo(() => collectWorkouts(dayPlans, typeFilters), [dayPlans, typeFilters]);
   const totals = useMemo(() => {
     const mileage = workouts.reduce((sum, workout) => sum + (Number(workout.athleteActivity.mileage) || 0), 0);
     const minutes = workouts.reduce((sum, workout) => sum + (Number(workout.athleteActivity.duration_minutes) || 0), 0);
@@ -136,6 +227,18 @@ export default function Workouts() {
     };
   }, [workouts]);
 
+  const toggleTypeFilter = (filter) => {
+    setTypeFilters((current) => (
+      current.includes(filter)
+        ? current.filter((currentFilter) => currentFilter !== filter)
+        : [...current, filter]
+    ));
+  };
+
+  const removeTypeFilter = (filter) => {
+    setTypeFilters((current) => current.filter((currentFilter) => currentFilter !== filter));
+  };
+
   if (!user) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center dark:bg-slate-950">
@@ -150,7 +253,7 @@ export default function Workouts() {
         <div className="btc-rail-card mb-6 overflow-hidden rounded-2xl border border-slate-300 bg-white p-4 shadow-md backdrop-blur dark:border-slate-700 dark:bg-slate-950">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-3">
-              <Link to={createPageUrl('TrainingLog')}>
+              <Link to={trainingLogUrl}>
                 <Button variant="ghost" size="icon">
                   <ArrowLeft className="h-5 w-5" />
                 </Button>
@@ -202,11 +305,47 @@ export default function Workouts() {
             <Label htmlFor="workouts-end">End</Label>
             <Input id="workouts-end" type="date" value={endDate} onChange={(event) => setEndDate(event.target.value)} />
           </div>
+          <div className="space-y-2 md:col-span-full">
+            <Label className="flex items-center gap-1.5">
+              <Filter className="h-4 w-4 text-red-700 dark:text-red-300" />
+              Type Filters
+            </Label>
+            <div className="flex flex-wrap items-center gap-2">
+              {typeFilters.map((filter) => (
+                <Badge
+                  key={filter}
+                  variant="outline"
+                  className="gap-1.5 border-red-200 bg-red-50 px-2.5 py-1 text-sm font-semibold text-red-900 dark:border-red-900 dark:bg-red-950/40 dark:text-red-100"
+                >
+                  {getTypeFilterLabel(filter)}
+                  <button
+                    type="button"
+                    className="rounded-full p-0.5 text-red-700 hover:bg-red-100 hover:text-red-900 dark:text-red-200 dark:hover:bg-red-900/60 dark:hover:text-white"
+                    onClick={() => removeTypeFilter(filter)}
+                    aria-label={`Remove ${getTypeFilterLabel(filter)} filter`}
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </Badge>
+              ))}
+              {typeFilters.length === 0 && (
+                <Badge variant="outline" className="px-2.5 py-1 text-sm font-medium text-slate-500 dark:text-slate-300">
+                  All Types
+                </Badge>
+              )}
+              <WorkoutTypeFilterMenu selectedFilters={typeFilters} onToggleFilter={toggleTypeFilter} />
+              {typeFilters.length > 0 && (
+                <Button type="button" variant="ghost" size="sm" className="h-9 px-2 text-xs" onClick={() => setTypeFilters([])}>
+                  Clear All
+                </Button>
+              )}
+            </div>
+          </div>
         </div>
 
         <div className="mb-6 grid gap-3 sm:grid-cols-4">
           <Card className="border-slate-300 shadow-sm dark:border-slate-700">
-            <CardContent className="p-4"><div className="text-xs uppercase text-slate-500 dark:text-slate-300">Workouts</div><div className="text-2xl font-bold">{totals.count}</div></CardContent>
+            <CardContent className="p-4"><div className="text-xs uppercase text-slate-500 dark:text-slate-300">Results</div><div className="text-2xl font-bold">{totals.count}</div></CardContent>
           </Card>
           <Card className="border-slate-300 shadow-sm dark:border-slate-700">
             <CardContent className="p-4"><div className="text-xs uppercase text-slate-500 dark:text-slate-300">Miles</div><div className="text-2xl font-bold">{formatNumber(totals.mileage)}</div></CardContent>
@@ -226,7 +365,7 @@ export default function Workouts() {
         ) : workouts.length === 0 ? (
           <div className="rounded-xl border border-slate-300 bg-white p-12 text-center shadow-sm dark:border-slate-700 dark:bg-slate-950">
             <Activity className="mx-auto mb-3 h-8 w-8 text-slate-400" />
-            <div className="font-semibold">No workouts in this range</div>
+            <div className="font-semibold">No matching activities in this range</div>
           </div>
         ) : (
           <div className="space-y-4">
@@ -251,7 +390,7 @@ export default function Workouts() {
                         <div className="space-y-2">
                           {workout.coachMatches.map((coachWorkout, coachIndex) => (
                             <div key={coachIndex} className="whitespace-pre-wrap text-sm text-slate-800 dark:text-slate-100">
-                              {coachWorkout.activity.prescription || coachWorkout.activity.workout_type}
+                              {coachWorkout.activity.prescription || displayWorkoutTypes(coachWorkout.activity.workout_type)}
                               {coachWorkout.activity.planned_difficulty && (
                                 <span className="ml-2 font-semibold">RPE {coachWorkout.activity.planned_difficulty}</span>
                               )}
@@ -264,7 +403,7 @@ export default function Workouts() {
                     <div className="grid gap-3 sm:grid-cols-3">
                       <div><div className="text-xs uppercase text-slate-500 dark:text-slate-300">Mileage</div><div className="font-bold">{formatNumber(workout.athleteActivity.mileage)} mi</div></div>
                       <div><div className="text-xs uppercase text-slate-500 dark:text-slate-300">Duration</div><div className="font-bold">{formatNumber(workout.athleteActivity.duration_minutes)} min</div></div>
-                      <div><div className="text-xs uppercase text-slate-500 dark:text-slate-300">Type</div><div className="font-bold">{workout.athleteActivity.session_type}</div></div>
+                      <div><div className="text-xs uppercase text-slate-500 dark:text-slate-300">Type</div><div className="font-bold">{displayWorkoutTypes(workout.athleteActivity.session_type)}</div></div>
                     </div>
 
                     {workout.athleteActivity.comments?.trim() && (

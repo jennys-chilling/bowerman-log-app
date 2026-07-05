@@ -134,6 +134,26 @@
         }
       }
     },
+    "training_factors": {
+      "type": "object",
+      "properties": {
+        "sleep_hours": {
+          "type": "string"
+        },
+        "location": {
+          "type": "string"
+        },
+        "vert": {
+          "type": "string"
+        },
+        "weight": {
+          "type": "string"
+        },
+        "rhr": {
+          "type": "string"
+        }
+      }
+    },
     "splits": {
       "type": "array",
       "items": {

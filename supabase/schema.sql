@@ -18,6 +18,7 @@ create table if not exists public.profiles (
   full_name text,
   phone_number text,
   profile_image_url text,
+  training_factor_preferences jsonb not null default '[]'::jsonb,
   role text not null default 'athlete' check (role in ('athlete', 'admin')),
   created_at timestamptz not null default timezone('utc', now()),
   updated_at timestamptz not null default timezone('utc', now())
@@ -27,7 +28,8 @@ alter table public.profiles
   add column if not exists first_name text,
   add column if not exists last_name text,
   add column if not exists phone_number text,
-  add column if not exists profile_image_url text;
+  add column if not exists profile_image_url text,
+  add column if not exists training_factor_preferences jsonb not null default '[]'::jsonb;
 
 create table if not exists public.training_weeks (
   id uuid primary key default gen_random_uuid(),
@@ -59,6 +61,7 @@ create table if not exists public.day_plans (
   am_session jsonb not null default '{}'::jsonb,
   pm_session jsonb not null default '{}'::jsonb,
   lift jsonb not null default '{}'::jsonb,
+  training_factors jsonb not null default '{}'::jsonb,
   splits jsonb not null default '[]'::jsonb,
   created_at timestamptz not null default timezone('utc', now()),
   updated_at timestamptz not null default timezone('utc', now()),
@@ -66,7 +69,8 @@ create table if not exists public.day_plans (
 );
 
 alter table public.day_plans
-  add column if not exists lift_coach jsonb not null default '{}'::jsonb;
+  add column if not exists lift_coach jsonb not null default '{}'::jsonb,
+  add column if not exists training_factors jsonb not null default '{}'::jsonb;
 
 create table if not exists public.week_templates (
   id uuid primary key default gen_random_uuid(),
