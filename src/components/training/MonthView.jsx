@@ -19,8 +19,8 @@ import {
   neutralWorkoutBadgeClass,
 } from './sessionUtils';
 
-const MONTH_GRID_TEMPLATE = 'repeat(7, minmax(10rem, 1fr)) minmax(5.75rem, 6.5rem)';
-const MONTH_GRID_MIN_WIDTH = '76rem';
+const MONTH_GRID_TEMPLATE = 'repeat(7, minmax(10rem, 1fr)) minmax(5.75rem, 6.5rem) 15rem';
+const MONTH_GRID_MIN_WIDTH = '91.25rem';
 
 const COMPACT_SESSION_TYPES = {
   'Easy Run': 'Easy',
@@ -243,7 +243,7 @@ function CoachSessionSummary({ label, session }) {
   ));
 }
 
-function FeedbackPanel({ label, value, tone }) {
+function FeedbackPanel({ label, value, tone, compact = false }) {
   const text = String(value || '').trim();
 
   if (!text) {
@@ -256,63 +256,57 @@ function FeedbackPanel({ label, value, tone }) {
   };
 
   return (
-    <div className={cn('rounded-lg border px-3 py-2 shadow-sm', toneClasses[tone])}>
+    <div className={cn('rounded-lg border px-3 py-2', toneClasses[tone])}>
       <div className="mb-1 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide opacity-80">
         <MessageSquare className="h-3 w-3" />
         {label}
       </div>
-      <div className="max-h-24 overflow-y-auto whitespace-pre-wrap text-[11px] leading-snug sm:text-xs">
+      <div className={cn(
+        'overflow-y-auto whitespace-pre-wrap text-[11px] leading-snug sm:text-xs',
+        compact ? 'max-h-20' : 'max-h-24'
+      )}>
         {text}
       </div>
     </div>
   );
 }
 
-function WeekFeedbackRow({ trainingWeek, onWeekClick }) {
+function WeekFeedbackColumn({ trainingWeek }) {
   const hasAthleteReflection = hasText(trainingWeek?.athlete_reflection);
   const hasCoachFeedback = hasText(trainingWeek?.coach_feedback);
-  const panelCount = Number(hasAthleteReflection) + Number(hasCoachFeedback);
-
-  if (!hasAthleteReflection && !hasCoachFeedback) {
-    return null;
-  }
 
   return (
-    <div
-      className="grid border-b border-slate-200 bg-slate-50/80 dark:border-slate-800 dark:bg-slate-900/70"
-      style={{ gridTemplateColumns: MONTH_GRID_TEMPLATE, minWidth: MONTH_GRID_MIN_WIDTH }}
-    >
-      <div
-        className="border-r border-slate-200 p-2 dark:border-slate-800 sm:p-2.5"
-        style={{ gridColumn: '1 / span 7' }}
-      >
-        <div className={cn('grid gap-2', panelCount > 1 ? 'md:grid-cols-2' : 'md:grid-cols-1')}>
-          <FeedbackPanel
-            label="Athlete Reflection"
-            value={trainingWeek?.athlete_reflection}
-            tone="athlete"
-          />
-          <FeedbackPanel
-            label="Coach Feedback"
-            value={trainingWeek?.coach_feedback}
-            tone="coach"
-          />
-        </div>
-      </div>
-      <button
-        type="button"
-        className="sticky right-0 z-10 flex min-h-16 flex-col items-center justify-center gap-1 border-l border-slate-300 bg-slate-100 px-2 text-center text-[10px] font-bold uppercase tracking-wide text-slate-500 transition-colors hover:bg-slate-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
-        onClick={() => onWeekClick(trainingWeek.week_start_date ? parseISO(trainingWeek.week_start_date) : new Date())}
-        title="Open this week"
-      >
+    <div className="border-l border-slate-300 bg-slate-50 p-2 dark:border-slate-700 dark:bg-slate-900 md:sticky md:right-0 md:z-10">
+      <div className="mb-2 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-300">
         <MessageSquare className="h-3.5 w-3.5 text-red-600 dark:text-red-300" />
         Feedback
-      </button>
+      </div>
+
+      {hasAthleteReflection || hasCoachFeedback ? (
+        <div className="space-y-2">
+          <FeedbackPanel
+            label="Athlete"
+            value={trainingWeek?.athlete_reflection}
+            tone="athlete"
+            compact
+          />
+          <FeedbackPanel
+            label="Coach"
+            value={trainingWeek?.coach_feedback}
+            tone="coach"
+            compact
+          />
+        </div>
+      ) : (
+        <div className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-[11px] font-medium text-slate-400 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-500">
+          No feedback
+        </div>
+      )}
     </div>
   );
 }
 
-function WeekRow({ weekStart, allDayPlans, onWeekClick, onDayClick, selectedDate }) {
+function WeekRow({ weekStart, trainingWeek, allDayPlans, onWeekClick, onDayClick, selectedDate }) {
   const days = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
   const weekStats = getWeekStats(days, allDayPlans);
   const avgRpeColors = getRpeColorClasses(weekStats.avgRpe ? Math.round(weekStats.avgRpe) : null);
@@ -419,7 +413,7 @@ function WeekRow({ weekStart, allDayPlans, onWeekClick, onDayClick, selectedDate
       })}
 
       <div
-        className="sticky right-0 z-10 flex min-h-[220px] cursor-pointer flex-col items-center justify-center gap-1 border-l border-slate-300 bg-slate-100 p-2 text-center transition-colors hover:bg-slate-200 dark:border-slate-700 dark:bg-slate-900 dark:hover:bg-slate-800 sm:min-h-[260px]"
+        className="sticky right-0 z-10 flex min-h-[220px] cursor-pointer flex-col items-center justify-center gap-1 border-l border-slate-300 bg-slate-100 p-2 text-center transition-colors hover:bg-slate-200 dark:border-slate-700 dark:bg-slate-900 dark:hover:bg-slate-800 sm:min-h-[260px] md:right-60"
         onClick={() => onWeekClick(weekStart)}
         title="Open this week"
       >
@@ -451,6 +445,7 @@ function WeekRow({ weekStart, allDayPlans, onWeekClick, onDayClick, selectedDate
           Open
         </div>
       </div>
+      <WeekFeedbackColumn trainingWeek={trainingWeek} />
     </div>
   );
 }
@@ -535,8 +530,11 @@ export default function MonthView({
               {dayHeader}
             </div>
           ))}
-          <div className="sticky right-0 z-20 border-l border-slate-300 bg-slate-200 py-2.5 text-center text-xs font-bold uppercase tracking-wide text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200">
+          <div className="sticky right-0 z-20 border-l border-slate-300 bg-slate-200 py-2.5 text-center text-xs font-bold uppercase tracking-wide text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 md:right-60">
             Total
+          </div>
+          <div className="border-l border-slate-300 bg-slate-200 py-2.5 text-center text-xs font-bold uppercase tracking-wide text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 md:sticky md:right-0 md:z-20">
+            Feedback
           </div>
         </div>
 
@@ -559,12 +557,12 @@ export default function MonthView({
               )}
               <WeekRow
                 weekStart={weekStart}
+                trainingWeek={trainingWeek}
                 allDayPlans={allDayPlans}
                 onWeekClick={onWeekClick}
                 onDayClick={onDayClick}
                 selectedDate={selectedDate}
               />
-              <WeekFeedbackRow trainingWeek={trainingWeek} onWeekClick={onWeekClick} />
             </React.Fragment>
           );
         })}
