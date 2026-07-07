@@ -224,7 +224,7 @@ export default function DayColumn({ date, dayPlan, onEdit, isCoach, shoes = [] }
         <div className="mb-1.5 flex items-center justify-between sm:mb-2">
           <span className="text-[10px] font-medium uppercase tracking-wider text-slate-400 dark:text-slate-500">Coach</span>
           {isCoach && (
-            <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => onEdit(dayPlan, 'coach')}>
+            <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => onEdit(dayPlan, 'coach', date)}>
               <Pencil className="h-3 w-3" />
             </Button>
           )}
@@ -241,7 +241,7 @@ export default function DayColumn({ date, dayPlan, onEdit, isCoach, shoes = [] }
         <div className="mb-1.5 flex items-center justify-between sm:mb-2">
           <span className="text-[10px] font-medium uppercase tracking-wider text-slate-400 dark:text-slate-500">Athlete</span>
           {!isCoach && (
-            <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => onEdit(dayPlan, 'athlete')}>
+            <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => onEdit(dayPlan, 'athlete', date)}>
               <Pencil className="h-3 w-3" />
             </Button>
           )}

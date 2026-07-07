@@ -503,18 +503,28 @@ export default function TrainingLog() {
     },
   });
   
-  const handleEditDay = (dayPlan, mode) => {
-    const dayDate = dayPlan?.date 
+  const handleEditDay = async (dayPlan, mode, fallbackDate) => {
+    const dayDate = dayPlan?.date
       ? parseISO(dayPlan.date)
-      : addDays(currentWeekStart, DAYS.indexOf(dayPlan?.day_of_week || 'Monday'));
-    
-    setEditorState({
-      coachEditor: mode === 'coach',
-      athleteEditor: mode === 'athlete',
-      splitsEditor: false,
-      selectedDay: dayDate,
-      selectedDayPlan: dayPlan,
-    });
+      : fallbackDate || addDays(currentWeekStart, DAYS.indexOf(dayPlan?.day_of_week || 'Monday'));
+
+    try {
+      const resolvedDayPlan = dayPlan?.id ? dayPlan : await ensureDayPlanForDate(dayDate);
+
+      setEditorState({
+        coachEditor: mode === 'coach',
+        athleteEditor: mode === 'athlete',
+        splitsEditor: false,
+        selectedDay: dayDate,
+        selectedDayPlan: resolvedDayPlan,
+      });
+    } catch (error) {
+      toast({
+        title: 'Could not open day',
+        description: error.message || 'Could not create the day plan for editing.',
+        variant: 'destructive',
+      });
+    }
   };
 
   const getOrCreateTrainingWeek = async (athleteId, weekStartDate) => {
@@ -667,31 +677,33 @@ export default function TrainingLog() {
   const persistAthleteLog = async (data, { closeEditor = false, updateShoes = false, showErrors = false } = {}) => {
     try {
       const dayPlan = editorState.selectedDayPlan;
-      if (dayPlan?.id) {
-        if (updateShoes) {
-          const oldShoeMileage = combineShoeMileageMaps(
-            getShoeMileageById(dayPlan.am_session),
-            getShoeMileageById(dayPlan.pm_session)
-          );
-          const newShoeMileage = combineShoeMileageMaps(
-            getShoeMileageById(data.am_session),
-            getShoeMileageById(data.pm_session)
-          );
-          const shoeIds = new Set([...oldShoeMileage.keys(), ...newShoeMileage.keys()]);
+      if (!dayPlan?.id) {
+        throw new Error('Could not save because this day is not connected to a training week. Close the editor and try again.');
+      }
 
-          for (const shoeId of shoeIds) {
-            const mileageDelta = (newShoeMileage.get(shoeId) || 0) - (oldShoeMileage.get(shoeId) || 0);
-            if (mileageDelta !== 0) {
-              await updateShoeMileageMutation.mutateAsync({
-                shoeIds: [shoeId],
-                mileage: mileageDelta,
-              });
-            }
+      if (updateShoes) {
+        const oldShoeMileage = combineShoeMileageMaps(
+          getShoeMileageById(dayPlan.am_session),
+          getShoeMileageById(dayPlan.pm_session)
+        );
+        const newShoeMileage = combineShoeMileageMaps(
+          getShoeMileageById(data.am_session),
+          getShoeMileageById(data.pm_session)
+        );
+        const shoeIds = new Set([...oldShoeMileage.keys(), ...newShoeMileage.keys()]);
+
+        for (const shoeId of shoeIds) {
+          const mileageDelta = (newShoeMileage.get(shoeId) || 0) - (oldShoeMileage.get(shoeId) || 0);
+          if (mileageDelta !== 0) {
+            await updateShoeMileageMutation.mutateAsync({
+              shoeIds: [shoeId],
+              mileage: mileageDelta,
+            });
           }
         }
-
-        await updateDayPlanMutation.mutateAsync({ id: dayPlan.id, data });
       }
+
+      await updateDayPlanMutation.mutateAsync({ id: dayPlan.id, data });
 
       if (closeEditor) {
         setEditorState({ ...editorState, athleteEditor: false });

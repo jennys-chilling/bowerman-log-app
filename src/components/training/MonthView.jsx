@@ -462,10 +462,28 @@ export default function MonthView({
   selectedDate,
   inlineEditor,
 }) {
+  const [rangeWeeksDraft, setRangeWeeksDraft] = React.useState(String(rangeWeeks));
   const weeks = Array.from({ length: rangeWeeks }, (_, i) => addDays(rangeStart, i * 7));
   const dayHeaders = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   const rangeEnd = addDays(rangeStart, (rangeWeeks * 7) - 1);
   const selectedWeekKey = selectedDate ? format(startOfWeek(selectedDate, { weekStartsOn: 1 }), 'yyyy-MM-dd') : null;
+
+  React.useEffect(() => {
+    setRangeWeeksDraft(String(rangeWeeks));
+  }, [rangeWeeks]);
+
+  const commitRangeWeeksDraft = () => {
+    const parsed = parseInt(rangeWeeksDraft, 10);
+
+    if (!Number.isFinite(parsed)) {
+      setRangeWeeksDraft(String(rangeWeeks));
+      return;
+    }
+
+    const nextRangeWeeks = Math.max(1, Math.min(16, parsed));
+    setRangeWeeksDraft(String(nextRangeWeeks));
+    onRangeWeeksChange(nextRangeWeeks);
+  };
 
   const goToPrev = () => {
     onRangeStartChange(addDays(rangeStart, rangeWeeks * -7));
@@ -496,11 +514,16 @@ export default function MonthView({
             <Label htmlFor="range-weeks" className="text-[10px] uppercase tracking-wide text-slate-500 dark:text-slate-300">Weeks</Label>
             <Input
               id="range-weeks"
-              type="number"
-              min="1"
-              max="16"
-              value={rangeWeeks}
-              onChange={(event) => onRangeWeeksChange(Math.max(1, Math.min(16, parseInt(event.target.value, 10) || 1)))}
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              value={rangeWeeksDraft}
+              onChange={(event) => setRangeWeeksDraft(event.target.value.replace(/\D/g, ''))}
+              onBlur={commitRangeWeeksDraft}
+              onKeyDown={(event) => {
+                if (event.key !== 'Enter') return;
+                event.currentTarget.blur();
+              }}
               className="h-8 text-sm font-semibold sm:w-24"
             />
           </div>
