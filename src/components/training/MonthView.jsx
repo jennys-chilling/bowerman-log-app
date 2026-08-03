@@ -17,6 +17,7 @@ import {
   hasCoachSessionData,
   isXTrainType,
   neutralWorkoutBadgeClass,
+  XTRAIN_OTHER_TYPE,
 } from './sessionUtils';
 
 const MONTH_GRID_TEMPLATE = 'repeat(7, minmax(10rem, 1fr)) minmax(5.75rem, 6.5rem) 15rem';
@@ -39,6 +40,7 @@ const COMPACT_SESSION_TYPES = {
   'X-Train > Swim': 'Swim',
   'X-Train > Bike': 'Bike',
   'X-Train > Ski': 'Ski',
+  [XTRAIN_OTHER_TYPE]: 'Other',
 };
 
 const hasLift = (lift = {}) => (
@@ -61,12 +63,16 @@ const formatMinutes = (minutes) => {
   return `${hours}h ${remainingMinutes}m`;
 };
 
-const compactSessionType = (sessionType = 'Session') => (
-  sessionType
+const compactSessionType = (sessionType = 'Session', xtrainOther = '') => {
+  const customXTrainType = String(xtrainOther || '').trim();
+
+  return sessionType
     .split(/\s+OR\s+/i)
-    .map((type) => COMPACT_SESSION_TYPES[type] || type)
-    .join(' / ')
-);
+    .map((type) => (type === XTRAIN_OTHER_TYPE && customXTrainType
+      ? customXTrainType
+      : COMPACT_SESSION_TYPES[type] || type))
+    .join(' / ');
+};
 
 const hasText = (value) => Boolean(String(value || '').trim());
 
@@ -136,7 +142,7 @@ function AthleteActivitySummary({ label, activity, index, total }) {
         )}
           title={sessionType}
         >
-          {compactSessionType(sessionType)}
+          {compactSessionType(sessionType, activity.xtrain_other || '')}
         </span>
       </div>
 
@@ -210,7 +216,7 @@ function CoachActivitySummary({ label, activity, index, total }) {
           {label}{total > 1 ? index + 1 : ''}
         </span>
         <span className={cn('min-w-0 rounded border px-1.5 py-0.5 text-[10px] font-semibold leading-none', neutralWorkoutBadgeClass)}>
-          {compactSessionType(workoutType)}
+          {compactSessionType(workoutType, activity.xtrain_other || '')}
         </span>
       </div>
       {activity.planned_difficulty !== null && activity.planned_difficulty !== undefined && (

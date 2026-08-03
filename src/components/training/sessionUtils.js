@@ -1,3 +1,5 @@
+export const XTRAIN_OTHER_TYPE = 'X-Train > Other';
+
 export const WORKOUT_TYPE_MENU = [
   { label: 'Off', value: 'Off' },
   { label: 'Easy Run', value: 'Easy Run' },
@@ -29,6 +31,7 @@ export const WORKOUT_TYPE_MENU = [
       { label: 'Bike', value: 'X-Train > Bike' },
       { label: 'Swim', value: 'X-Train > Swim' },
       { label: 'Ski', value: 'X-Train > Ski' },
+      { label: 'Other', value: XTRAIN_OTHER_TYPE },
     ],
   },
 ];
@@ -72,14 +75,25 @@ export const displayWorkoutType = (type = '') => (
   WORKOUT_TYPE_LABELS[type] || type.split(' > ').pop() || type
 );
 
-export const displayWorkoutTypes = (value = '') => {
+export const isXTrainOtherType = (value = '') => parseWorkoutTypes(value).includes(XTRAIN_OTHER_TYPE);
+
+export const displayWorkoutTypeWithOther = (type = '', xtrainOther = '') => {
+  const customName = String(xtrainOther || '').trim();
+  if (type === XTRAIN_OTHER_TYPE && customName) {
+    return customName;
+  }
+
+  return displayWorkoutType(type);
+};
+
+export const displayWorkoutTypes = (value = '', xtrainOther = '') => {
   const selectedTypes = parseWorkoutTypes(value);
   if (selectedTypes.length > 0) {
-    return selectedTypes.map(displayWorkoutType).join(WORKOUT_TYPE_SEPARATOR);
+    return selectedTypes.map((type) => displayWorkoutTypeWithOther(type, xtrainOther)).join(WORKOUT_TYPE_SEPARATOR);
   }
 
   if (Array.isArray(value)) {
-    return value.map(displayWorkoutType).join(WORKOUT_TYPE_SEPARATOR);
+    return value.map((type) => displayWorkoutTypeWithOther(type, xtrainOther)).join(WORKOUT_TYPE_SEPARATOR);
   }
 
   if (!value || typeof value !== 'string') {
@@ -88,7 +102,7 @@ export const displayWorkoutTypes = (value = '') => {
 
   return value
     .split(/\s+OR\s+/i)
-    .map((type) => displayWorkoutType(type.trim()))
+    .map((type) => displayWorkoutTypeWithOther(type.trim(), xtrainOther))
     .filter(Boolean)
     .join(WORKOUT_TYPE_SEPARATOR);
 };
@@ -141,6 +155,7 @@ export const canHaveStrides = (value = '') => (
 
 export const emptyAthleteActivity = {
   session_type: '',
+  xtrain_other: '',
   duration_minutes: 0,
   mileage: 0,
   shoes: [],
@@ -152,6 +167,7 @@ export const emptyAthleteActivity = {
 
 export const emptyCoachActivity = {
   workout_type: '',
+  xtrain_other: '',
   planned_difficulty: null,
   strides: false,
   prescription: '',
@@ -170,6 +186,7 @@ export const neutralWorkoutBadgeClass =
 
 export const hasAthleteActivityData = (activity = {}) => (
   Boolean(activity.session_type) ||
+  (isXTrainOtherType(activity.session_type) && Boolean(activity.xtrain_other?.trim())) ||
   Number(activity.duration_minutes) > 0 ||
   Number(activity.mileage) > 0 ||
   Boolean(activity.shoes?.length) ||
@@ -198,6 +215,7 @@ export const sanitizeAthleteActivity = (activity = {}) => {
   return {
     ...activity,
     session_type: sessionType,
+    xtrain_other: isXTrainOtherType(sessionType) ? String(activity.xtrain_other || '').trim() : '',
     duration_minutes: Number(activity.duration_minutes) || 0,
     mileage: allowMileage ? Number(activity.mileage) || 0 : 0,
     shoes: countAsRun ? activity.shoes || [] : [],
@@ -239,6 +257,7 @@ export const getSessionDuration = (session = {}) => getAthleteActivities(session
 
 export const hasCoachActivityData = (activity = {}) => (
   Boolean(activity.workout_type) ||
+  (isXTrainOtherType(activity.workout_type) && Boolean(activity.xtrain_other?.trim())) ||
   activity.planned_difficulty !== null && activity.planned_difficulty !== undefined ||
   Boolean(activity.strides) ||
   Boolean(activity.prescription?.trim()) ||
@@ -263,6 +282,7 @@ export const sanitizeCoachActivity = (activity = {}) => {
   return {
     ...activity,
     workout_type: workoutType,
+    xtrain_other: isXTrainOtherType(workoutType) ? String(activity.xtrain_other || '').trim() : '',
     planned_difficulty:
       activity.planned_difficulty === null || activity.planned_difficulty === undefined || activity.planned_difficulty === ''
         ? null

@@ -43,6 +43,7 @@ import {
   getCoachActivities,
   hasCoachLiftData,
   hasCoachSessionData,
+  isXTrainOtherType,
   makeCoachSession,
   sanitizeCoachLift,
 } from '@/components/training/sessionUtils';
@@ -68,6 +69,7 @@ const normalizeDraftActivity = (activity = {}) => ({
   ...emptyCoachActivity,
   ...activity,
   workout_type: activity.workout_type || '',
+  xtrain_other: activity.xtrain_other || '',
   planned_difficulty:
     activity.planned_difficulty === null || activity.planned_difficulty === undefined || activity.planned_difficulty === ''
       ? null
@@ -184,6 +186,7 @@ function SessionEditor({ title, icon: Icon, session, onChange, onRemove }) {
             ...activity,
             [field]: value,
             ...(field === 'workout_type' && !canHaveStrides(value) ? { strides: false } : {}),
+            ...(field === 'workout_type' && !isXTrainOtherType(value) ? { xtrain_other: '' } : {}),
           }
         : activity
     )));
@@ -224,11 +227,23 @@ function SessionEditor({ title, icon: Icon, session, onChange, onRemove }) {
                 <Label className="text-xs">Type</Label>
                 <WorkoutTypePicker
                   value={activity.workout_type}
+                  xtrainOther={activity.xtrain_other}
                   onChange={(value) => updateActivity(index, 'workout_type', value)}
                   triggerClassName="h-9"
                 />
                 <div className="text-[11px] text-slate-500 dark:text-slate-400">Select multiple for OR.</div>
               </div>
+
+              {isXTrainOtherType(activity.workout_type) && (
+                <div className="space-y-1">
+                  <Label className="text-xs">X-Train Type</Label>
+                  <Input
+                    value={activity.xtrain_other || ''}
+                    onChange={(event) => updateActivity(index, 'xtrain_other', event.target.value)}
+                    placeholder="e.g., Rowing, stair climber"
+                  />
+                </div>
+              )}
 
               <div className="space-y-1">
                 <div className="flex items-center justify-between gap-2">

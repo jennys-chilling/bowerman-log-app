@@ -19,6 +19,7 @@ import {
   getCoachActivities,
   hasCoachActivityData,
   hasCoachLiftData,
+  isXTrainOtherType,
   makeCoachSession,
   sanitizeCoachLift,
 } from "./sessionUtils";
@@ -43,6 +44,7 @@ function ActivityForm({ activity, index, canRemove, onChange, onRemove, compact 
   const rpeColors = getRpeColorClasses(activity.planned_difficulty);
   const rpeValue = activity.planned_difficulty ?? 5;
   const showStrides = canHaveStrides(activity.workout_type);
+  const showXTrainOther = isXTrainOtherType(activity.workout_type);
   const fieldSpacing = compact ? "space-y-1" : "space-y-2";
 
   const workoutTypeField = (
@@ -50,6 +52,7 @@ function ActivityForm({ activity, index, canRemove, onChange, onRemove, compact 
       <Label className={cn(compact && "text-xs")}>Workout Type</Label>
       <WorkoutTypePicker
         value={activity.workout_type}
+        xtrainOther={activity.xtrain_other}
         onChange={(value) => onChange('workout_type', value)}
         triggerClassName={compact ? "h-9" : undefined}
       />
@@ -58,6 +61,18 @@ function ActivityForm({ activity, index, canRemove, onChange, onRemove, compact 
       )}
     </div>
   );
+
+  const xtrainOtherField = showXTrainOther ? (
+    <div className={fieldSpacing}>
+      <Label className={cn(compact && "text-xs")}>X-Train Type</Label>
+      <Input
+        className={compact ? "h-9" : undefined}
+        value={activity.xtrain_other || ''}
+        onChange={(event) => onChange('xtrain_other', event.target.value)}
+        placeholder="e.g., Rowing, stair climber"
+      />
+    </div>
+  ) : null;
 
   const stridesControl = showStrides ? (
     <label className={cn(
@@ -153,6 +168,7 @@ function ActivityForm({ activity, index, canRemove, onChange, onRemove, compact 
         <div className="grid items-start gap-3 lg:grid-cols-[minmax(12rem,0.85fr)_minmax(17rem,1.3fr)_minmax(14rem,1fr)] xl:grid-cols-[minmax(11rem,0.75fr)_minmax(16rem,1.15fr)_minmax(13rem,0.9fr)_minmax(13rem,0.85fr)]">
             <div className="space-y-2">
               {workoutTypeField}
+              {xtrainOtherField}
               {stridesControl}
             </div>
             {prescriptionField}
@@ -167,6 +183,7 @@ function ActivityForm({ activity, index, canRemove, onChange, onRemove, compact 
             {workoutTypeField}
             {rpeField}
           </div>
+          {xtrainOtherField}
           {stridesControl}
           {prescriptionField}
           {coachNotesField}
@@ -184,6 +201,7 @@ function ActivitiesForm({ activities, onChange, onDeleteActivity, compact = fals
             ...activity,
             [field]: value,
             ...(field === 'workout_type' && !canHaveStrides(value) ? { strides: false } : {}),
+            ...(field === 'workout_type' && !isXTrainOtherType(value) ? { xtrain_other: '' } : {}),
           }
         : activity
     )));

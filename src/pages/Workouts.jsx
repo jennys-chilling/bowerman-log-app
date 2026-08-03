@@ -390,7 +390,7 @@ export default function Workouts() {
                         <div className="space-y-2">
                           {workout.coachMatches.map((coachWorkout, coachIndex) => (
                             <div key={coachIndex} className="whitespace-pre-wrap text-sm text-slate-800 dark:text-slate-100">
-                              {coachWorkout.activity.prescription || displayWorkoutTypes(coachWorkout.activity.workout_type)}
+                              {coachWorkout.activity.prescription || displayWorkoutTypes(coachWorkout.activity.workout_type, coachWorkout.activity.xtrain_other)}
                               {coachWorkout.activity.planned_difficulty && (
                                 <span className="ml-2 font-semibold">RPE {coachWorkout.activity.planned_difficulty}</span>
                               )}
@@ -403,7 +403,7 @@ export default function Workouts() {
                     <div className="grid gap-3 sm:grid-cols-3">
                       <div><div className="text-xs uppercase text-slate-500 dark:text-slate-300">Mileage</div><div className="font-bold">{formatNumber(workout.athleteActivity.mileage)} mi</div></div>
                       <div><div className="text-xs uppercase text-slate-500 dark:text-slate-300">Duration</div><div className="font-bold">{formatNumber(workout.athleteActivity.duration_minutes)} min</div></div>
-                      <div><div className="text-xs uppercase text-slate-500 dark:text-slate-300">Type</div><div className="font-bold">{displayWorkoutTypes(workout.athleteActivity.session_type)}</div></div>
+                      <div><div className="text-xs uppercase text-slate-500 dark:text-slate-300">Type</div><div className="font-bold">{displayWorkoutTypes(workout.athleteActivity.session_type, workout.athleteActivity.xtrain_other)}</div></div>
                     </div>
 
                     {workout.athleteActivity.comments?.trim() && (

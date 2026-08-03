@@ -37,6 +37,7 @@ import {
   getAthleteActivities,
   hasAthleteActivityData,
   isBikeType,
+  isXTrainOtherType,
   isXTrainType,
   makeAthleteSession,
 } from "./sessionUtils";
@@ -111,7 +112,7 @@ const buildPayload = (formData) => {
   return payload;
 };
 
-function WorkoutTypeSinglePicker({ value, onChange }) {
+function WorkoutTypeSinglePicker({ value, onChange, xtrainOther = '' }) {
   const chooseType = (nextValue) => {
     onChange(nextValue);
   };
@@ -163,7 +164,7 @@ function WorkoutTypeSinglePicker({ value, onChange }) {
           className="h-9 w-full justify-between gap-2 px-3 font-normal"
         >
           <span className={cn("min-w-0 truncate text-left", !value && "text-slate-500 dark:text-slate-400")}>
-            {displayWorkoutTypes(value) || 'Select type'}
+            {displayWorkoutTypes(value, xtrainOther) || 'Select type'}
           </span>
           <ChevronsUpDown className="h-4 w-4 shrink-0 text-slate-500" />
         </Button>
@@ -192,6 +193,7 @@ function ActivityForm({ activity, index, canDelete, onChange, onDelete, toggleSh
   const showStrides = canHaveStrides(activity.session_type);
   const isXTrain = isXTrainType(activity.session_type);
   const isBike = isBikeType(activity.session_type);
+  const showXTrainOther = isXTrainOtherType(activity.session_type);
   const selectedShoes = activeShoes.filter((shoe) => activity.shoes?.includes(shoe.id));
   const splitTotal = Object.entries(activity.shoe_mileage || {})
     .filter(([shoeId]) => activity.shoes?.includes(shoeId))
@@ -223,6 +225,7 @@ function ActivityForm({ activity, index, canDelete, onChange, onDelete, toggleSh
           <Label className="text-xs">Type</Label>
           <WorkoutTypeSinglePicker
             value={activity.session_type}
+            xtrainOther={activity.xtrain_other}
             onChange={(value) => onChange('session_type', value)}
           />
         </div>
@@ -253,6 +256,18 @@ function ActivityForm({ activity, index, canDelete, onChange, onDelete, toggleSh
           )}
         </div>
       </div>
+
+      {showXTrainOther && (
+        <div className="space-y-1">
+          <Label className="text-xs">X-Train Type</Label>
+          <Input
+            className="h-9"
+            value={activity.xtrain_other || ''}
+            onChange={(event) => onChange('xtrain_other', event.target.value)}
+            placeholder="e.g., Rowing, stair climber"
+          />
+        </div>
+      )}
 
       {showStrides && (
         <label className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
@@ -368,6 +383,9 @@ function ActivitiesForm({ activities, onChange, onDeleteActivity, activeShoes })
               }
               if (!canHaveStrides(value)) {
                 nextActivity.strides = false;
+              }
+              if (!isXTrainOtherType(value)) {
+                nextActivity.xtrain_other = '';
               }
             }
 

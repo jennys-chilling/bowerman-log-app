@@ -19,9 +19,9 @@ import {
   parseWorkoutTypes,
 } from './sessionUtils';
 
-export default function WorkoutTypePicker({ value, onChange, className, triggerClassName }) {
+export default function WorkoutTypePicker({ value, onChange, className, triggerClassName, xtrainOther = '' }) {
   const selectedTypes = parseWorkoutTypes(value);
-  const displayValue = displayWorkoutTypes(selectedTypes);
+  const displayValue = displayWorkoutTypes(selectedTypes, xtrainOther);
 
   const updateSelection = (type) => {
     const checked = !selectedTypes.includes(type);

@@ -27,6 +27,9 @@
         "workout_type": {
           "type": "string"
         },
+        "xtrain_other": {
+          "type": "string"
+        },
         "planned_difficulty": {
           "type": "number"
         },
@@ -42,6 +45,9 @@
       "type": "object",
       "properties": {
         "workout_type": {
+          "type": "string"
+        },
+        "xtrain_other": {
           "type": "string"
         },
         "planned_difficulty": {
@@ -68,6 +74,9 @@
         },
         "duration_minutes": {
           "type": "number"
+        },
+        "xtrain_other": {
+          "type": "string"
         },
         "mileage": {
           "type": "number"
@@ -102,6 +111,9 @@
         },
         "duration_minutes": {
           "type": "number"
+        },
+        "xtrain_other": {
+          "type": "string"
         },
         "mileage": {
           "type": "number"

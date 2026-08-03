@@ -164,32 +164,34 @@ export default function ShoeInventory() {
   
   return (
     <div className="btc-app-shell text-slate-900 dark:text-slate-100">
-      <div className="relative max-w-5xl mx-auto px-4 py-6">
+      <div className="relative mx-auto w-full max-w-5xl px-3 py-4 sm:px-4 sm:py-6">
         {/* Header */}
-        <div className="btc-rail-card mb-6 overflow-hidden rounded-2xl border border-red-900/10 bg-white/90 p-4 shadow-sm backdrop-blur dark:border-red-500/20 dark:bg-slate-950/90">
-          <div className="flex items-center justify-between gap-4 pl-2">
-            <div className="flex items-center gap-3">
+        <div className="btc-rail-card mb-4 overflow-hidden rounded-2xl border border-red-900/10 bg-white/90 p-3 shadow-sm backdrop-blur dark:border-red-500/20 dark:bg-slate-950/90 sm:mb-6 sm:p-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex min-w-0 items-center gap-2 sm:gap-3">
               <Link to={trainingLogUrl}>
-                <Button variant="ghost" size="icon">
+                <Button variant="ghost" size="icon" className="h-9 w-9 shrink-0">
                   <ArrowLeft className="w-5 h-5" />
                 </Button>
               </Link>
-              <BrandMark title="Bowerman" subtitle="Shoe Inventory" compact />
+              <div className="min-w-0">
+                <BrandMark title="Bowerman" subtitle="Shoe Inventory" compact />
+              </div>
             </div>
 
-            <div className="flex items-center gap-2">
-              <Link to={accountUrl}>
-                <Button variant="outline" size="sm">
+            <div className="grid w-full grid-cols-2 items-center gap-2 sm:flex sm:w-auto sm:flex-nowrap">
+              <Button className="order-first col-span-2 h-10 w-full sm:order-none sm:col-span-1 sm:w-auto" onClick={() => setShowEditor(true)}>
+                <Plus className="w-4 h-4 mr-2" /> Add Shoe
+              </Button>
+              <Link to={accountUrl} className="w-full sm:w-auto">
+                <Button variant="outline" size="sm" className="h-9 w-full sm:w-auto">
                   <UserCircle className="mr-1.5 h-4 w-4" />
                   Account
                 </Button>
               </Link>
-              <Button variant="ghost" size="sm" onClick={() => logout()}>
+              <Button variant="ghost" size="sm" className="h-9 w-full sm:w-auto" onClick={() => logout()}>
                 <LogOut className="mr-1.5 h-4 w-4" />
                 Sign Out
-              </Button>
-              <Button onClick={() => setShowEditor(true)}>
-                <Plus className="w-4 h-4 mr-2" /> Add Shoe
               </Button>
             </div>
           </div>
@@ -202,30 +204,32 @@ export default function ShoeInventory() {
         ) : (
           <>
             {/* Active Shoes */}
-            <Card className="mb-6">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-lg">
+            <Card className="mb-4 border-slate-300 bg-white shadow-md dark:border-slate-700 dark:bg-slate-950 sm:mb-6">
+              <CardHeader className="px-4 py-4 sm:px-6">
+                <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
                   <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
                   Active Shoes ({activeShoes.length})
                 </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="px-4 pb-4 sm:px-6 sm:pb-6">
                 {activeShoes.length === 0 ? (
                   <p className="text-slate-500 text-center py-8 dark:text-slate-400">No active shoes. Add your first pair!</p>
                 ) : (
-                  <div className="grid md:grid-cols-2 gap-4">
+                  <div className="grid gap-3 md:grid-cols-2 md:gap-4">
                     {activeShoes.map(shoe => (
-                      <div key={shoe.id} className="bg-slate-50 rounded-xl p-4 border border-slate-200 dark:border-slate-800 dark:bg-slate-900">
-                        <div className="flex items-start gap-3">
-                          <div className={`w-10 h-10 rounded-lg ${shoe.color || 'bg-red-700'} flex items-center justify-center text-lg text-white shadow-sm`}>
-                            👟
+                      <div key={shoe.id} className="rounded-xl border border-slate-300 bg-slate-50 p-3 shadow-sm dark:border-slate-700 dark:bg-slate-900 sm:p-4">
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
+                          <div className="flex min-w-0 flex-1 items-start gap-3">
+                            <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${shoe.color || 'bg-red-700'} text-lg text-white shadow-sm`}>
+                              👟
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <h4 className="truncate font-semibold text-slate-800 dark:text-slate-100">{shoe.name}</h4>
+                              <p className="truncate text-sm text-slate-500 dark:text-slate-400">{shoe.model}</p>
+                              <Badge variant="outline" className="mt-1 text-xs">{shoe.type}</Badge>
+                            </div>
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <h4 className="font-semibold text-slate-800 truncate dark:text-slate-100">{shoe.name}</h4>
-                            <p className="text-sm text-slate-500 truncate dark:text-slate-400">{shoe.model}</p>
-                            <Badge variant="outline" className="mt-1 text-xs">{shoe.type}</Badge>
-                          </div>
-                          <div className="flex gap-1">
+                          <div className="flex shrink-0 justify-end gap-1 self-end sm:self-start">
                             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(shoe)}>
                               <Pencil className="w-4 h-4" />
                             </Button>
@@ -239,9 +243,9 @@ export default function ShoeInventory() {
                         </div>
                         
                         <div className="mt-4">
-                          <div className="flex justify-between text-xs text-slate-500 mb-1 dark:text-slate-400">
+                          <div className="mb-1 flex justify-between gap-3 text-xs text-slate-500 dark:text-slate-400">
                             <span>Mileage</span>
-                            <span>{(shoe.current_mileage || 0).toFixed(1)} / {getMaxMileage(shoe).toFixed(0)} mi</span>
+                            <span className="shrink-0">{(shoe.current_mileage || 0).toFixed(1)} / {getMaxMileage(shoe).toFixed(0)} mi</span>
                           </div>
                           <div className="h-2 bg-slate-200 rounded-full overflow-hidden dark:bg-slate-800">
                             <div 
@@ -259,45 +263,70 @@ export default function ShoeInventory() {
             
             {/* Retired Shoes */}
             {retiredShoes.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-lg text-slate-500 dark:text-slate-400">
+              <Card className="border-slate-300 bg-white shadow-md dark:border-slate-700 dark:bg-slate-950">
+                <CardHeader className="px-4 py-4 sm:px-6">
+                  <CardTitle className="flex items-center gap-2 text-base text-slate-500 dark:text-slate-400 sm:text-lg">
                     <span className="w-2 h-2 rounded-full bg-slate-400"></span>
                     Retired Shoes ({retiredShoes.length})
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Name</TableHead>
-                        <TableHead>Model</TableHead>
-                        <TableHead>Type</TableHead>
-                        <TableHead>Final Mileage</TableHead>
-                        <TableHead></TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {retiredShoes.map(shoe => (
-                        <TableRow key={shoe.id} className="text-slate-500 dark:text-slate-400">
-                          <TableCell className="font-medium">{shoe.name}</TableCell>
-                          <TableCell>{shoe.model}</TableCell>
-                          <TableCell>{shoe.type}</TableCell>
-                          <TableCell>{(shoe.current_mileage || 0).toFixed(1)} mi</TableCell>
-                          <TableCell>
-                            <div className="flex justify-end gap-1">
-                              <Button variant="ghost" size="sm" onClick={() => handleRetire(shoe)}>
-                                Reactivate
-                              </Button>
-                              <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-500 hover:text-red-700 dark:text-slate-400 dark:hover:text-red-300" onClick={() => handleDelete(shoe)}>
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
+                <CardContent className="px-4 pb-4 sm:px-6 sm:pb-6">
+                  <div className="grid gap-3 md:hidden">
+                    {retiredShoes.map(shoe => (
+                      <div key={shoe.id} className="rounded-xl border border-slate-300 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-900">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <h4 className="truncate font-semibold text-slate-700 dark:text-slate-200">{shoe.name}</h4>
+                            <p className="truncate text-sm text-slate-500 dark:text-slate-400">{shoe.model}</p>
+                            <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+                              <Badge variant="outline" className="text-xs">{shoe.type}</Badge>
+                              <span>{(shoe.current_mileage || 0).toFixed(1)} mi</span>
                             </div>
-                          </TableCell>
+                          </div>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0 text-slate-500 hover:text-red-700 dark:text-slate-400 dark:hover:text-red-300" onClick={() => handleDelete(shoe)}>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                        <Button variant="outline" size="sm" className="mt-3 w-full" onClick={() => handleRetire(shoe)}>
+                          Reactivate
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="hidden md:block">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Name</TableHead>
+                          <TableHead>Model</TableHead>
+                          <TableHead>Type</TableHead>
+                          <TableHead>Final Mileage</TableHead>
+                          <TableHead></TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                      </TableHeader>
+                      <TableBody>
+                        {retiredShoes.map(shoe => (
+                          <TableRow key={shoe.id} className="text-slate-500 dark:text-slate-400">
+                            <TableCell className="font-medium">{shoe.name}</TableCell>
+                            <TableCell>{shoe.model}</TableCell>
+                            <TableCell>{shoe.type}</TableCell>
+                            <TableCell>{(shoe.current_mileage || 0).toFixed(1)} mi</TableCell>
+                            <TableCell>
+                              <div className="flex justify-end gap-1">
+                                <Button variant="ghost" size="sm" onClick={() => handleRetire(shoe)}>
+                                  Reactivate
+                                </Button>
+                                <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-500 hover:text-red-700 dark:text-slate-400 dark:hover:text-red-300" onClick={() => handleDelete(shoe)}>
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
                 </CardContent>
               </Card>
             )}
@@ -307,13 +336,13 @@ export default function ShoeInventory() {
       
       {/* Shoe Editor */}
       <Dialog open={showEditor} onOpenChange={(open) => { if (!open) { setShowEditor(false); resetForm(); } }}>
-        <DialogContent>
+        <DialogContent className="max-h-[90vh] w-[calc(100vw-1.5rem)] max-w-lg overflow-y-auto p-4 sm:p-6">
           <DialogHeader>
             <DialogTitle>{editingShoe ? 'Edit Shoe' : 'Add New Shoe'}</DialogTitle>
           </DialogHeader>
           
-          <div className="space-y-4 py-4">
-            <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-4 py-2 sm:py-4">
+            <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label>Nickname</Label>
                 <Input
@@ -332,7 +361,7 @@ export default function ShoeInventory() {
               </div>
             </div>
             
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label>Type</Label>
                 <Select value={formData.type} onValueChange={(v) => setFormData({ ...formData, type: v })}>
@@ -387,9 +416,9 @@ export default function ShoeInventory() {
             </div>
           </div>
           
-          <DialogFooter>
-            <Button variant="outline" onClick={() => { setShowEditor(false); resetForm(); }}>Cancel</Button>
-            <Button onClick={handleSave} disabled={!formData.name || !formData.model}>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" className="w-full sm:w-auto" onClick={() => { setShowEditor(false); resetForm(); }}>Cancel</Button>
+            <Button className="w-full sm:w-auto" onClick={handleSave} disabled={!formData.name || !formData.model}>
               {editingShoe ? 'Update' : 'Add'} Shoe
             </Button>
           </DialogFooter>

@@ -93,7 +93,7 @@ export default function DayColumn({ date, dayPlan, onEdit, isCoach, shoes = [] }
           </div>
 
           <div className="flex flex-wrap items-center gap-1.5">
-            <TypeBadge>{displayWorkoutTypes(activity.session_type)}</TypeBadge>
+            <TypeBadge>{displayWorkoutTypes(activity.session_type, activity.xtrain_other)}</TypeBadge>
             {activity.strides && <TypeBadge>Strides</TypeBadge>}
             <RpeChip value={activity.rpe} />
           </div>
@@ -141,7 +141,7 @@ export default function DayColumn({ date, dayPlan, onEdit, isCoach, shoes = [] }
         </div>
 
         <div className="flex flex-wrap items-center gap-1.5">
-          <TypeBadge>{displayWorkoutTypes(activity.workout_type)}</TypeBadge>
+          <TypeBadge>{displayWorkoutTypes(activity.workout_type, activity.xtrain_other)}</TypeBadge>
           {activity.strides && <TypeBadge>Strides</TypeBadge>}
           <RpeChip value={activity.planned_difficulty} />
         </div>
