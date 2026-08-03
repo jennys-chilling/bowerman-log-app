@@ -12,7 +12,7 @@ export default function WeekNavigation({ currentWeekStart, onWeekChange }) {
   const isCurrentWeek = isThisWeek(currentWeekStart, { weekStartsOn: 1 });
   
   return (
-    <div className="rounded-xl border border-slate-300 bg-white px-3 py-3 shadow-md dark:border-slate-700 dark:bg-slate-950 sm:px-4">
+    <div className="btc-panel px-3 py-3 sm:px-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0 text-center sm:order-2 sm:flex-1">
           <div className="whitespace-nowrap text-base font-semibold text-slate-900 dark:text-slate-100 sm:text-lg">

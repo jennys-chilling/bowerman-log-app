@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { appClient } from '@/api/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/lib/AuthContext';
-import BrandMark from '@/components/BrandMark';
+import { AppHeader, AppPage } from '@/components/AppChrome';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Pencil, Archive, ArrowLeft, Loader2, LogOut, UserCircle, Trash2 } from 'lucide-react';
+import { Plus, Pencil, Archive, Loader2, LogOut, UserCircle, Trash2, Footprints } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 
@@ -164,38 +164,29 @@ export default function ShoeInventory() {
   
   return (
     <div className="btc-app-shell text-slate-900 dark:text-slate-100">
-      <div className="relative mx-auto w-full max-w-5xl px-3 py-4 sm:px-4 sm:py-6">
-        {/* Header */}
-        <div className="btc-rail-card mb-4 overflow-hidden rounded-2xl border border-red-900/10 bg-white/90 p-3 shadow-sm backdrop-blur dark:border-red-500/20 dark:bg-slate-950/90 sm:mb-6 sm:p-4">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex min-w-0 items-center gap-2 sm:gap-3">
-              <Link to={trainingLogUrl}>
-                <Button variant="ghost" size="icon" className="h-9 w-9 shrink-0">
-                  <ArrowLeft className="w-5 h-5" />
-                </Button>
-              </Link>
-              <div className="min-w-0">
-                <BrandMark title="Bowerman" subtitle="Shoe Inventory" compact />
-              </div>
-            </div>
-
-            <div className="grid w-full grid-cols-2 items-center gap-2 sm:flex sm:w-auto sm:flex-nowrap">
-              <Button className="order-first col-span-2 h-10 w-full sm:order-none sm:col-span-1 sm:w-auto" onClick={() => setShowEditor(true)}>
+      <AppPage maxWidth="max-w-5xl">
+        <AppHeader
+          title="Bowerman Training Log"
+          subtitle="Shoes"
+          backTo={trainingLogUrl}
+          actions={(
+            <>
+              <Button className="h-9 rounded-full px-3 text-sm font-semibold sm:px-4" onClick={() => setShowEditor(true)}>
                 <Plus className="w-4 h-4 mr-2" /> Add Shoe
               </Button>
-              <Link to={accountUrl} className="w-full sm:w-auto">
-                <Button variant="outline" size="sm" className="h-9 w-full sm:w-auto">
+              <Link to={accountUrl}>
+                <Button variant="outline" size="sm" className="h-9 rounded-full px-3 text-sm font-semibold sm:px-4">
                   <UserCircle className="mr-1.5 h-4 w-4" />
                   Account
                 </Button>
               </Link>
-              <Button variant="ghost" size="sm" className="h-9 w-full sm:w-auto" onClick={() => logout()}>
+              <Button variant="ghost" size="sm" className="h-9 rounded-full px-3" onClick={() => logout()}>
                 <LogOut className="mr-1.5 h-4 w-4" />
                 Sign Out
               </Button>
-            </div>
-          </div>
-        </div>
+            </>
+          )}
+        />
         
         {isLoading ? (
           <div className="flex items-center justify-center py-20">
@@ -204,7 +195,7 @@ export default function ShoeInventory() {
         ) : (
           <>
             {/* Active Shoes */}
-            <Card className="mb-4 border-slate-300 bg-white shadow-md dark:border-slate-700 dark:bg-slate-950 sm:mb-6">
+            <Card className="btc-panel mb-4 sm:mb-6">
               <CardHeader className="px-4 py-4 sm:px-6">
                 <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
                   <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
@@ -220,8 +211,8 @@ export default function ShoeInventory() {
                       <div key={shoe.id} className="rounded-xl border border-slate-300 bg-slate-50 p-3 shadow-sm dark:border-slate-700 dark:bg-slate-900 sm:p-4">
                         <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
                           <div className="flex min-w-0 flex-1 items-start gap-3">
-                            <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${shoe.color || 'bg-red-700'} text-lg text-white shadow-sm`}>
-                              👟
+                            <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${shoe.color || 'bg-red-700'} text-white shadow-sm`}>
+                              <Footprints className="h-5 w-5" />
                             </div>
                             <div className="min-w-0 flex-1">
                               <h4 className="truncate font-semibold text-slate-800 dark:text-slate-100">{shoe.name}</h4>
@@ -263,7 +254,7 @@ export default function ShoeInventory() {
             
             {/* Retired Shoes */}
             {retiredShoes.length > 0 && (
-              <Card className="border-slate-300 bg-white shadow-md dark:border-slate-700 dark:bg-slate-950">
+              <Card className="btc-panel">
                 <CardHeader className="px-4 py-4 sm:px-6">
                   <CardTitle className="flex items-center gap-2 text-base text-slate-500 dark:text-slate-400 sm:text-lg">
                     <span className="w-2 h-2 rounded-full bg-slate-400"></span>
@@ -332,7 +323,7 @@ export default function ShoeInventory() {
             )}
           </>
         )}
-      </div>
+      </AppPage>
       
       {/* Shoe Editor */}
       <Dialog open={showEditor} onOpenChange={(open) => { if (!open) { setShowEditor(false); resetForm(); } }}>

@@ -1,10 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { addDays, format, startOfWeek } from 'date-fns';
 import { useQuery } from '@tanstack/react-query';
-import { Activity, ArrowLeft, Check, Filter, Loader2, Mail, Plus, X } from 'lucide-react';
-import { Link, useLocation } from 'react-router-dom';
+import { Activity, Check, Filter, Loader2, Mail, Plus, X } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
 import { appClient } from '@/api/client';
-import BrandMark from '@/components/BrandMark';
+import { AppHeader, AppPage } from '@/components/AppChrome';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -249,20 +249,13 @@ export default function Workouts() {
 
   return (
     <div className="btc-app-shell text-slate-900 dark:text-slate-100">
-      <div className="relative mx-auto max-w-6xl px-4 py-6">
-        <div className="btc-rail-card mb-6 overflow-hidden rounded-2xl border border-slate-300 bg-white p-4 shadow-md backdrop-blur dark:border-slate-700 dark:bg-slate-950">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-center gap-3">
-              <Link to={trainingLogUrl}>
-                <Button variant="ghost" size="icon">
-                  <ArrowLeft className="h-5 w-5" />
-                </Button>
-              </Link>
-              <BrandMark title="Bowerman" subtitle="Workouts" compact />
-            </div>
-
-            {selectedAthlete && (
-              <div className="flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 dark:border-slate-700 dark:bg-slate-900">
+      <AppPage maxWidth="max-w-6xl">
+        <AppHeader
+          title="Bowerman Training Log"
+          subtitle="Workouts"
+          backTo={trainingLogUrl}
+          meta={selectedAthlete && (
+              <div className="flex w-full items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 dark:border-slate-700 dark:bg-slate-900 sm:w-auto">
                 <Avatar className="h-8 w-8">
                   <AvatarImage src={selectedAthlete.profile_image_url} alt={getDisplayName(selectedAthlete)} />
                   <AvatarFallback className="text-xs font-semibold">{getInitials(selectedAthlete)}</AvatarFallback>
@@ -277,11 +270,10 @@ export default function Workouts() {
                   )}
                 </div>
               </div>
-            )}
-          </div>
-        </div>
+          )}
+        />
 
-        <div className="mb-6 grid gap-3 rounded-xl border border-slate-300 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-950 md:grid-cols-[minmax(0,1fr)_10rem_10rem]">
+        <div className="btc-panel mb-6 grid gap-3 p-4 md:grid-cols-[minmax(0,1fr)_10rem_10rem]">
           {isCoach && (
             <div className="space-y-1">
               <Label>Athlete</Label>
@@ -344,16 +336,16 @@ export default function Workouts() {
         </div>
 
         <div className="mb-6 grid gap-3 sm:grid-cols-4">
-          <Card className="border-slate-300 shadow-sm dark:border-slate-700">
+          <Card className="border-slate-300 shadow-sm dark:border-slate-700 dark:bg-slate-900">
             <CardContent className="p-4"><div className="text-xs uppercase text-slate-500 dark:text-slate-300">Results</div><div className="text-2xl font-bold">{totals.count}</div></CardContent>
           </Card>
-          <Card className="border-slate-300 shadow-sm dark:border-slate-700">
+          <Card className="border-slate-300 shadow-sm dark:border-slate-700 dark:bg-slate-900">
             <CardContent className="p-4"><div className="text-xs uppercase text-slate-500 dark:text-slate-300">Miles</div><div className="text-2xl font-bold">{formatNumber(totals.mileage)}</div></CardContent>
           </Card>
-          <Card className="border-slate-300 shadow-sm dark:border-slate-700">
+          <Card className="border-slate-300 shadow-sm dark:border-slate-700 dark:bg-slate-900">
             <CardContent className="p-4"><div className="text-xs uppercase text-slate-500 dark:text-slate-300">Minutes</div><div className="text-2xl font-bold">{formatNumber(totals.minutes)}</div></CardContent>
           </Card>
-          <Card className="border-slate-300 shadow-sm dark:border-slate-700">
+          <Card className="border-slate-300 shadow-sm dark:border-slate-700 dark:bg-slate-900">
             <CardContent className="p-4"><div className="text-xs uppercase text-slate-500 dark:text-slate-300">Avg RPE</div><div className="text-2xl font-bold">{totals.avgRpe ? totals.avgRpe.toFixed(1) : '-'}</div></CardContent>
           </Card>
         </div>
@@ -363,7 +355,7 @@ export default function Workouts() {
             <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
           </div>
         ) : workouts.length === 0 ? (
-          <div className="rounded-xl border border-slate-300 bg-white p-12 text-center shadow-sm dark:border-slate-700 dark:bg-slate-950">
+          <div className="btc-panel p-8 text-center sm:p-12">
             <Activity className="mx-auto mb-3 h-8 w-8 text-slate-400" />
             <div className="font-semibold">No matching activities in this range</div>
           </div>
@@ -374,7 +366,7 @@ export default function Workouts() {
               const splits = Array.isArray(workout.dayPlan.splits) ? workout.dayPlan.splits.filter((split) => split.distance || split.time || split.rest || split.notes) : [];
 
               return (
-                <Card key={`${workout.dayPlan.id}-${workout.athleteLabel}-${index}`} className="overflow-hidden border-slate-300 shadow-sm dark:border-slate-700">
+                <Card key={`${workout.dayPlan.id}-${workout.athleteLabel}-${index}`} className="overflow-hidden border-slate-300 shadow-sm dark:border-slate-700 dark:bg-slate-950">
                   <CardHeader className="border-b border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900">
                     <CardTitle className="flex flex-wrap items-center justify-between gap-3 text-base">
                       <span>{format(new Date(`${workout.dayPlan.date}T00:00:00`), 'EEE, MMM d, yyyy')} · {workout.athleteLabel}</span>
@@ -442,7 +434,7 @@ export default function Workouts() {
             })}
           </div>
         )}
-      </div>
+      </AppPage>
     </div>
   );
 }

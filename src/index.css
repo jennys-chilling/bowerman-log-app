@@ -56,37 +56,37 @@
     --btc-ice: 208 62% 92%;
     --btc-ink: 0 0% 4%;
     --btc-cream: 220 20% 97%;
-    --background: 224 30% 6%;
+    --background: 0 0% 5%;
     --foreground: 0 0% 98%;
-    --card: 224 22% 12%;
+    --card: 0 0% 13%;
     --card-foreground: 0 0% 98%;
-    --popover: 224 22% 12%;
+    --popover: 0 0% 13%;
     --popover-foreground: 0 0% 98%;
     --primary: var(--btc-red);
     --primary-foreground: 0 0% 100%;
-    --secondary: 224 18% 17%;
+    --secondary: 0 0% 17%;
     --secondary-foreground: 0 0% 98%;
-    --muted: 224 18% 17%;
-    --muted-foreground: 218 18% 82%;
-    --accent: 224 18% 19%;
+    --muted: 0 0% 17%;
+    --muted-foreground: 0 0% 78%;
+    --accent: 0 0% 20%;
     --accent-foreground: 0 0% 98%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
-    --border: 220 15% 40%;
-    --input: 220 15% 40%;
+    --border: 0 0% 34%;
+    --input: 0 0% 34%;
     --ring: var(--btc-red-bright);
     --chart-1: var(--btc-red);
     --chart-2: 160 60% 45%;
     --chart-3: 220 16% 72%;
     --chart-4: var(--btc-orange);
     --chart-5: var(--btc-red-bright);
-    --sidebar-background: 224 22% 12%;
-    --sidebar-foreground: 218 24% 96%;
+    --sidebar-background: 0 0% 13%;
+    --sidebar-foreground: 0 0% 96%;
     --sidebar-primary: var(--btc-red);
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 224 18% 19%;
-    --sidebar-accent-foreground: 218 24% 96%;
-    --sidebar-border: 220 15% 40%;
+    --sidebar-accent: 0 0% 20%;
+    --sidebar-accent-foreground: 0 0% 96%;
+    --sidebar-border: 0 0% 34%;
     --sidebar-ring: var(--btc-red-bright);
   }
 }
@@ -98,21 +98,21 @@
     min-height: 100vh;
     overflow-x: hidden;
     background:
-      radial-gradient(circle at 18% 8%, hsl(var(--btc-orange) / 0.16), transparent 28rem),
-      radial-gradient(circle at 82% 22%, hsl(var(--btc-pink) / 0.14), transparent 24rem),
-      linear-gradient(128deg, transparent 0 11%, hsl(var(--btc-red-bright) / 0.14) 11% 12.4%, transparent 12.4% 100%),
-      linear-gradient(128deg, transparent 0 28%, hsl(var(--btc-orange) / 0.12) 28% 30%, transparent 30% 100%),
-      linear-gradient(128deg, transparent 0 70%, hsl(var(--btc-pink) / 0.16) 70% 72%, transparent 72% 100%),
-      linear-gradient(180deg, hsl(0 0% 100%), hsl(220 34% 97%) 48%, hsl(220 28% 93%));
+      radial-gradient(circle at 18% 8%, hsl(var(--btc-orange) / 0.10), transparent 30rem),
+      radial-gradient(circle at 82% 22%, hsl(var(--btc-pink) / 0.09), transparent 26rem),
+      linear-gradient(128deg, transparent 0 11%, hsl(var(--btc-red-bright) / 0.10) 11% 12.2%, transparent 12.2% 100%),
+      linear-gradient(128deg, transparent 0 28%, hsl(var(--btc-orange) / 0.08) 28% 29.5%, transparent 29.5% 100%),
+      linear-gradient(128deg, transparent 0 70%, hsl(var(--btc-pink) / 0.10) 70% 71.6%, transparent 71.6% 100%),
+      linear-gradient(180deg, hsl(0 0% 100%), hsl(0 0% 98%) 48%, hsl(0 0% 94%));
   }
 
   .dark .btc-app-shell {
     background:
-      radial-gradient(circle at 20% 10%, hsl(var(--btc-red) / 0.12), transparent 28rem),
-      radial-gradient(circle at 86% 22%, hsl(210 70% 44% / 0.10), transparent 24rem),
-      linear-gradient(128deg, transparent 0 10%, hsl(var(--btc-red-bright) / 0.10) 10% 11.5%, transparent 11.5% 100%),
-      linear-gradient(128deg, transparent 0 72%, hsl(210 70% 44% / 0.10) 72% 74%, transparent 74% 100%),
-      linear-gradient(180deg, hsl(224 32% 7%), hsl(224 28% 8%) 48%, hsl(224 36% 5%));
+      radial-gradient(circle at 20% 10%, hsl(var(--btc-red) / 0.10), transparent 28rem),
+      radial-gradient(circle at 86% 22%, hsl(var(--btc-pink) / 0.06), transparent 24rem),
+      linear-gradient(128deg, transparent 0 10%, hsl(var(--btc-red-bright) / 0.09) 10% 11.5%, transparent 11.5% 100%),
+      linear-gradient(128deg, transparent 0 72%, hsl(var(--btc-orange) / 0.07) 72% 74%, transparent 74% 100%),
+      linear-gradient(180deg, hsl(0 0% 5%), hsl(0 0% 6%) 48%, hsl(0 0% 3%));
   }
 
   .btc-app-shell .btc-app-shell {
@@ -133,25 +133,25 @@
     inset: 0;
     z-index: 0;
     background-image:
-      radial-gradient(circle, hsl(var(--btc-red) / 0.14) 0 1px, transparent 1.35px),
-      linear-gradient(132deg, transparent 0 18%, hsl(var(--btc-red-bright) / 0.16) 18% 20%, transparent 20% 100%),
-      linear-gradient(132deg, transparent 0 42%, hsl(var(--btc-orange) / 0.15) 42% 44%, transparent 44% 100%),
-      linear-gradient(132deg, transparent 0 62%, hsl(var(--btc-pink) / 0.18) 62% 64%, transparent 64% 100%),
-      linear-gradient(132deg, transparent 0 78%, hsl(var(--btc-red) / 0.11) 78% 80.5%, transparent 80.5% 100%);
+      radial-gradient(circle, hsl(var(--btc-red) / 0.10) 0 1px, transparent 1.35px),
+      linear-gradient(132deg, transparent 0 18%, hsl(var(--btc-red-bright) / 0.10) 18% 20%, transparent 20% 100%),
+      linear-gradient(132deg, transparent 0 42%, hsl(var(--btc-orange) / 0.10) 42% 44%, transparent 44% 100%),
+      linear-gradient(132deg, transparent 0 62%, hsl(var(--btc-pink) / 0.11) 62% 64%, transparent 64% 100%),
+      linear-gradient(132deg, transparent 0 78%, hsl(var(--btc-red) / 0.08) 78% 80.5%, transparent 80.5% 100%);
     background-position: 0 0, 0 0, 96px 34px, 44px 10px, 160px 80px;
     background-size: 14px 14px, 360px 220px, 420px 260px, 340px 220px, 480px 280px;
-    opacity: 0.8;
+    opacity: 0.58;
   }
 
   .dark .btc-app-shell::before,
   .dark .btc-auth-shell::before {
     background-image:
-      radial-gradient(circle, hsl(var(--btc-red-bright) / 0.12) 0 1px, transparent 1.35px),
-      linear-gradient(132deg, transparent 0 17%, hsl(var(--btc-red-bright) / 0.2) 17% 19%, transparent 19% 100%),
-      linear-gradient(132deg, transparent 0 42%, hsl(var(--btc-orange) / 0.15) 42% 44%, transparent 44% 100%),
-      linear-gradient(132deg, transparent 0 62%, hsl(var(--btc-pink) / 0.1) 62% 64%, transparent 64% 100%),
-      linear-gradient(132deg, transparent 0 78%, hsl(var(--btc-red) / 0.18) 78% 80.5%, transparent 80.5% 100%);
-    opacity: 0.68;
+      radial-gradient(circle, hsl(var(--btc-red-bright) / 0.10) 0 1px, transparent 1.35px),
+      linear-gradient(132deg, transparent 0 17%, hsl(var(--btc-red-bright) / 0.14) 17% 19%, transparent 19% 100%),
+      linear-gradient(132deg, transparent 0 42%, hsl(var(--btc-orange) / 0.10) 42% 44%, transparent 44% 100%),
+      linear-gradient(132deg, transparent 0 62%, hsl(var(--btc-pink) / 0.08) 62% 64%, transparent 64% 100%),
+      linear-gradient(132deg, transparent 0 78%, hsl(var(--btc-red) / 0.12) 78% 80.5%, transparent 80.5% 100%);
+    opacity: 0.5;
   }
 
   .btc-app-shell::after,
@@ -162,23 +162,23 @@
     inset: 0;
     z-index: 0;
     background:
-      linear-gradient(130deg, transparent 0 18%, hsl(var(--btc-orange) / 0.16) 18% 21%, transparent 21% 100%),
-      linear-gradient(130deg, transparent 0 35%, hsl(var(--btc-red) / 0.2) 35% 36.2%, transparent 36.2% 100%),
-      linear-gradient(130deg, transparent 0 55%, hsl(var(--btc-pink) / 0.14) 55% 57.5%, transparent 57.5% 100%),
-      linear-gradient(130deg, transparent 0 83%, hsl(var(--btc-red-bright) / 0.18) 83% 85%, transparent 85% 100%);
+      linear-gradient(130deg, transparent 0 18%, hsl(var(--btc-orange) / 0.10) 18% 21%, transparent 21% 100%),
+      linear-gradient(130deg, transparent 0 35%, hsl(var(--btc-red) / 0.13) 35% 36.2%, transparent 36.2% 100%),
+      linear-gradient(130deg, transparent 0 55%, hsl(var(--btc-pink) / 0.09) 55% 57.5%, transparent 57.5% 100%),
+      linear-gradient(130deg, transparent 0 83%, hsl(var(--btc-red-bright) / 0.11) 83% 85%, transparent 85% 100%);
     background-position: 0 0, 140px 48px, 70px 112px, 230px 26px;
     background-size: 520px 300px, 460px 280px, 390px 240px, 560px 340px;
-    opacity: 0.72;
+    opacity: 0.44;
   }
 
   .dark .btc-app-shell::after,
   .dark .btc-auth-shell::after {
     background:
-      linear-gradient(130deg, transparent 0 18%, hsl(var(--btc-orange) / 0.2) 18% 21%, transparent 21% 100%),
-      linear-gradient(130deg, transparent 0 35%, hsl(var(--btc-red-bright) / 0.24) 35% 36.4%, transparent 36.4% 100%),
-      linear-gradient(130deg, transparent 0 55%, hsl(var(--btc-pink) / 0.12) 55% 57.5%, transparent 57.5% 100%),
-      linear-gradient(130deg, transparent 0 83%, hsl(var(--btc-red) / 0.22) 83% 85%, transparent 85% 100%);
-    opacity: 0.58;
+      linear-gradient(130deg, transparent 0 18%, hsl(var(--btc-orange) / 0.13) 18% 21%, transparent 21% 100%),
+      linear-gradient(130deg, transparent 0 35%, hsl(var(--btc-red-bright) / 0.16) 35% 36.4%, transparent 36.4% 100%),
+      linear-gradient(130deg, transparent 0 55%, hsl(var(--btc-pink) / 0.08) 55% 57.5%, transparent 57.5% 100%),
+      linear-gradient(130deg, transparent 0 83%, hsl(var(--btc-red) / 0.15) 83% 85%, transparent 85% 100%);
+    opacity: 0.42;
   }
 
   .btc-auth-shell {
@@ -197,8 +197,8 @@
     background:
       radial-gradient(circle at 18% 8%, hsl(var(--btc-red) / 0.12), transparent 28rem),
       linear-gradient(132deg, transparent 0 18%, hsl(var(--btc-red-bright) / 0.16) 18% 20%, transparent 20% 100%),
-      linear-gradient(132deg, transparent 0 62%, hsl(210 70% 44% / 0.10) 62% 64%, transparent 64% 100%),
-      linear-gradient(180deg, hsl(224 32% 7%), hsl(224 28% 8%) 54%, hsl(224 36% 5%));
+      linear-gradient(132deg, transparent 0 62%, hsl(var(--btc-pink) / 0.08) 62% 64%, transparent 64% 100%),
+      linear-gradient(180deg, hsl(0 0% 5%), hsl(0 0% 6%) 54%, hsl(0 0% 3%));
   }
 
   .btc-app-shell > *,
@@ -273,6 +273,122 @@
     width: 0.25rem;
     background: linear-gradient(180deg, hsl(var(--btc-red)), hsl(var(--btc-orange)), hsl(var(--btc-pink)));
   }
+
+  .btc-page-header,
+  .btc-panel {
+    border: 1px solid hsl(var(--border));
+    background: hsl(var(--card) / 0.96);
+    box-shadow: 0 14px 34px hsl(0 0% 0% / 0.10);
+    backdrop-filter: blur(12px);
+  }
+
+  .dark .btc-page-header,
+  .dark .btc-panel {
+    background: hsl(var(--card) / 0.97);
+    box-shadow: 0 18px 42px hsl(0 0% 0% / 0.42);
+  }
+
+  .btc-page-header {
+    position: sticky;
+    top: 0.75rem;
+    z-index: 30;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    border-radius: 1rem;
+    padding: 0.65rem 0.75rem;
+  }
+
+  .btc-page-header::before {
+    content: "";
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 0.25rem;
+    border-radius: 1rem 0 0 1rem;
+    background: linear-gradient(180deg, hsl(var(--btc-red)), hsl(var(--btc-orange)), hsl(var(--btc-pink)));
+  }
+
+  .btc-header-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.5rem;
+  }
+
+  .btc-panel {
+    border-radius: 0.875rem;
+  }
+
+  .btc-control-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    border: 1px solid hsl(var(--border));
+    border-radius: 0.875rem;
+    background: hsl(var(--card) / 0.96);
+    padding: 0.75rem;
+    box-shadow: 0 10px 26px hsl(0 0% 0% / 0.08);
+  }
+
+  .dark .btc-control-bar {
+    background: hsl(var(--card) / 0.97);
+    box-shadow: 0 14px 34px hsl(0 0% 0% / 0.32);
+  }
+
+  .btc-section-title {
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: hsl(var(--muted-foreground));
+  }
+
+  .btc-page-header .btc-brand-lockup {
+    min-width: 0;
+  }
+
+  .btc-page-header .btc-brand-lockup > div {
+    min-width: 0;
+  }
+
+  .btc-page-header .btc-brand-lockup img {
+    flex-shrink: 0;
+  }
+
+  .btc-page-header .btc-brand-lockup div div:first-child {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  @media (max-width: 640px) {
+    .btc-page-header {
+      position: relative;
+      top: auto;
+      align-items: stretch;
+      flex-direction: column;
+      padding: 0.7rem;
+    }
+
+    .btc-header-actions {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      width: 100%;
+    }
+
+    .btc-header-actions > * {
+      min-width: 0;
+    }
+
+    .btc-header-actions a,
+    .btc-header-actions button {
+      width: 100%;
+    }
+  }
 }
 
 
@@ -288,31 +404,31 @@
 }
 
 :root {
-  --warm-50: 220 34% 98%;
-  --warm-100: 220 28% 95%;
-  --warm-200: 220 22% 88%;
-  --warm-300: 220 18% 78%;
-  --warm-400: 220 12% 58%;
-  --warm-500: 220 10% 46%;
-  --warm-600: 222 12% 36%;
-  --warm-700: 224 16% 28%;
-  --warm-800: 226 20% 20%;
-  --warm-900: 228 24% 15%;
-  --warm-950: 230 32% 10%;
+  --warm-50: 0 0% 98%;
+  --warm-100: 0 0% 95%;
+  --warm-200: 0 0% 88%;
+  --warm-300: 0 0% 76%;
+  --warm-400: 0 0% 58%;
+  --warm-500: 0 0% 45%;
+  --warm-600: 0 0% 35%;
+  --warm-700: 0 0% 26%;
+  --warm-800: 0 0% 18%;
+  --warm-900: 0 0% 12%;
+  --warm-950: 0 0% 7%;
 }
 
 .dark {
-  --warm-50: 218 28% 97%;
-  --warm-100: 218 24% 94%;
-  --warm-200: 218 20% 88%;
-  --warm-300: 218 18% 80%;
-  --warm-400: 218 16% 70%;
-  --warm-500: 218 14% 60%;
-  --warm-600: 220 14% 50%;
-  --warm-700: 220 14% 42%;
-  --warm-800: 224 20% 21%;
-  --warm-900: 224 22% 14%;
-  --warm-950: 224 30% 8%;
+  --warm-50: 0 0% 97%;
+  --warm-100: 0 0% 93%;
+  --warm-200: 0 0% 86%;
+  --warm-300: 0 0% 76%;
+  --warm-400: 0 0% 66%;
+  --warm-500: 0 0% 56%;
+  --warm-600: 0 0% 46%;
+  --warm-700: 0 0% 36%;
+  --warm-800: 0 0% 21%;
+  --warm-900: 0 0% 14%;
+  --warm-950: 0 0% 8%;
 }
 
 .bg-slate-50,

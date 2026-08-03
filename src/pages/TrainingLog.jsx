@@ -13,7 +13,7 @@ import AthleteLogEditor from '@/components/training/AthleteLogEditor';
 import SplitsEditor from '@/components/training/SplitsEditor';
 import MonthView from '@/components/training/MonthView';
 import CopyWeekToAthletesDialog from '@/components/training/CopyWeekToAthletesDialog';
-import BrandMark from '@/components/BrandMark';
+import { AppHeader, AppPage, PagePanel } from '@/components/AppChrome';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -48,6 +48,8 @@ import {
 } from '@/components/training/trainingFactors';
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+const DEFAULT_MONTH_RANGE_WEEKS = 5;
+const MAX_MONTH_RANGE_WEEKS = 16;
 
 const getDisplayName = (athlete = {}) => {
   const structuredName = `${athlete.first_name || ''} ${athlete.last_name || ''}`.trim();
@@ -115,10 +117,46 @@ const parseDateParam = (value, fallback) => {
 
 const parseViewModeParam = (value) => (value === 'month' ? 'month' : 'week');
 
-const parseRangeWeeksParam = (value) => {
+const parseRangeWeeksParam = (value, fallback = DEFAULT_MONTH_RANGE_WEEKS) => {
   const parsed = Number(value);
-  return Number.isInteger(parsed) && parsed > 0 ? parsed : 5;
+  return Number.isInteger(parsed) && parsed > 0
+    ? Math.min(MAX_MONTH_RANGE_WEEKS, parsed)
+    : fallback;
 };
+
+const normalizeMonthViewPreferences = (preferences) => {
+  if (!preferences || typeof preferences !== 'object' || Array.isArray(preferences)) {
+    return null;
+  }
+
+  const parsedRangeStart = parseDateParam(preferences.rangeStart, null);
+  const normalizedRangeStart = parsedRangeStart
+    ? startOfWeek(parsedRangeStart, { weekStartsOn: 1 })
+    : null;
+  const hasRangeWeeksPreference = preferences.rangeWeeks !== undefined &&
+    preferences.rangeWeeks !== null &&
+    preferences.rangeWeeks !== '';
+
+  const normalizedRangeWeeks = parseRangeWeeksParam(preferences.rangeWeeks, DEFAULT_MONTH_RANGE_WEEKS);
+
+  if (!normalizedRangeStart && !hasRangeWeeksPreference) {
+    return null;
+  }
+
+  return {
+    rangeStart: normalizedRangeStart,
+    rangeWeeks: normalizedRangeWeeks,
+  };
+};
+
+const createMonthViewPreferences = (rangeStart, rangeWeeks) => ({
+  rangeStart: format(startOfWeek(rangeStart, { weekStartsOn: 1 }), 'yyyy-MM-dd'),
+  rangeWeeks: parseRangeWeeksParam(rangeWeeks),
+});
+
+const getMonthViewPreferencesKey = (preferences) => (
+  `${preferences.rangeStart}:${preferences.rangeWeeks}`
+);
 
 const isDuplicateKeyError = (error) => (
   error?.code === '23505' ||
@@ -130,6 +168,16 @@ const getTrainingFactorSettingsErrorMessage = (error) => {
 
   if (message.includes('training_factor_preferences')) {
     return 'Could not save training factor settings because the Supabase profiles.training_factor_preferences column is missing. Run the latest schema SQL, then try again.';
+  }
+
+  return message;
+};
+
+const getMonthViewPreferencesErrorMessage = (error) => {
+  const message = error?.message || 'Could not save month view settings.';
+
+  if (message.includes('month_view_preferences')) {
+    return 'Could not save month view settings because the Supabase profiles.month_view_preferences column is missing. Run the latest schema SQL, then try again.';
   }
 
   return message;
@@ -157,6 +205,11 @@ export default function TrainingLog() {
   const [copyDialogOpen, setCopyDialogOpen] = useState(false);
   const [factorSettingsOpen, setFactorSettingsOpen] = useState(false);
   const [factorDraftKeys, setFactorDraftKeys] = useState([]);
+  const [monthViewPreferencesReady, setMonthViewPreferencesReady] = useState(false);
+  const hasExplicitMonthRangeRef = React.useRef(searchParams.has('rangeStart') || searchParams.has('rangeWeeks'));
+  const monthViewPreferenceHydrationStartedRef = React.useRef(false);
+  const lastSavedMonthViewPreferencesKeyRef = React.useRef(null);
+  const monthViewPreferencesErrorShownRef = React.useRef(false);
   
   useEffect(() => {
     appClient.auth.me().then(u => {
@@ -177,6 +230,37 @@ export default function TrainingLog() {
     () => TRAINING_FACTOR_OPTIONS.filter((option) => activeTrainingFactorKeys.includes(option.key)),
     [activeTrainingFactorKeys]
   );
+
+  useEffect(() => {
+    if (!user || monthViewPreferenceHydrationStartedRef.current) return;
+
+    monthViewPreferenceHydrationStartedRef.current = true;
+
+    const currentPreferences = createMonthViewPreferences(rangeStart, rangeWeeks);
+
+    if (hasExplicitMonthRangeRef.current) {
+      lastSavedMonthViewPreferencesKeyRef.current = getMonthViewPreferencesKey(currentPreferences);
+      setMonthViewPreferencesReady(true);
+      return;
+    }
+
+    const savedPreferences = normalizeMonthViewPreferences(user.month_view_preferences);
+
+    if (!savedPreferences) {
+      lastSavedMonthViewPreferencesKeyRef.current = getMonthViewPreferencesKey(currentPreferences);
+      setMonthViewPreferencesReady(true);
+      return;
+    }
+
+    const nextRangeStart = savedPreferences.rangeStart || rangeStart;
+    const nextPreferences = createMonthViewPreferences(nextRangeStart, savedPreferences.rangeWeeks);
+
+    setRangeStart(nextRangeStart);
+    setRangeWeeks(nextPreferences.rangeWeeks);
+    lastSavedMonthViewPreferencesKeyRef.current = getMonthViewPreferencesKey(nextPreferences);
+    setMonthViewPreferencesReady(true);
+  }, [rangeStart, rangeWeeks, user]);
+
   const logContextSearch = React.useMemo(() => {
     const params = new URLSearchParams();
 
@@ -196,11 +280,11 @@ export default function TrainingLog() {
   ), [logContextSearch]);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user || !monthViewPreferencesReady) return;
     if (searchParams.toString() !== logContextSearch) {
       setSearchParams(logContextSearch, { replace: true });
     }
-  }, [logContextSearch, searchParams, setSearchParams, user]);
+  }, [logContextSearch, monthViewPreferencesReady, searchParams, setSearchParams, user]);
 
   useEffect(() => {
     if (!factorSettingsOpen) return;
@@ -364,6 +448,55 @@ export default function TrainingLog() {
       });
     },
   });
+
+  const saveMonthViewPreferencesMutation = useMutation({
+    mutationFn: (preferences) => {
+      if (!user?.id) {
+        throw new Error('Sign in before saving month view settings.');
+      }
+
+      return appClient.entities.User.update(user.id, {
+        month_view_preferences: preferences,
+      });
+    },
+    onSuccess: (updatedUser) => {
+      setUser((currentUser) => ({ ...(currentUser || {}), ...updatedUser }));
+    },
+    onError: (error) => {
+      if (monthViewPreferencesErrorShownRef.current) return;
+
+      monthViewPreferencesErrorShownRef.current = true;
+      toast({
+        title: 'Month view settings not saved',
+        description: getMonthViewPreferencesErrorMessage(error),
+        variant: 'destructive',
+      });
+    },
+  });
+
+  useEffect(() => {
+    if (!user?.id || !monthViewPreferencesReady || viewMode !== 'month') return undefined;
+
+    const preferences = createMonthViewPreferences(rangeStart, rangeWeeks);
+    const preferenceKey = getMonthViewPreferencesKey(preferences);
+
+    if (lastSavedMonthViewPreferencesKeyRef.current === preferenceKey) {
+      return undefined;
+    }
+
+    const saveTimer = window.setTimeout(() => {
+      lastSavedMonthViewPreferencesKeyRef.current = preferenceKey;
+      saveMonthViewPreferencesMutation.mutate(preferences);
+    }, 500);
+
+    return () => window.clearTimeout(saveTimer);
+  }, [
+    monthViewPreferencesReady,
+    rangeStart,
+    rangeWeeks,
+    user?.id,
+    viewMode,
+  ]);
   
   // Update shoe mileage after session save
   const updateShoeMileageMutation = useMutation({
@@ -769,19 +902,18 @@ export default function TrainingLog() {
   
   return (
     <div className="btc-app-shell text-slate-900 dark:text-slate-100">
-      <div className="relative mx-auto w-full max-w-[1800px] px-3 py-4 sm:px-4 sm:py-6 2xl:px-8">
-        {/* Header */}
-        <div className="btc-rail-card mb-4 overflow-hidden rounded-2xl border border-slate-300 bg-white p-2.5 shadow-md backdrop-blur dark:border-slate-700 dark:bg-slate-950 sm:mb-6 sm:p-3">
-          <div className="flex flex-col gap-3 pl-2 lg:flex-row lg:items-center lg:justify-between">
-            <BrandMark title="Bowerman Training Log" subtitle={isCoach ? 'Coach' : 'Athlete'} compact />
-          
-            <div className="grid grid-cols-2 items-center gap-2 sm:flex sm:flex-nowrap sm:gap-2 lg:justify-end">
+      <AppPage>
+        <AppHeader
+          title="Bowerman Training Log"
+          subtitle={isCoach ? 'Coach' : 'Athlete'}
+          actions={(
+            <>
               {!isCoach && (
                 <>
                   <Button
                     type="button"
                     variant="outline"
-                    className="h-9 w-full rounded-full px-3 text-sm font-semibold sm:w-auto sm:px-4"
+                    className="h-9 rounded-full px-3 text-sm font-semibold sm:px-4"
                     onClick={() => setFactorSettingsOpen(true)}
                   >
                     <Settings className="mr-2 h-4 w-4" />
@@ -796,112 +928,113 @@ export default function TrainingLog() {
                 </>
               )}
               {isCoach && (
-                <Link to={getPageUrlWithLogContext('WeekTemplates')} className="w-full sm:w-auto">
-                  <Button className="h-9 w-full rounded-full bg-red-700 px-3 text-sm font-semibold text-white shadow-sm hover:bg-red-800 dark:bg-red-600 dark:hover:bg-red-500 sm:w-auto sm:px-4">
+                <Link to={getPageUrlWithLogContext('WeekTemplates')}>
+                  <Button className="h-9 rounded-full bg-red-700 px-3 text-sm font-semibold text-white shadow-sm hover:bg-red-800 dark:bg-red-600 dark:hover:bg-red-500 sm:px-4">
                     <Layers className="mr-2 h-4 w-4" />
                     Templates
                   </Button>
                 </Link>
               )}
-              <Link to={getPageUrlWithLogContext('Workouts')} className="w-full sm:w-auto">
-                <Button className="h-9 w-full rounded-full bg-red-700 px-3 text-sm font-semibold text-white shadow-sm hover:bg-red-800 dark:bg-red-600 dark:hover:bg-red-500 sm:w-auto sm:px-4">
+              <Link to={getPageUrlWithLogContext('Workouts')}>
+                <Button className="h-9 rounded-full bg-red-700 px-3 text-sm font-semibold text-white shadow-sm hover:bg-red-800 dark:bg-red-600 dark:hover:bg-red-500 sm:px-4">
                   <Activity className="mr-2 h-4 w-4" />
                   Workouts
                 </Button>
               </Link>
-              <Link to={getPageUrlWithLogContext('Account')} className="w-full sm:w-auto">
-                <Button variant="outline" className="h-9 w-full rounded-full px-3 text-sm font-semibold sm:w-auto sm:px-4">
+              <Link to={getPageUrlWithLogContext('Account')}>
+                <Button variant="outline" className="h-9 rounded-full px-3 text-sm font-semibold sm:px-4">
                   <UserCircle className="mr-2 h-4 w-4" />
                   Account
                 </Button>
               </Link>
-              <Button variant="ghost" size="sm" className="col-span-2 h-9 justify-center sm:col-span-1" onClick={() => logout()}>
+              <Button variant="ghost" size="sm" className="h-9 justify-center rounded-full px-3" onClick={() => logout()}>
                 <LogOut className="mr-1.5 h-4 w-4" />
                 Sign Out
               </Button>
-            </div>
-          </div>
-        </div>
+            </>
+          )}
+        />
         
         {/* Coach Athlete Selector */}
         {isCoach && athletes.length > 0 && (
-          <div className="mb-4 space-y-3">
-            <div className="flex flex-wrap items-center gap-3">
-              <Label className="flex items-center gap-1 text-sm text-slate-600 dark:text-slate-300">
-                <Users className="h-4 w-4" /> Viewing
-              </Label>
-              <Popover open={athleteSelectorOpen} onOpenChange={setAthleteSelectorOpen}>
-                <PopoverTrigger asChild>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    role="combobox"
-                    aria-expanded={athleteSelectorOpen}
-                    className="h-10 w-full max-w-sm justify-between border-slate-300 bg-white px-3 text-left font-normal text-slate-900 shadow-sm dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 sm:h-11"
-                  >
-                    <span className="min-w-0 truncate">
-                      {selectedAthlete ? getDisplayName(selectedAthlete) : 'Select athlete'}
-                    </span>
-                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 text-slate-500" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent align="start" className="w-[min(calc(100vw-2rem),24rem)] p-0">
-                  <Command>
-                    <CommandInput placeholder="Search athletes..." />
-                    <CommandList>
-                      <CommandEmpty>No athletes found.</CommandEmpty>
-                      <CommandGroup>
-                        {athleteOptions.map((athlete) => {
-                          const displayName = getDisplayName(athlete);
-                          const searchValue = [
-                            displayName,
-                            athlete.email,
-                            athlete.phone_number,
-                            athlete.id,
-                          ].filter(Boolean).join(' ');
+          <PagePanel className="mb-4 p-3 sm:p-4">
+            <div className="grid gap-3 lg:grid-cols-[minmax(18rem,24rem)_minmax(0,1fr)] lg:items-center">
+              <div className="space-y-1.5">
+                <Label className="flex items-center gap-1 text-xs font-bold uppercase tracking-wide text-slate-600 dark:text-slate-300">
+                  <Users className="h-4 w-4 text-red-700 dark:text-red-300" /> Viewing Athlete
+                </Label>
+                <Popover open={athleteSelectorOpen} onOpenChange={setAthleteSelectorOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      role="combobox"
+                      aria-expanded={athleteSelectorOpen}
+                      className="h-10 w-full justify-between border-slate-300 bg-white px-3 text-left font-semibold text-slate-900 shadow-sm dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 sm:h-11"
+                    >
+                      <span className="min-w-0 truncate">
+                        {selectedAthlete ? getDisplayName(selectedAthlete) : 'Select athlete'}
+                      </span>
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 text-slate-500" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent align="start" className="w-[min(calc(100vw-2rem),24rem)] p-0">
+                    <Command>
+                      <CommandInput placeholder="Search athletes..." />
+                      <CommandList>
+                        <CommandEmpty>No athletes found.</CommandEmpty>
+                        <CommandGroup>
+                          {athleteOptions.map((athlete) => {
+                            const displayName = getDisplayName(athlete);
+                            const searchValue = [
+                              displayName,
+                              athlete.email,
+                              athlete.phone_number,
+                              athlete.id,
+                            ].filter(Boolean).join(' ');
 
-                          return (
-                            <CommandItem
-                              key={athlete.id}
-                              value={searchValue}
-                              onSelect={() => {
-                                setViewingAthleteId(athlete.id);
-                                setAthleteSelectorOpen(false);
-                              }}
-                              className="gap-3"
-                            >
-                              <Avatar className="h-7 w-7">
-                                <AvatarImage src={athlete.profile_image_url} alt={displayName} className="object-cover" />
-                                <AvatarFallback className="text-xs font-semibold">
-                                  {getInitials(athlete)}
-                                </AvatarFallback>
-                              </Avatar>
-                              <div className="min-w-0 flex-1">
-                                <div className="truncate font-medium">{displayName}</div>
-                                {athlete.email && (
-                                  <div className="truncate text-xs text-slate-500 dark:text-slate-400">
-                                    {athlete.email}
-                                  </div>
-                                )}
-                              </div>
-                              <Check
-                                className={cn(
-                                  'h-4 w-4 text-red-700 dark:text-red-300',
-                                  athlete.id === effectiveAthleteId ? 'opacity-100' : 'opacity-0'
-                                )}
-                              />
-                            </CommandItem>
-                          );
-                        })}
-                      </CommandGroup>
-                    </CommandList>
-                  </Command>
-                </PopoverContent>
-              </Popover>
-            </div>
+                            return (
+                              <CommandItem
+                                key={athlete.id}
+                                value={searchValue}
+                                onSelect={() => {
+                                  setViewingAthleteId(athlete.id);
+                                  setAthleteSelectorOpen(false);
+                                }}
+                                className="gap-3"
+                              >
+                                <Avatar className="h-7 w-7">
+                                  <AvatarImage src={athlete.profile_image_url} alt={displayName} className="object-cover" />
+                                  <AvatarFallback className="text-xs font-semibold">
+                                    {getInitials(athlete)}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <div className="min-w-0 flex-1">
+                                  <div className="truncate font-medium">{displayName}</div>
+                                  {athlete.email && (
+                                    <div className="truncate text-xs text-slate-500 dark:text-slate-400">
+                                      {athlete.email}
+                                    </div>
+                                  )}
+                                </div>
+                                <Check
+                                  className={cn(
+                                    'h-4 w-4 text-red-700 dark:text-red-300',
+                                    athlete.id === effectiveAthleteId ? 'opacity-100' : 'opacity-0'
+                                  )}
+                                />
+                              </CommandItem>
+                            );
+                          })}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+              </div>
 
             {selectedAthlete && (
-              <div className="flex flex-wrap items-center gap-3 rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm shadow-sm dark:border-slate-700 dark:bg-slate-950 sm:px-4 sm:py-3">
+              <div className="flex min-w-0 flex-wrap items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm dark:border-slate-700 dark:bg-slate-900/70 sm:px-4 sm:py-3">
                 <Avatar className="h-9 w-9 sm:h-10 sm:w-10">
                   <AvatarImage src={selectedAthlete.profile_image_url} alt={getDisplayName(selectedAthlete)} className="object-cover" />
                   <AvatarFallback className="font-semibold">
@@ -928,10 +1061,11 @@ export default function TrainingLog() {
               </div>
             )}
           </div>
+          </PagePanel>
         )}
         
         {/* View Toggle + Navigation */}
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <div className="btc-control-bar mb-4">
           <div className="flex overflow-hidden rounded-lg border border-slate-300 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-950">
             <Button
               variant="ghost"
@@ -1016,20 +1150,27 @@ export default function TrainingLog() {
             <Loader2 className="w-8 h-8 animate-spin text-slate-400" />
           </div>
         ) : !trainingWeek ? (
-          <div className="mt-5 rounded-xl border border-slate-300 bg-white p-5 text-center shadow-md dark:border-slate-700 dark:bg-slate-950 sm:mt-8 sm:p-12">
-            <h3 className="mb-2 text-base font-semibold text-slate-800 dark:text-slate-100 sm:text-lg">No training week found</h3>
-            <p className="mb-4 text-sm text-slate-600 dark:text-slate-300 sm:text-base">Create a training week to start planning.</p>
-            <Button className="w-full sm:w-auto" onClick={() => createWeekMutation.mutate()} disabled={createWeekMutation.isPending}>
-              {createWeekMutation.isPending ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : null}
-              Create Training Week
-            </Button>
-          </div>
+          <PagePanel className="mt-5 p-4 sm:mt-6 sm:p-6">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="min-w-0 text-left">
+                <div className="btc-section-title">Week Setup</div>
+                <h3 className="mt-1 text-lg font-extrabold text-slate-900 dark:text-slate-100">No training week yet</h3>
+                <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
+                  Create this week once, then use the day cards below to plan or log training.
+                </p>
+              </div>
+              <Button className="w-full sm:w-auto" onClick={() => createWeekMutation.mutate()} disabled={createWeekMutation.isPending}>
+                {createWeekMutation.isPending ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : null}
+                Create Training Week
+              </Button>
+            </div>
+          </PagePanel>
         ) : (
           <>
             {/* Weekly Grid */}
-            <div className="mt-5 overflow-hidden rounded-xl border border-slate-300 bg-white shadow-md dark:border-slate-700 dark:bg-slate-950 sm:mt-6">
+            <div className="btc-panel mt-5 overflow-hidden sm:mt-6">
               <div className="overflow-x-auto">
                 <div className="flex min-w-[756px] w-full sm:min-w-[896px] lg:min-w-[980px]">
                   {DAYS.map((day, index) => (
@@ -1069,7 +1210,7 @@ export default function TrainingLog() {
             </div>
           </>
         )}
-      </div>
+      </AppPage>
 
       {!isCoach && (
         <Dialog open={factorSettingsOpen} onOpenChange={setFactorSettingsOpen}>

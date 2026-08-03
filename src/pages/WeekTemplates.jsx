@@ -19,7 +19,7 @@ import {
   Users,
 } from 'lucide-react';
 import { appClient } from '@/api/client';
-import BrandMark from '@/components/BrandMark';
+import { AppHeader, AppPage } from '@/components/AppChrome';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -889,31 +889,31 @@ export default function WeekTemplates() {
 
   return (
     <div className="btc-app-shell min-h-screen text-slate-900 dark:text-slate-100">
-      <div className="relative mx-auto w-full max-w-[1800px] px-4 py-6 2xl:px-8">
-        <div className="btc-rail-card mb-6 overflow-hidden rounded-2xl border border-slate-300 bg-white p-2.5 shadow-md backdrop-blur dark:border-slate-700 dark:bg-slate-950 sm:p-3">
-          <div className="flex flex-col gap-3 pl-2 lg:flex-row lg:items-center lg:justify-between">
-            <BrandMark title="Bowerman Training Log" subtitle="Templates" compact />
-
-            <div className="flex flex-wrap items-center gap-2 lg:flex-nowrap lg:justify-end">
+      <AppPage>
+        <AppHeader
+          title="Bowerman Training Log"
+          subtitle="Templates"
+          actions={(
+            <>
               <Link to={trainingLogUrl}>
-                <Button variant="outline" className="h-9 rounded-full px-4 text-sm font-semibold">
+                <Button variant="outline" className="h-9 rounded-full px-3 text-sm font-semibold sm:px-4">
                   <ArrowLeft className="mr-2 h-4 w-4" />
                   Log
                 </Button>
               </Link>
               <Link to={accountUrl}>
-                <Button variant="outline" className="h-9 rounded-full px-4 text-sm font-semibold">
+                <Button variant="outline" className="h-9 rounded-full px-3 text-sm font-semibold sm:px-4">
                   <UserCircle className="mr-2 h-4 w-4" />
                   Account
                 </Button>
               </Link>
-            </div>
-          </div>
-        </div>
+            </>
+          )}
+        />
 
         <div className="grid min-w-0 gap-5 lg:grid-cols-[300px_minmax(0,1fr)] 2xl:grid-cols-[340px_minmax(0,1fr)]">
           <aside className="min-w-0 space-y-4">
-            <div className="rounded-xl border border-slate-300 bg-white p-4 shadow-md dark:border-slate-700 dark:bg-slate-950">
+            <div className="btc-panel p-4">
               <div className="mb-3 flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
                   <Layers className="h-4 w-4 text-red-700 dark:text-red-300" />
@@ -958,7 +958,7 @@ export default function WeekTemplates() {
 
           <main className="min-w-0 space-y-5">
             {!draft ? (
-              <div className="rounded-xl border border-slate-300 bg-white p-12 text-center shadow-md dark:border-slate-700 dark:bg-slate-950">
+              <div className="btc-panel p-8 text-center sm:p-12">
                 <CalendarDays className="mx-auto h-8 w-8 text-slate-400" />
                 <h2 className="mt-3 text-lg font-semibold text-slate-800 dark:text-slate-100">Select or create a template</h2>
                 <div className="mt-5">
@@ -970,7 +970,7 @@ export default function WeekTemplates() {
               </div>
             ) : (
               <>
-                <div className="rounded-xl border border-slate-300 bg-white p-4 shadow-md dark:border-slate-700 dark:bg-slate-950">
+                <div className="btc-panel p-4">
                   <div className="grid gap-4 lg:grid-cols-[1fr_180px_180px]">
                     <div className="space-y-2">
                       <Label>Name</Label>
@@ -1046,7 +1046,7 @@ export default function WeekTemplates() {
         </div>
 
         {draft && (
-          <div className="mt-5 max-w-full overflow-x-auto rounded-xl border border-slate-300 bg-white shadow-md dark:border-slate-700 dark:bg-slate-950">
+          <div className="btc-panel mt-5 max-w-full overflow-x-auto">
             <div className="flex min-w-[1080px] w-full">
               {draft.days.map((day, index) => (
                 <DayTemplateCard
@@ -1059,7 +1059,7 @@ export default function WeekTemplates() {
             </div>
           </div>
         )}
-      </div>
+      </AppPage>
 
       <ApplyTemplateDialog
         open={applyOpen}

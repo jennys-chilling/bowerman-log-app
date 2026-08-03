@@ -500,7 +500,7 @@ export default function MonthView({
   };
 
   return (
-    <div className="overflow-hidden rounded-xl border border-slate-300 bg-white shadow-md dark:border-slate-700 dark:bg-slate-950">
+    <div className="btc-panel overflow-hidden">
       <div className="flex flex-col gap-3 border-b border-slate-200 bg-slate-50 px-3 py-3 dark:border-slate-800 dark:bg-slate-900 sm:flex-row sm:items-center sm:justify-between sm:px-4">
         <div className="order-1 grid gap-2 sm:order-2 sm:flex sm:items-end">
           <div className="space-y-1">

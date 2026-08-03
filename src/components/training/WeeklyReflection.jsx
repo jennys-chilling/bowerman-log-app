@@ -50,8 +50,8 @@ export default function WeeklyReflection({ trainingWeek, onSave, isCoach }) {
   };
 
   return (
-    <div className="grid md:grid-cols-2 gap-4">
-      <Card className="border-slate-300 bg-white shadow-md dark:border-slate-700 dark:bg-slate-950">
+    <div className="grid gap-4 md:grid-cols-2">
+      <Card className="btc-panel overflow-hidden">
         <CardHeader className="pb-2">
           <CardTitle className="text-sm flex items-center gap-2 text-slate-700 dark:text-slate-300">
             <MessageSquare className="w-4 h-4 text-red-600" />
@@ -73,7 +73,7 @@ export default function WeeklyReflection({ trainingWeek, onSave, isCoach }) {
         </CardContent>
       </Card>
       
-      <Card className="border-slate-300 bg-white shadow-md dark:border-slate-700 dark:bg-slate-950">
+      <Card className="btc-panel overflow-hidden">
         <CardHeader className="pb-2">
           <CardTitle className="text-sm flex items-center gap-2 text-slate-700 dark:text-slate-300">
             <MessageSquare className="w-4 h-4 text-emerald-500" />
@@ -95,8 +95,7 @@ export default function WeeklyReflection({ trainingWeek, onSave, isCoach }) {
         </CardContent>
       </Card>
       
-      <div className="md:col-span-2 flex flex-wrap items-center justify-between gap-3">
-        <div />
+      <div className="flex flex-wrap items-center justify-end gap-3 md:col-span-2">
         <Button onClick={handleSave} disabled={saving}>
           {saved ? (
             <><CheckCircle className="w-4 h-4 mr-2" /> Saved</>

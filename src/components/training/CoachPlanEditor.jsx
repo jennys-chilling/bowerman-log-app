@@ -435,7 +435,10 @@ export default function CoachPlanEditor({ open, onClose, dayPlan, date, onSave, 
       </Tabs>
 
       <DialogFooter className={cn(
-        compact && "sticky bottom-0 -mx-3 -mb-3 border-t border-slate-200 bg-white/95 px-3 py-2 backdrop-blur dark:border-slate-800 dark:bg-slate-950/95 [&_button]:h-8"
+        "sticky bottom-0 border-t border-slate-200 bg-white/95 backdrop-blur dark:border-slate-800 dark:bg-slate-950/95",
+        compact
+          ? "-mx-3 -mb-3 px-3 py-2 [&_button]:h-8"
+          : "-mx-6 -mb-6 px-6 py-3"
       )}>
         <Button variant="outline" onClick={onClose}>Close</Button>
         <Button onClick={handleSave}>Save Plan</Button>
@@ -446,7 +449,7 @@ export default function CoachPlanEditor({ open, onClose, dayPlan, date, onSave, 
   if (variant === 'panel') {
     return (
       <div className={cn(
-        "rounded-xl border border-slate-300 bg-white shadow-md dark:border-slate-700 dark:bg-slate-950",
+        "btc-panel",
         compact ? "p-3" : "p-4",
         className
       )}>
@@ -457,7 +460,7 @@ export default function CoachPlanEditor({ open, onClose, dayPlan, date, onSave, 
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-h-[90vh] max-w-5xl overflow-y-auto">
         {editorContent}
       </DialogContent>
     </Dialog>

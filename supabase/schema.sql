@@ -19,6 +19,7 @@ create table if not exists public.profiles (
   phone_number text,
   profile_image_url text,
   training_factor_preferences jsonb not null default '[]'::jsonb,
+  month_view_preferences jsonb not null default '{}'::jsonb,
   role text not null default 'athlete' check (role in ('athlete', 'admin')),
   created_at timestamptz not null default timezone('utc', now()),
   updated_at timestamptz not null default timezone('utc', now())
@@ -29,7 +30,8 @@ alter table public.profiles
   add column if not exists last_name text,
   add column if not exists phone_number text,
   add column if not exists profile_image_url text,
-  add column if not exists training_factor_preferences jsonb not null default '[]'::jsonb;
+  add column if not exists training_factor_preferences jsonb not null default '[]'::jsonb,
+  add column if not exists month_view_preferences jsonb not null default '{}'::jsonb;
 
 create table if not exists public.training_weeks (
   id uuid primary key default gen_random_uuid(),

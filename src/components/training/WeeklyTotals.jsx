@@ -71,7 +71,7 @@ export default function WeeklyTotals({ dayPlans }) {
   const totals = calculateTotals();
 
   const StatCard = ({ icon: Icon, label, value, subValue, color }) => (
-    <div className="rounded-xl border border-slate-300 bg-white p-3 shadow-sm dark:border-slate-700 dark:bg-slate-950 sm:p-4">
+    <div className="rounded-xl border border-slate-300 bg-white p-3 shadow-sm dark:border-slate-700 dark:bg-slate-900 sm:p-4">
       <div className="mb-1 flex items-center gap-1.5 text-slate-500 dark:text-slate-400 sm:gap-2">
         <Icon className={`h-4 w-4 ${color}`} />
         <span className="text-[10px] uppercase tracking-wide sm:text-xs">{label}</span>
@@ -94,7 +94,7 @@ function WeeklyTotalsShell({ totals, StatCard }) {
       open={isOpen}
       onOpenChange={setIsOpen}
       className={cn(
-        "w-full rounded-xl border border-slate-300 bg-white p-3 shadow-md dark:border-slate-700 dark:bg-slate-950 sm:p-4",
+        "btc-panel w-full p-3 sm:p-4",
         isOpen ? "h-full self-stretch" : "self-start"
       )}
     >

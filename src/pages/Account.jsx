@@ -1,9 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, Camera, KeyRound, Loader2, Save, UserCircle } from 'lucide-react';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { Camera, KeyRound, Loader2, Save, UserCircle } from 'lucide-react';
 import { appClient } from '@/api/client';
 import { useAuth } from '@/lib/AuthContext';
-import BrandMark from '@/components/BrandMark';
+import { AppHeader, AppPage } from '@/components/AppChrome';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -198,21 +198,14 @@ export default function Account() {
 
   return (
     <div className="btc-app-shell text-slate-900 dark:text-slate-100">
-      <div className="relative mx-auto max-w-4xl px-4 py-6">
-        <div className="btc-rail-card mb-6 overflow-hidden rounded-2xl border border-red-900/10 bg-white/90 p-4 shadow-sm backdrop-blur dark:border-red-500/20 dark:bg-slate-950/90">
-          <div className="flex items-center justify-between gap-4 pl-2">
-            <div className="flex items-center gap-3">
-              <Link to={trainingLogUrl}>
-                <Button variant="ghost" size="icon">
-                  <ArrowLeft className="h-5 w-5" />
-                </Button>
-              </Link>
-              <BrandMark title="Bowerman" subtitle="Account" compact />
-            </div>
-          </div>
-        </div>
+      <AppPage maxWidth="max-w-4xl">
+        <AppHeader
+          title="Bowerman Training Log"
+          subtitle={isSetupMode ? 'Account Setup' : 'Account'}
+          backTo={trainingLogUrl}
+        />
 
-        <Card className="overflow-hidden border-slate-200 shadow-sm dark:border-slate-800">
+        <Card className="btc-panel overflow-hidden">
           <CardHeader className="border-b border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-900">
             <CardTitle className="flex items-center gap-2 text-lg">
               <UserCircle className="h-5 w-5 text-red-700 dark:text-red-300" />
@@ -316,7 +309,7 @@ export default function Account() {
           </CardContent>
         </Card>
 
-        <Card className="mt-6 overflow-hidden border-slate-200 shadow-sm dark:border-slate-800">
+        <Card className="btc-panel mt-6 overflow-hidden">
           <CardHeader className="border-b border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-900">
             <CardTitle className="flex items-center gap-2 text-lg">
               <KeyRound className="h-5 w-5 text-red-700 dark:text-red-300" />
@@ -357,7 +350,7 @@ export default function Account() {
             </div>
           </CardContent>
         </Card>
-      </div>
+      </AppPage>
     </div>
   );
 }

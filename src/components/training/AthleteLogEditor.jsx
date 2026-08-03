@@ -606,7 +606,7 @@ export default function AthleteLogEditor({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
+      <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <span className="text-sm text-slate-400">Athlete Log:</span>
@@ -687,7 +687,7 @@ export default function AthleteLogEditor({
           </TabsContent>
         </Tabs>
 
-        <DialogFooter>
+        <DialogFooter className="sticky bottom-0 -mx-6 -mb-6 border-t border-slate-200 bg-white/95 px-6 py-3 backdrop-blur dark:border-slate-800 dark:bg-slate-950/95">
           <Button variant="outline" onClick={onClose}>Close</Button>
           <Button onClick={handleSave}>Save Log</Button>
         </DialogFooter>

@@ -120,7 +120,7 @@ export default function WeeklyMileageGoal({ trainingWeek, isCoach, onSave, dayPl
       open={isOpen}
       onOpenChange={setIsOpen}
       className={cn(
-        "flex w-full flex-col rounded-xl border border-slate-300 bg-white p-3 shadow-md dark:border-slate-700 dark:bg-slate-950 sm:p-4",
+        "btc-panel flex w-full flex-col p-3 sm:p-4",
         isOpen ? "h-full self-stretch sm:min-h-[168px]" : "self-start"
       )}
     >
@@ -163,13 +163,13 @@ export default function WeeklyMileageGoal({ trainingWeek, isCoach, onSave, dayPl
             )}
           </div>
         ) : (
-          <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-800 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100">
+          <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100">
             {formatGoalText(parsedGoal.goalMin, parsedGoal.goalMax)}
           </div>
         )}
 
         <div className="mt-3 grid flex-1 gap-2 sm:mt-4 sm:content-end sm:gap-3">
-          <div className="rounded-lg border border-slate-200 bg-slate-50 p-2.5 dark:border-slate-700 dark:bg-slate-900 sm:p-3">
+          <div className="rounded-lg border border-slate-200 bg-slate-50 p-2.5 dark:border-slate-700 dark:bg-slate-800 sm:p-3">
             <div className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Miles Left</div>
             <div className="mt-0.5 text-xl font-bold text-slate-900 dark:text-slate-100 sm:mt-1 sm:text-2xl">{milesLeft}</div>
           </div>
