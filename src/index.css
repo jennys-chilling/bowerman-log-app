@@ -655,6 +655,42 @@
     --btc-month-grid-min-width: 101.5rem;
   }
 
+  .btc-month-feedback-cell {
+    align-self: stretch;
+  }
+
+  .btc-month-entry-card,
+  .btc-month-entry-header,
+  .btc-month-entry-text,
+  .btc-month-total-label {
+    min-width: 0;
+    max-width: 100%;
+    overflow-wrap: break-word;
+    word-break: normal;
+  }
+
+  .btc-month-entry-badge {
+    display: inline-block;
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-align: center;
+    line-height: 1.05;
+    overflow-wrap: normal;
+    word-break: normal;
+  }
+
+  .btc-month-entry-header .btc-month-entry-badge {
+    flex: 1 1 auto;
+  }
+
+  .btc-month-total-label {
+    white-space: normal;
+    line-height: 1.15;
+  }
+
   @media (max-width: 640px), (hover: none), (pointer: coarse) {
     .btc-month-view {
       --btc-month-grid-template: repeat(7, minmax(7.75rem, 7.75rem)) minmax(5.25rem, 5.25rem) minmax(8.5rem, 8.5rem);
@@ -668,10 +704,13 @@
     }
 
     .btc-month-day-cell,
-    .btc-month-total-cell,
-    .btc-month-feedback-cell {
+    .btc-month-total-cell {
       min-height: 12.5rem;
       padding: 0.5rem;
+    }
+
+    .btc-month-feedback-cell {
+      min-height: 12.5rem;
     }
 
     .btc-month-day-cell .btc-role-zone {

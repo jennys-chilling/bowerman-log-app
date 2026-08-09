@@ -136,13 +136,13 @@ function AthleteActivitySummary({ label, activity, index, total }) {
   }
 
   return (
-    <div className={cn("btc-role-card btc-role-card-athlete rounded-lg border px-2 py-1.5 pl-3 shadow-sm", rpeColors.surface)}>
-      <div className="flex min-w-0 items-center justify-between gap-1.5">
+    <div className={cn("btc-month-entry-card btc-role-card btc-role-card-athlete rounded-lg border px-2 py-1.5 pl-3 shadow-sm", rpeColors.surface)}>
+      <div className="btc-month-entry-header flex min-w-0 items-start justify-between gap-1.5">
         <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide opacity-75">
           {label}{total > 1 ? index + 1 : ''}
         </span>
         <span className={cn(
-          'min-w-0 rounded border px-1.5 py-0.5 text-[10px] font-semibold leading-none',
+          'btc-month-entry-badge min-w-0 rounded border px-1.5 py-0.5 text-[10px] font-semibold leading-none',
           neutralWorkoutBadgeClass
         )}
           title={sessionType}
@@ -151,7 +151,7 @@ function AthleteActivitySummary({ label, activity, index, total }) {
         </span>
       </div>
 
-      <div className="mt-1 flex flex-wrap items-center gap-1 text-[11px] font-medium leading-tight">
+      <div className="btc-month-entry-text mt-1 flex flex-wrap items-center gap-1 text-[11px] font-medium leading-tight">
         {metricItems.length > 0 && <span>{metricItems.join(' · ')}</span>}
         {activity.rpe !== null && activity.rpe !== undefined && (
           <span className={cn("rounded border px-1.5 py-0.5 text-[9px] font-bold leading-none", rpeColors.badge)}>
@@ -166,7 +166,7 @@ function AthleteActivitySummary({ label, activity, index, total }) {
       </div>
 
       {activity.comments?.trim() && (
-        <div className="mt-1 hidden whitespace-pre-wrap text-[9px] italic opacity-80 sm:block">
+        <div className="btc-month-entry-text mt-1 hidden whitespace-pre-wrap text-[9px] italic opacity-80 sm:block">
           {activity.comments.trim()}
         </div>
       )}
@@ -200,7 +200,7 @@ function TrainingFactorSummary({ factors }) {
       {entries.map((entry) => (
         <span
           key={entry.key}
-          className="rounded border border-slate-200 bg-white px-1.5 py-0.5 text-[9px] font-semibold leading-none text-slate-600 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200"
+          className="btc-month-entry-badge rounded border border-slate-200 bg-white px-1.5 py-0.5 text-[9px] font-semibold leading-none text-slate-600 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200"
           title={entry.label}
         >
           {entry.shortLabel}: {entry.value}
@@ -215,12 +215,12 @@ function CoachActivitySummary({ label, activity, index, total }) {
   const workoutType = activity.workout_type || 'Plan';
 
   return (
-    <div className={cn("btc-role-card btc-role-card-coach rounded-lg border px-2 py-1.5 pl-3 shadow-sm", rpeColors.surface)}>
-      <div className="flex min-w-0 items-center justify-between gap-1.5">
+    <div className={cn("btc-month-entry-card btc-role-card btc-role-card-coach rounded-lg border px-2 py-1.5 pl-3 shadow-sm", rpeColors.surface)}>
+      <div className="btc-month-entry-header flex min-w-0 items-start justify-between gap-1.5">
         <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide opacity-75">
           {label}{total > 1 ? index + 1 : ''}
         </span>
-        <span className={cn('min-w-0 rounded border px-1.5 py-0.5 text-[10px] font-semibold leading-none', neutralWorkoutBadgeClass)}>
+        <span className={cn('btc-month-entry-badge min-w-0 rounded border px-1.5 py-0.5 text-[10px] font-semibold leading-none', neutralWorkoutBadgeClass)}>
           {compactSessionType(workoutType, activity.xtrain_other || '')}
         </span>
       </div>
@@ -231,10 +231,10 @@ function CoachActivitySummary({ label, activity, index, total }) {
         <div className="mt-1 text-[10px] font-bold leading-none">Strides</div>
       )}
       {activity.prescription?.trim() && (
-        <div className="mt-1 max-h-20 overflow-y-auto whitespace-pre-wrap text-[11px] leading-snug">{activity.prescription.trim()}</div>
+        <div className="btc-month-entry-text mt-1 whitespace-pre-wrap text-[11px] leading-snug">{activity.prescription.trim()}</div>
       )}
       {activity.coach_notes?.trim() && (
-        <div className="mt-1 max-h-16 overflow-y-auto border-t border-current/15 pt-1 whitespace-pre-wrap text-[10px] leading-snug opacity-90">{activity.coach_notes.trim()}</div>
+        <div className="btc-month-entry-text mt-1 border-t border-current/15 pt-1 whitespace-pre-wrap text-[10px] leading-snug opacity-90">{activity.coach_notes.trim()}</div>
       )}
     </div>
   );
@@ -267,7 +267,7 @@ function FeedbackPanel({ label, value, tone, className }) {
   };
 
   return (
-    <div className={cn('flex min-h-0 flex-col rounded-lg px-3 py-2', toneClasses[tone], className)}>
+    <div className={cn('flex min-h-0 flex-col overflow-hidden rounded-lg px-3 py-2', toneClasses[tone], className)}>
       <div className="mb-1 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide opacity-80">
         <MessageSquare className="h-3 w-3" />
         {label}
@@ -284,32 +284,34 @@ function WeekFeedbackColumn({ trainingWeek }) {
   const hasCoachFeedback = hasText(trainingWeek?.coach_feedback);
 
   return (
-    <div className="btc-month-feedback-cell flex h-[220px] max-h-[220px] flex-col overflow-hidden border-l border-slate-300 bg-slate-50 p-2 dark:border-slate-700 dark:bg-slate-900 sm:h-[260px] sm:max-h-[260px] md:sticky md:right-0 md:z-10">
-      <div className="mb-2 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-300">
-        <MessageSquare className="h-3.5 w-3.5 text-red-600 dark:text-red-300" />
-        Feedback
-      </div>
+    <div className="btc-month-feedback-cell relative min-h-[220px] min-w-0 overflow-hidden border-l border-slate-300 bg-slate-50 dark:border-slate-700 dark:bg-slate-900 sm:min-h-[260px] md:sticky md:right-0 md:z-10">
+      <div className="absolute inset-0 flex min-h-0 flex-col overflow-hidden p-2">
+        <div className="mb-2 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-300">
+          <MessageSquare className="h-3.5 w-3.5 text-red-600 dark:text-red-300" />
+          Feedback
+        </div>
 
-      {hasAthleteReflection || hasCoachFeedback ? (
-        <div className="flex min-h-0 flex-1 flex-col gap-2">
-          <FeedbackPanel
-            label="Athlete"
-            value={trainingWeek?.athlete_reflection}
-            tone="athlete"
-            className={hasAthleteReflection && hasCoachFeedback ? 'basis-1/2' : 'basis-full'}
-          />
-          <FeedbackPanel
-            label="Coach"
-            value={trainingWeek?.coach_feedback}
-            tone="coach"
-            className={hasAthleteReflection && hasCoachFeedback ? 'basis-1/2' : 'basis-full'}
-          />
-        </div>
-      ) : (
-        <div className="flex min-h-0 flex-1 items-center justify-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-center text-[11px] font-medium text-slate-400 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-500">
-          No feedback
-        </div>
-      )}
+        {hasAthleteReflection || hasCoachFeedback ? (
+          <div className="flex min-h-0 flex-1 flex-col gap-2">
+            <FeedbackPanel
+              label="Coach"
+              value={trainingWeek?.coach_feedback}
+              tone="coach"
+              className={hasAthleteReflection && hasCoachFeedback ? 'basis-1/2' : 'basis-full'}
+            />
+            <FeedbackPanel
+              label="Athlete"
+              value={trainingWeek?.athlete_reflection}
+              tone="athlete"
+              className={hasAthleteReflection && hasCoachFeedback ? 'basis-1/2' : 'basis-full'}
+            />
+          </div>
+        ) : (
+          <div className="flex min-h-0 flex-1 items-center justify-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-center text-[11px] font-medium text-slate-400 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-500">
+            No feedback
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -358,7 +360,7 @@ function WeekRow({ weekStart, trainingWeek, allDayPlans, onWeekClick, onDayClick
               onDayClick({ date: day, dayPlan: plan });
             }}
             className={cn(
-              'btc-month-day-cell h-[220px] max-h-[220px] overflow-y-auto border-r border-slate-200 bg-white p-2 outline-none dark:border-slate-800 dark:bg-slate-950 sm:h-[260px] sm:max-h-[260px] sm:p-2.5',
+              'btc-month-day-cell min-h-[220px] border-r border-slate-200 bg-white p-2 outline-none dark:border-slate-800 dark:bg-slate-950 sm:min-h-[260px] sm:p-2.5',
               onDayClick && 'cursor-pointer transition-colors hover:bg-red-50/60 focus-visible:ring-2 focus-visible:ring-red-600 focus-visible:ring-inset dark:hover:bg-red-950/20',
               today && 'btc-today-cell',
               selected && 'bg-red-50 ring-2 ring-inset ring-red-700 dark:bg-red-950/30 dark:ring-red-400',
@@ -415,9 +417,9 @@ function WeekRow({ weekStart, trainingWeek, allDayPlans, onWeekClick, onDayClick
               )}
 
               {hasLift(lift) && (
-                <div className="btc-role-card btc-role-card-athlete rounded-lg border border-slate-200 bg-slate-50 px-2 py-1.5 pl-3 text-[11px] leading-tight text-slate-600 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300">
+                <div className="btc-month-entry-card btc-role-card btc-role-card-athlete rounded-lg border border-slate-200 bg-slate-50 px-2 py-1.5 pl-3 text-[11px] leading-tight text-slate-600 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300">
                   <div className="font-semibold">Lift</div>
-                  <div>
+                  <div className="btc-month-entry-text">
                     {Number(lift.duration_minutes) > 0 && <span>{formatMinutes(lift.duration_minutes)}</span>}
                     {lift.lift_type?.trim() && (
                       <span className="text-slate-500 dark:text-slate-400">
@@ -434,11 +436,11 @@ function WeekRow({ weekStart, trainingWeek, allDayPlans, onWeekClick, onDayClick
       })}
 
       <div
-        className="btc-month-total-cell sticky right-0 z-10 flex h-[220px] max-h-[220px] cursor-pointer flex-col items-center justify-center gap-1 overflow-y-auto border-l border-slate-300 bg-slate-100 p-2 text-center transition-colors hover:bg-slate-200 dark:border-slate-700 dark:bg-slate-900 dark:hover:bg-slate-800 sm:h-[260px] sm:max-h-[260px] md:right-72"
+        className="btc-month-total-cell sticky right-0 z-10 flex min-h-[220px] cursor-pointer flex-col items-center justify-center gap-1 border-l border-slate-300 bg-slate-100 p-2 text-center transition-colors hover:bg-slate-200 dark:border-slate-700 dark:bg-slate-900 dark:hover:bg-slate-800 sm:min-h-[260px] md:right-72"
         onClick={() => onWeekClick(weekStart)}
         title="Open this week"
       >
-        <div className="mb-1 text-[10px] font-extrabold uppercase tracking-wide text-red-700 dark:text-red-300">
+        <div className="btc-month-total-label mb-1 w-full text-[10px] font-extrabold uppercase tracking-wide text-red-700 dark:text-red-300">
           {weekLabel}
         </div>
         {weekStats.mileage > 0 && (
