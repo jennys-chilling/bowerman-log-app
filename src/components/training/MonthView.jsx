@@ -231,10 +231,10 @@ function CoachActivitySummary({ label, activity, index, total }) {
         <div className="mt-1 text-[10px] font-bold leading-none">Strides</div>
       )}
       {activity.prescription?.trim() && (
-        <div className="mt-1 whitespace-pre-wrap text-[11px] leading-snug">{activity.prescription.trim()}</div>
+        <div className="mt-1 max-h-20 overflow-y-auto whitespace-pre-wrap text-[11px] leading-snug">{activity.prescription.trim()}</div>
       )}
       {activity.coach_notes?.trim() && (
-        <div className="mt-1 border-t border-current/15 pt-1 whitespace-pre-wrap text-[10px] leading-snug opacity-90">{activity.coach_notes.trim()}</div>
+        <div className="mt-1 max-h-16 overflow-y-auto border-t border-current/15 pt-1 whitespace-pre-wrap text-[10px] leading-snug opacity-90">{activity.coach_notes.trim()}</div>
       )}
     </div>
   );
@@ -284,7 +284,7 @@ function WeekFeedbackColumn({ trainingWeek }) {
   const hasCoachFeedback = hasText(trainingWeek?.coach_feedback);
 
   return (
-    <div className="btc-month-feedback-cell flex h-full min-h-[220px] flex-col overflow-hidden border-l border-slate-300 bg-slate-50 p-2 dark:border-slate-700 dark:bg-slate-900 sm:min-h-[260px] md:sticky md:right-0 md:z-10">
+    <div className="btc-month-feedback-cell flex h-[220px] max-h-[220px] flex-col overflow-hidden border-l border-slate-300 bg-slate-50 p-2 dark:border-slate-700 dark:bg-slate-900 sm:h-[260px] sm:max-h-[260px] md:sticky md:right-0 md:z-10">
       <div className="mb-2 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-300">
         <MessageSquare className="h-3.5 w-3.5 text-red-600 dark:text-red-300" />
         Feedback
@@ -358,7 +358,7 @@ function WeekRow({ weekStart, trainingWeek, allDayPlans, onWeekClick, onDayClick
               onDayClick({ date: day, dayPlan: plan });
             }}
             className={cn(
-              'btc-month-day-cell min-h-[220px] border-r border-slate-200 bg-white p-2 outline-none dark:border-slate-800 dark:bg-slate-950 sm:min-h-[260px] sm:p-2.5',
+              'btc-month-day-cell h-[220px] max-h-[220px] overflow-y-auto border-r border-slate-200 bg-white p-2 outline-none dark:border-slate-800 dark:bg-slate-950 sm:h-[260px] sm:max-h-[260px] sm:p-2.5',
               onDayClick && 'cursor-pointer transition-colors hover:bg-red-50/60 focus-visible:ring-2 focus-visible:ring-red-600 focus-visible:ring-inset dark:hover:bg-red-950/20',
               today && 'btc-today-cell',
               selected && 'bg-red-50 ring-2 ring-inset ring-red-700 dark:bg-red-950/30 dark:ring-red-400',
@@ -434,7 +434,7 @@ function WeekRow({ weekStart, trainingWeek, allDayPlans, onWeekClick, onDayClick
       })}
 
       <div
-        className="btc-month-total-cell sticky right-0 z-10 flex min-h-[220px] cursor-pointer flex-col items-center justify-center gap-1 border-l border-slate-300 bg-slate-100 p-2 text-center transition-colors hover:bg-slate-200 dark:border-slate-700 dark:bg-slate-900 dark:hover:bg-slate-800 sm:min-h-[260px] md:right-72"
+        className="btc-month-total-cell sticky right-0 z-10 flex h-[220px] max-h-[220px] cursor-pointer flex-col items-center justify-center gap-1 overflow-y-auto border-l border-slate-300 bg-slate-100 p-2 text-center transition-colors hover:bg-slate-200 dark:border-slate-700 dark:bg-slate-900 dark:hover:bg-slate-800 sm:h-[260px] sm:max-h-[260px] md:right-72"
         onClick={() => onWeekClick(weekStart)}
         title="Open this week"
       >
@@ -491,7 +491,13 @@ export default function MonthView({
   selectedDate,
   inlineEditor,
   zoom = 1,
+  onZoomChange,
+  zoomMin = 0.35,
+  zoomMax = 1.2,
 }) {
+  const scrollRef = React.useRef(null);
+  const zoomRef = React.useRef(zoom);
+  const pinchStateRef = React.useRef(null);
   const [rangeWeeksDraft, setRangeWeeksDraft] = React.useState(String(rangeWeeks));
   const weeks = Array.from({ length: rangeWeeks }, (_, i) => addDays(rangeStart, i * 7));
   const dayHeaders = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -502,6 +508,77 @@ export default function MonthView({
   React.useEffect(() => {
     setRangeWeeksDraft(String(rangeWeeks));
   }, [rangeWeeks]);
+
+  React.useEffect(() => {
+    zoomRef.current = zoom;
+  }, [zoom]);
+
+  React.useEffect(() => {
+    const scrollElement = scrollRef.current;
+    if (!scrollElement || !onZoomChange) return undefined;
+
+    const clampZoom = (nextZoom) => Math.min(zoomMax, Math.max(zoomMin, Number(nextZoom.toFixed(2))));
+    const getTouchDistance = (touches) => Math.hypot(
+      touches[0].clientX - touches[1].clientX,
+      touches[0].clientY - touches[1].clientY
+    );
+    const getTouchMidpoint = (touches) => ({
+      x: (touches[0].clientX + touches[1].clientX) / 2,
+      y: (touches[0].clientY + touches[1].clientY) / 2,
+    });
+
+    const handleTouchStart = (event) => {
+      if (event.touches.length !== 2) return;
+
+      event.preventDefault();
+      const rect = scrollElement.getBoundingClientRect();
+      const midpoint = getTouchMidpoint(event.touches);
+
+      pinchStateRef.current = {
+        startDistance: getTouchDistance(event.touches),
+        startZoom: zoomRef.current,
+        focusXRatio: (scrollElement.scrollLeft + midpoint.x - rect.left) / Math.max(scrollElement.scrollWidth, 1),
+        focusYRatio: (scrollElement.scrollTop + midpoint.y - rect.top) / Math.max(scrollElement.scrollHeight, 1),
+        localX: midpoint.x - rect.left,
+        localY: midpoint.y - rect.top,
+      };
+    };
+
+    const handleTouchMove = (event) => {
+      const pinchState = pinchStateRef.current;
+      if (!pinchState || event.touches.length !== 2) return;
+
+      event.preventDefault();
+      const distance = getTouchDistance(event.touches);
+      if (pinchState.startDistance <= 0) return;
+
+      const nextZoom = clampZoom(pinchState.startZoom * (distance / pinchState.startDistance));
+      onZoomChange(nextZoom);
+
+      window.requestAnimationFrame(() => {
+        scrollElement.scrollLeft = (scrollElement.scrollWidth * pinchState.focusXRatio) - pinchState.localX;
+        scrollElement.scrollTop = (scrollElement.scrollHeight * pinchState.focusYRatio) - pinchState.localY;
+      });
+    };
+
+    const handleTouchEnd = (event) => {
+      if (event.touches.length < 2) {
+        pinchStateRef.current = null;
+      }
+    };
+
+    scrollElement.addEventListener('touchstart', handleTouchStart, { passive: false });
+    scrollElement.addEventListener('touchmove', handleTouchMove, { passive: false });
+    scrollElement.addEventListener('touchend', handleTouchEnd);
+    scrollElement.addEventListener('touchcancel', handleTouchEnd);
+
+    return () => {
+      scrollElement.removeEventListener('touchstart', handleTouchStart);
+      scrollElement.removeEventListener('touchmove', handleTouchMove);
+      scrollElement.removeEventListener('touchend', handleTouchEnd);
+      scrollElement.removeEventListener('touchcancel', handleTouchEnd);
+    };
+  }, [onZoomChange, zoomMax, zoomMin]);
 
   const commitRangeWeeksDraft = () => {
     const parsed = parseInt(rangeWeeksDraft, 10);
@@ -527,7 +604,7 @@ export default function MonthView({
   return (
     <div className="btc-panel btc-month-view overflow-hidden">
       <div className="flex flex-col gap-3 border-b border-slate-200 bg-slate-50 px-3 py-3 dark:border-slate-800 dark:bg-slate-900 sm:flex-row sm:items-center sm:justify-between sm:px-4">
-        <div className="order-1 grid grid-cols-[minmax(0,1fr)_5.5rem] gap-2 sm:order-2 sm:flex sm:items-end">
+        <div className="order-1 grid gap-3 sm:order-2 sm:flex sm:items-end">
           <div className="space-y-1">
             <Label htmlFor="range-start" className="text-[10px] uppercase tracking-wide text-slate-500 dark:text-slate-300">Start Week</Label>
             <Input
@@ -558,7 +635,7 @@ export default function MonthView({
               className="h-9 text-sm font-semibold sm:h-8 sm:w-24"
             />
           </div>
-          <div className="col-span-2 pb-1 text-xs font-medium text-slate-600 dark:text-slate-200 sm:col-span-1">
+          <div className="pb-1 text-xs font-medium text-slate-600 dark:text-slate-200">
             {format(rangeStart, 'MMM d')} - {format(rangeEnd, 'MMM d, yyyy')}
           </div>
         </div>
@@ -574,7 +651,7 @@ export default function MonthView({
         </div>
       </div>
 
-      <div className="btc-zoomable-table-scroll overflow-x-auto" data-training-table-scroll>
+      <div ref={scrollRef} className="btc-zoomable-table-scroll overflow-x-auto" data-training-table-scroll>
         <div className="btc-zoomable-table" style={{ zoom }}>
           <div
             className="grid border-b border-slate-200 bg-slate-100 dark:border-slate-800 dark:bg-slate-900"

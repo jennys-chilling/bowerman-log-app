@@ -279,7 +279,6 @@ export default function TrainingLog() {
     [activeTrainingFactorKeys]
   );
   const currentTableZoom = tableZooms[viewMode] || 1;
-  const appliedTableZoom = isTouchTableView ? 1 : currentTableZoom;
 
   useEffect(() => {
     if (typeof window === 'undefined') return undefined;
@@ -1239,7 +1238,10 @@ export default function TrainingLog() {
                 }}
                 onDayClick={isCoach ? handleMonthEditDay : undefined}
                 selectedDate={editorState.coachEditor ? editorState.selectedDay : null}
-                zoom={appliedTableZoom}
+                zoom={currentTableZoom}
+                onZoomChange={setCurrentTableZoom}
+                zoomMin={TABLE_ZOOM_MIN}
+                zoomMax={TABLE_ZOOM_MAX}
                 inlineEditor={isCoach && editorState.coachEditor ? (
                   <CoachPlanEditor
                     variant="panel"
@@ -1284,7 +1286,7 @@ export default function TrainingLog() {
               <div className="btc-zoomable-table-scroll overflow-x-auto" data-training-table-scroll>
                 <div
                   className="btc-zoomable-table flex min-w-[70rem] w-full sm:min-w-[77rem] lg:min-w-[84rem]"
-                  style={{ zoom: appliedTableZoom }}
+                  style={{ zoom: currentTableZoom }}
                 >
                   {DAYS.map((day, index) => (
                     <DayColumn

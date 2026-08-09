@@ -664,6 +664,7 @@
     .btc-month-view .btc-zoomable-table-scroll {
       overflow-x: auto;
       overscroll-behavior: contain auto;
+      touch-action: pan-x pan-y;
     }
 
     .btc-month-day-cell,
