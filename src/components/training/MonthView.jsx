@@ -21,8 +21,8 @@ import {
   XTRAIN_OTHER_TYPE,
 } from './sessionUtils';
 
-const MONTH_GRID_TEMPLATE = 'repeat(7, minmax(11rem, 1fr)) minmax(6rem, 6.5rem) 18rem';
-const MONTH_GRID_MIN_WIDTH = '101.5rem';
+const MONTH_GRID_TEMPLATE = 'var(--btc-month-grid-template)';
+const MONTH_GRID_MIN_WIDTH = 'var(--btc-month-grid-min-width)';
 
 const COMPACT_SESSION_TYPES = {
   'Easy Run': 'Easy',
@@ -284,7 +284,7 @@ function WeekFeedbackColumn({ trainingWeek }) {
   const hasCoachFeedback = hasText(trainingWeek?.coach_feedback);
 
   return (
-    <div className="flex h-full min-h-[220px] flex-col overflow-hidden border-l border-slate-300 bg-slate-50 p-2 dark:border-slate-700 dark:bg-slate-900 sm:min-h-[260px] md:sticky md:right-0 md:z-10">
+    <div className="btc-month-feedback-cell flex h-full min-h-[220px] flex-col overflow-hidden border-l border-slate-300 bg-slate-50 p-2 dark:border-slate-700 dark:bg-slate-900 sm:min-h-[260px] md:sticky md:right-0 md:z-10">
       <div className="mb-2 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-300">
         <MessageSquare className="h-3.5 w-3.5 text-red-600 dark:text-red-300" />
         Feedback
@@ -358,7 +358,7 @@ function WeekRow({ weekStart, trainingWeek, allDayPlans, onWeekClick, onDayClick
               onDayClick({ date: day, dayPlan: plan });
             }}
             className={cn(
-              'min-h-[220px] border-r border-slate-200 bg-white p-2 outline-none dark:border-slate-800 dark:bg-slate-950 sm:min-h-[260px] sm:p-2.5',
+              'btc-month-day-cell min-h-[220px] border-r border-slate-200 bg-white p-2 outline-none dark:border-slate-800 dark:bg-slate-950 sm:min-h-[260px] sm:p-2.5',
               onDayClick && 'cursor-pointer transition-colors hover:bg-red-50/60 focus-visible:ring-2 focus-visible:ring-red-600 focus-visible:ring-inset dark:hover:bg-red-950/20',
               today && 'btc-today-cell',
               selected && 'bg-red-50 ring-2 ring-inset ring-red-700 dark:bg-red-950/30 dark:ring-red-400',
@@ -434,7 +434,7 @@ function WeekRow({ weekStart, trainingWeek, allDayPlans, onWeekClick, onDayClick
       })}
 
       <div
-        className="sticky right-0 z-10 flex min-h-[220px] cursor-pointer flex-col items-center justify-center gap-1 border-l border-slate-300 bg-slate-100 p-2 text-center transition-colors hover:bg-slate-200 dark:border-slate-700 dark:bg-slate-900 dark:hover:bg-slate-800 sm:min-h-[260px] md:right-72"
+        className="btc-month-total-cell sticky right-0 z-10 flex min-h-[220px] cursor-pointer flex-col items-center justify-center gap-1 border-l border-slate-300 bg-slate-100 p-2 text-center transition-colors hover:bg-slate-200 dark:border-slate-700 dark:bg-slate-900 dark:hover:bg-slate-800 sm:min-h-[260px] md:right-72"
         onClick={() => onWeekClick(weekStart)}
         title="Open this week"
       >
@@ -525,9 +525,9 @@ export default function MonthView({
   };
 
   return (
-    <div className="btc-panel overflow-hidden">
+    <div className="btc-panel btc-month-view overflow-hidden">
       <div className="flex flex-col gap-3 border-b border-slate-200 bg-slate-50 px-3 py-3 dark:border-slate-800 dark:bg-slate-900 sm:flex-row sm:items-center sm:justify-between sm:px-4">
-        <div className="order-1 grid gap-2 sm:order-2 sm:flex sm:items-end">
+        <div className="order-1 grid grid-cols-[minmax(0,1fr)_5.5rem] gap-2 sm:order-2 sm:flex sm:items-end">
           <div className="space-y-1">
             <Label htmlFor="range-start" className="text-[10px] uppercase tracking-wide text-slate-500 dark:text-slate-300">Start Week</Label>
             <Input
@@ -538,7 +538,7 @@ export default function MonthView({
                 const parsed = parseISO(event.target.value);
                 onRangeStartChange(startOfWeek(parsed, { weekStartsOn: 1 }));
               }}
-              className="h-8 text-sm font-semibold sm:w-40"
+              className="h-9 min-w-0 text-sm font-semibold sm:h-8 sm:w-40"
             />
           </div>
           <div className="space-y-1">
@@ -555,10 +555,10 @@ export default function MonthView({
                 if (event.key !== 'Enter') return;
                 event.currentTarget.blur();
               }}
-              className="h-8 text-sm font-semibold sm:w-24"
+              className="h-9 text-sm font-semibold sm:h-8 sm:w-24"
             />
           </div>
-          <div className="pb-1 text-xs font-medium text-slate-600 dark:text-slate-200">
+          <div className="col-span-2 pb-1 text-xs font-medium text-slate-600 dark:text-slate-200 sm:col-span-1">
             {format(rangeStart, 'MMM d')} - {format(rangeEnd, 'MMM d, yyyy')}
           </div>
         </div>

@@ -57,13 +57,18 @@ const TABLE_ZOOM_MIN = 0.35;
 const TABLE_ZOOM_MAX = 1.2;
 const TABLE_ZOOM_STEP = 0.05;
 const WEEK_TABLE_MIN_WIDTH_PX = 1120;
-const MONTH_TABLE_MIN_WIDTH_PX = 1576;
+const MONTH_TABLE_MIN_WIDTH_PX = 1624;
+const TOUCH_TABLE_MEDIA_QUERY = '(max-width: 640px), (hover: none), (pointer: coarse)';
 
 const clampTableZoom = (value) => {
   const parsed = Number(value);
   if (!Number.isFinite(parsed)) return 1;
   return Math.min(TABLE_ZOOM_MAX, Math.max(TABLE_ZOOM_MIN, Number(parsed.toFixed(2))));
 };
+
+const getIsTouchTableView = () => (
+  typeof window !== 'undefined' && window.matchMedia(TOUCH_TABLE_MEDIA_QUERY).matches
+);
 
 const getDefaultTableZooms = () => {
   const isMobile = typeof window !== 'undefined' && window.matchMedia('(max-width: 640px)').matches;
@@ -247,6 +252,7 @@ export default function TrainingLog() {
   const [factorSettingsOpen, setFactorSettingsOpen] = useState(false);
   const [factorDraftKeys, setFactorDraftKeys] = useState([]);
   const [tableZooms, setTableZooms] = useState(getInitialTableZooms);
+  const [isTouchTableView, setIsTouchTableView] = useState(getIsTouchTableView);
   const [monthViewPreferencesReady, setMonthViewPreferencesReady] = useState(false);
   const hasExplicitMonthRangeRef = React.useRef(searchParams.has('rangeStart') || searchParams.has('rangeWeeks'));
   const monthViewPreferenceHydrationStartedRef = React.useRef(false);
@@ -273,6 +279,23 @@ export default function TrainingLog() {
     [activeTrainingFactorKeys]
   );
   const currentTableZoom = tableZooms[viewMode] || 1;
+  const appliedTableZoom = isTouchTableView ? 1 : currentTableZoom;
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+
+    const mediaQuery = window.matchMedia(TOUCH_TABLE_MEDIA_QUERY);
+    const updateTouchTableView = () => setIsTouchTableView(mediaQuery.matches);
+    updateTouchTableView();
+
+    if (mediaQuery.addEventListener) {
+      mediaQuery.addEventListener('change', updateTouchTableView);
+      return () => mediaQuery.removeEventListener('change', updateTouchTableView);
+    }
+
+    mediaQuery.addListener(updateTouchTableView);
+    return () => mediaQuery.removeListener(updateTouchTableView);
+  }, []);
 
   const setCurrentTableZoom = React.useCallback((nextZoom) => {
     setTableZooms((current) => ({
@@ -1158,16 +1181,18 @@ export default function TrainingLog() {
             </Button>
           </div>
           <RoleLegend className="sm:mx-auto" />
-          <TableZoomControls
-            value={currentTableZoom}
-            min={TABLE_ZOOM_MIN}
-            max={TABLE_ZOOM_MAX}
-            step={TABLE_ZOOM_STEP}
-            onChange={setCurrentTableZoom}
-            onFit={fitCurrentTableZoom}
-            onReset={resetCurrentTableZoom}
-            className="w-full sm:w-auto"
-          />
+          {!isTouchTableView && (
+            <TableZoomControls
+              value={currentTableZoom}
+              min={TABLE_ZOOM_MIN}
+              max={TABLE_ZOOM_MAX}
+              step={TABLE_ZOOM_STEP}
+              onChange={setCurrentTableZoom}
+              onFit={fitCurrentTableZoom}
+              onReset={resetCurrentTableZoom}
+              className="w-full sm:w-auto"
+            />
+          )}
           {isCoach && viewMode === 'week' && trainingWeek && (
             <Button
               variant="outline"
@@ -1214,7 +1239,7 @@ export default function TrainingLog() {
                 }}
                 onDayClick={isCoach ? handleMonthEditDay : undefined}
                 selectedDate={editorState.coachEditor ? editorState.selectedDay : null}
-                zoom={currentTableZoom}
+                zoom={appliedTableZoom}
                 inlineEditor={isCoach && editorState.coachEditor ? (
                   <CoachPlanEditor
                     variant="panel"
@@ -1259,7 +1284,7 @@ export default function TrainingLog() {
               <div className="btc-zoomable-table-scroll overflow-x-auto" data-training-table-scroll>
                 <div
                   className="btc-zoomable-table flex min-w-[70rem] w-full sm:min-w-[77rem] lg:min-w-[84rem]"
-                  style={{ zoom: currentTableZoom }}
+                  style={{ zoom: appliedTableZoom }}
                 >
                   {DAYS.map((day, index) => (
                     <DayColumn

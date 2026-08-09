@@ -634,13 +634,53 @@
     background-color: hsl(0 0% 16% / 0.78);
   }
 
+  @media (hover: none), (pointer: coarse) {
+    .btc-table-zoom-control {
+      display: none;
+    }
+  }
+
   .btc-zoomable-table {
     transform-origin: top left;
   }
 
   .btc-zoomable-table-scroll {
     overscroll-behavior-x: contain;
+    touch-action: pan-x pan-y pinch-zoom;
     -webkit-overflow-scrolling: touch;
+  }
+
+  .btc-month-view {
+    --btc-month-grid-template: repeat(7, minmax(11rem, 1fr)) minmax(6rem, 6.5rem) 18rem;
+    --btc-month-grid-min-width: 101.5rem;
+  }
+
+  @media (max-width: 640px), (hover: none), (pointer: coarse) {
+    .btc-month-view {
+      --btc-month-grid-template: repeat(7, minmax(7.75rem, 7.75rem)) minmax(5.25rem, 5.25rem) minmax(8.5rem, 8.5rem);
+      --btc-month-grid-min-width: 68rem;
+    }
+
+    .btc-month-view .btc-zoomable-table-scroll {
+      overflow-x: auto;
+      overscroll-behavior: contain auto;
+    }
+
+    .btc-month-day-cell,
+    .btc-month-total-cell,
+    .btc-month-feedback-cell {
+      min-height: 12.5rem;
+      padding: 0.5rem;
+    }
+
+    .btc-month-day-cell .btc-role-zone {
+      padding: 0.35rem;
+    }
+
+    .btc-month-day-cell .btc-role-card {
+      border-radius: 0.55rem;
+      padding: 0.35rem 0.45rem 0.35rem 0.65rem;
+    }
   }
 
   .btc-zoomable-table-scroll::-webkit-scrollbar {
