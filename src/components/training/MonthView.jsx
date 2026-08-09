@@ -9,6 +9,7 @@ import { getRpeColorClasses } from './rpeColors';
 import { getTrainingFactorEntries } from './trainingFactors';
 import {
   allowsActivityMileage,
+  countsAsRunMileage,
   getAthleteActivities,
   getCoachActivities,
   getSessionMileage,
@@ -20,8 +21,8 @@ import {
   XTRAIN_OTHER_TYPE,
 } from './sessionUtils';
 
-const MONTH_GRID_TEMPLATE = 'repeat(7, minmax(10rem, 1fr)) minmax(5.75rem, 6.5rem) 15rem';
-const MONTH_GRID_MIN_WIDTH = '91.25rem';
+const MONTH_GRID_TEMPLATE = 'repeat(7, minmax(11rem, 1fr)) minmax(6rem, 6.5rem) 18rem';
+const MONTH_GRID_MIN_WIDTH = '101.5rem';
 
 const COMPACT_SESSION_TYPES = {
   'Easy Run': 'Easy',
@@ -78,6 +79,7 @@ const hasText = (value) => Boolean(String(value || '').trim());
 
 const getWeekStats = (days, allDayPlans) => {
   let mileage = 0;
+  let runMinutes = 0;
   let xTrainMinutes = 0;
   let liftCount = 0;
   let rpeSum = 0;
@@ -94,6 +96,8 @@ const getWeekStats = (days, allDayPlans) => {
       getAthleteActivities(session).forEach((activity) => {
         if (isXTrainType(activity.session_type)) {
           xTrainMinutes += Number(activity.duration_minutes) || 0;
+        } else if (countsAsRunMileage(activity.session_type)) {
+          runMinutes += Number(activity.duration_minutes) || 0;
         }
         if (activity.rpe !== null && activity.rpe !== undefined) {
           rpeSum += Number(activity.rpe) || 0;
@@ -109,6 +113,7 @@ const getWeekStats = (days, allDayPlans) => {
 
   return {
     mileage,
+    runMinutes,
     xTrainMinutes,
     liftCount,
     avgRpe: rpeCount > 0 ? rpeSum / rpeCount : null,
@@ -131,7 +136,7 @@ function AthleteActivitySummary({ label, activity, index, total }) {
   }
 
   return (
-    <div className={cn("rounded-lg border px-2 py-1.5 shadow-sm", rpeColors.surface)}>
+    <div className={cn("btc-role-card btc-role-card-athlete rounded-lg border px-2 py-1.5 pl-3 shadow-sm", rpeColors.surface)}>
       <div className="flex min-w-0 items-center justify-between gap-1.5">
         <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide opacity-75">
           {label}{total > 1 ? index + 1 : ''}
@@ -210,7 +215,7 @@ function CoachActivitySummary({ label, activity, index, total }) {
   const workoutType = activity.workout_type || 'Plan';
 
   return (
-    <div className={cn("rounded-lg border px-2 py-1.5 shadow-sm", rpeColors.surface)}>
+    <div className={cn("btc-role-card btc-role-card-coach rounded-lg border px-2 py-1.5 pl-3 shadow-sm", rpeColors.surface)}>
       <div className="flex min-w-0 items-center justify-between gap-1.5">
         <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide opacity-75">
           {label}{total > 1 ? index + 1 : ''}
@@ -226,10 +231,10 @@ function CoachActivitySummary({ label, activity, index, total }) {
         <div className="mt-1 text-[10px] font-bold leading-none">Strides</div>
       )}
       {activity.prescription?.trim() && (
-        <div className="mt-1 whitespace-pre-wrap text-[10px] leading-snug">{activity.prescription.trim()}</div>
+        <div className="mt-1 whitespace-pre-wrap text-[11px] leading-snug">{activity.prescription.trim()}</div>
       )}
       {activity.coach_notes?.trim() && (
-        <div className="mt-1 border-t border-current/15 pt-1 whitespace-pre-wrap text-[9px] italic opacity-80">{activity.coach_notes.trim()}</div>
+        <div className="mt-1 border-t border-current/15 pt-1 whitespace-pre-wrap text-[10px] leading-snug opacity-90">{activity.coach_notes.trim()}</div>
       )}
     </div>
   );
@@ -249,7 +254,7 @@ function CoachSessionSummary({ label, session }) {
   ));
 }
 
-function FeedbackPanel({ label, value, tone, compact = false }) {
+function FeedbackPanel({ label, value, tone, className }) {
   const text = String(value || '').trim();
 
   if (!text) {
@@ -257,20 +262,17 @@ function FeedbackPanel({ label, value, tone, compact = false }) {
   }
 
   const toneClasses = {
-    athlete: 'border-red-200 bg-red-50/70 text-red-900 dark:border-red-900/50 dark:bg-red-950/25 dark:text-red-100',
-    coach: 'border-emerald-200 bg-emerald-50/80 text-emerald-950 dark:border-emerald-900/50 dark:bg-emerald-950/25 dark:text-emerald-100',
+    athlete: 'btc-feedback-card btc-feedback-card-athlete',
+    coach: 'btc-feedback-card btc-feedback-card-coach',
   };
 
   return (
-    <div className={cn('rounded-lg border px-3 py-2', toneClasses[tone])}>
+    <div className={cn('flex min-h-0 flex-col rounded-lg px-3 py-2', toneClasses[tone], className)}>
       <div className="mb-1 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide opacity-80">
         <MessageSquare className="h-3 w-3" />
         {label}
       </div>
-      <div className={cn(
-        'overflow-y-auto whitespace-pre-wrap text-[11px] leading-snug sm:text-xs',
-        compact ? 'max-h-20' : 'max-h-24'
-      )}>
+      <div className="min-h-0 flex-1 overflow-y-auto whitespace-pre-wrap text-[11px] leading-snug sm:text-xs">
         {text}
       </div>
     </div>
@@ -282,29 +284,29 @@ function WeekFeedbackColumn({ trainingWeek }) {
   const hasCoachFeedback = hasText(trainingWeek?.coach_feedback);
 
   return (
-    <div className="border-l border-slate-300 bg-slate-50 p-2 dark:border-slate-700 dark:bg-slate-900 md:sticky md:right-0 md:z-10">
+    <div className="flex h-full min-h-[220px] flex-col overflow-hidden border-l border-slate-300 bg-slate-50 p-2 dark:border-slate-700 dark:bg-slate-900 sm:min-h-[260px] md:sticky md:right-0 md:z-10">
       <div className="mb-2 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-300">
         <MessageSquare className="h-3.5 w-3.5 text-red-600 dark:text-red-300" />
         Feedback
       </div>
 
       {hasAthleteReflection || hasCoachFeedback ? (
-        <div className="space-y-2">
+        <div className="flex min-h-0 flex-1 flex-col gap-2">
           <FeedbackPanel
             label="Athlete"
             value={trainingWeek?.athlete_reflection}
             tone="athlete"
-            compact
+            className={hasAthleteReflection && hasCoachFeedback ? 'basis-1/2' : 'basis-full'}
           />
           <FeedbackPanel
             label="Coach"
             value={trainingWeek?.coach_feedback}
             tone="coach"
-            compact
+            className={hasAthleteReflection && hasCoachFeedback ? 'basis-1/2' : 'basis-full'}
           />
         </div>
       ) : (
-        <div className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-[11px] font-medium text-slate-400 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-500">
+        <div className="flex min-h-0 flex-1 items-center justify-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-center text-[11px] font-medium text-slate-400 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-500">
           No feedback
         </div>
       )}
@@ -312,22 +314,27 @@ function WeekFeedbackColumn({ trainingWeek }) {
   );
 }
 
-function WeekRow({ weekStart, trainingWeek, allDayPlans, onWeekClick, onDayClick, selectedDate }) {
+function WeekRow({ weekStart, trainingWeek, allDayPlans, onWeekClick, onDayClick, selectedDate, showMonthContext }) {
   const days = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
   const weekStats = getWeekStats(days, allDayPlans);
   const avgRpeColors = getRpeColorClasses(weekStats.avgRpe ? Math.round(weekStats.avgRpe) : null);
   const selectedDateStr = selectedDate ? format(selectedDate, 'yyyy-MM-dd') : null;
+  const weekLabel = days.some((day) => format(day, 'MMM') !== format(weekStart, 'MMM'))
+    ? `${format(weekStart, 'MMM')} / ${format(days[6], 'MMM yyyy')}`
+    : format(weekStart, 'MMM yyyy');
 
   return (
     <div
       className="group grid border-b border-slate-200 last:border-b-0 dark:border-slate-800"
       style={{ gridTemplateColumns: MONTH_GRID_TEMPLATE, minWidth: MONTH_GRID_MIN_WIDTH }}
     >
-      {days.map((day) => {
+      {days.map((day, dayIndex) => {
         const dateStr = format(day, 'yyyy-MM-dd');
         const plan = allDayPlans[dateStr];
         const today = isToday(day);
         const selected = selectedDateStr === dateStr;
+        const dayOfMonth = format(day, 'd');
+        const showCellMonth = showMonthContext || dayOfMonth === '1' || dayIndex === 0;
         const coachSessions = [
           ['AM', plan?.am_coach],
           ['PM', plan?.pm_coach],
@@ -353,19 +360,29 @@ function WeekRow({ weekStart, trainingWeek, allDayPlans, onWeekClick, onDayClick
             className={cn(
               'min-h-[220px] border-r border-slate-200 bg-white p-2 outline-none dark:border-slate-800 dark:bg-slate-950 sm:min-h-[260px] sm:p-2.5',
               onDayClick && 'cursor-pointer transition-colors hover:bg-red-50/60 focus-visible:ring-2 focus-visible:ring-red-600 focus-visible:ring-inset dark:hover:bg-red-950/20',
-              today && 'bg-amber-50 dark:bg-amber-950/30',
+              today && 'btc-today-cell',
               selected && 'bg-red-50 ring-2 ring-inset ring-red-700 dark:bg-red-950/30 dark:ring-red-400',
             )}
           >
-            <div className="mb-2 flex items-center justify-between gap-2">
-              <div className={cn(
-                'text-sm font-bold',
-                today ? 'text-amber-700 dark:text-amber-300' : 'text-slate-600 dark:text-slate-300'
-              )}>
-                {format(day, 'd')}
+            <div className="mb-2 flex items-start justify-between gap-2">
+              <div className="min-w-0">
+                {showCellMonth && (
+                  <div className={cn(
+                    'mb-0.5 truncate text-[9px] font-extrabold uppercase tracking-wide',
+                    today ? 'btc-today-text' : 'text-red-700 dark:text-red-300'
+                  )}>
+                    {format(day, dayIndex === 0 ? 'MMM yyyy' : 'MMM')}
+                  </div>
+                )}
+                <div className={cn(
+                  'text-sm font-bold',
+                  today ? 'btc-today-text' : 'text-slate-600 dark:text-slate-300'
+                )}>
+                  {dayOfMonth}
+                </div>
               </div>
               {today && (
-                <span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-amber-700 dark:bg-amber-900/60 dark:text-amber-200">
+                <span className="btc-today-pill rounded-full px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide">
                   Today
                 </span>
               )}
@@ -379,8 +396,7 @@ function WeekRow({ weekStart, trainingWeek, allDayPlans, onWeekClick, onDayClick
 
             <div className="space-y-2">
               {coachSessions.length > 0 && (
-                <div className="space-y-1.5 rounded-lg bg-slate-100/80 p-1.5 dark:bg-slate-800/80">
-                  <div className="text-[9px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-200">Coach</div>
+                <div className="btc-role-zone btc-role-zone-coach space-y-1.5 rounded-lg border p-1.5">
                   {coachSessions.map(([label, session]) => (
                     <CoachSessionSummary key={label} label={label} session={session} />
                   ))}
@@ -388,8 +404,7 @@ function WeekRow({ weekStart, trainingWeek, allDayPlans, onWeekClick, onDayClick
               )}
 
               {(athleteSessions.length > 0 || trainingFactorEntries.length > 0) && (
-                <div className="space-y-1.5 rounded-lg bg-white p-1.5 ring-1 ring-slate-200 dark:bg-slate-950 dark:ring-slate-700">
-                  <div className="text-[9px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-200">Athlete</div>
+                <div className="btc-role-zone btc-role-zone-athlete space-y-1.5 rounded-lg border p-1.5">
                   {trainingFactorEntries.length > 0 && (
                     <TrainingFactorSummary factors={plan?.training_factors} />
                   )}
@@ -400,7 +415,7 @@ function WeekRow({ weekStart, trainingWeek, allDayPlans, onWeekClick, onDayClick
               )}
 
               {hasLift(lift) && (
-                <div className="rounded-lg border border-slate-200 bg-slate-50 px-2 py-1.5 text-[11px] leading-tight text-slate-600 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300">
+                <div className="btc-role-card btc-role-card-athlete rounded-lg border border-slate-200 bg-slate-50 px-2 py-1.5 pl-3 text-[11px] leading-tight text-slate-600 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300">
                   <div className="font-semibold">Lift</div>
                   <div>
                     {Number(lift.duration_minutes) > 0 && <span>{formatMinutes(lift.duration_minutes)}</span>}
@@ -419,10 +434,13 @@ function WeekRow({ weekStart, trainingWeek, allDayPlans, onWeekClick, onDayClick
       })}
 
       <div
-        className="sticky right-0 z-10 flex min-h-[220px] cursor-pointer flex-col items-center justify-center gap-1 border-l border-slate-300 bg-slate-100 p-2 text-center transition-colors hover:bg-slate-200 dark:border-slate-700 dark:bg-slate-900 dark:hover:bg-slate-800 sm:min-h-[260px] md:right-60"
+        className="sticky right-0 z-10 flex min-h-[220px] cursor-pointer flex-col items-center justify-center gap-1 border-l border-slate-300 bg-slate-100 p-2 text-center transition-colors hover:bg-slate-200 dark:border-slate-700 dark:bg-slate-900 dark:hover:bg-slate-800 sm:min-h-[260px] md:right-72"
         onClick={() => onWeekClick(weekStart)}
         title="Open this week"
       >
+        <div className="mb-1 text-[10px] font-extrabold uppercase tracking-wide text-red-700 dark:text-red-300">
+          {weekLabel}
+        </div>
         {weekStats.mileage > 0 && (
           <div className="text-base font-extrabold leading-tight text-slate-900 dark:text-slate-100">
             {weekStats.mileage.toFixed(1)}
@@ -434,6 +452,11 @@ function WeekRow({ weekStart, trainingWeek, allDayPlans, onWeekClick, onDayClick
             RPE {weekStats.avgRpe.toFixed(1)}
           </div>
         )}
+        {weekStats.runMinutes > 0 && (
+          <div className="text-[10px] font-medium text-slate-600 dark:text-slate-300">
+            Run {formatMinutes(weekStats.runMinutes)}
+          </div>
+        )}
         {weekStats.xTrainMinutes > 0 && (
           <div className="text-[10px] font-medium text-slate-600 dark:text-slate-300">
             XT {formatMinutes(weekStats.xTrainMinutes)}
@@ -441,10 +464,10 @@ function WeekRow({ weekStart, trainingWeek, allDayPlans, onWeekClick, onDayClick
         )}
         {weekStats.liftCount > 0 && (
           <div className="text-[10px] font-medium text-slate-600 dark:text-slate-300">
-            Lift {weekStats.liftCount}
+            {weekStats.liftCount} {weekStats.liftCount === 1 ? 'Lift' : 'Lifts'}
           </div>
         )}
-        {weekStats.mileage === 0 && weekStats.avgRpe === null && weekStats.xTrainMinutes === 0 && weekStats.liftCount === 0 && (
+        {weekStats.mileage === 0 && weekStats.runMinutes === 0 && weekStats.avgRpe === null && weekStats.xTrainMinutes === 0 && weekStats.liftCount === 0 && (
           <div className="text-[10px] text-slate-400 dark:text-slate-500">No log</div>
         )}
         <div className="mt-1 text-[10px] text-red-600 opacity-0 transition-opacity group-hover:opacity-100 dark:text-red-300">
@@ -467,11 +490,13 @@ export default function MonthView({
   onDayClick,
   selectedDate,
   inlineEditor,
+  zoom = 1,
 }) {
   const [rangeWeeksDraft, setRangeWeeksDraft] = React.useState(String(rangeWeeks));
   const weeks = Array.from({ length: rangeWeeks }, (_, i) => addDays(rangeStart, i * 7));
   const dayHeaders = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   const rangeEnd = addDays(rangeStart, (rangeWeeks * 7) - 1);
+  const showMonthContext = rangeWeeks >= 8;
   const selectedWeekKey = selectedDate ? format(startOfWeek(selectedDate, { weekStartsOn: 1 }), 'yyyy-MM-dd') : null;
 
   React.useEffect(() => {
@@ -549,52 +574,55 @@ export default function MonthView({
         </div>
       </div>
 
-      <div className="overflow-x-auto overscroll-x-contain [-webkit-overflow-scrolling:touch]">
-        <div
-          className="grid border-b border-slate-200 bg-slate-100 dark:border-slate-800 dark:bg-slate-900"
-          style={{ gridTemplateColumns: MONTH_GRID_TEMPLATE, minWidth: MONTH_GRID_MIN_WIDTH }}
-        >
-          {dayHeaders.map((dayHeader) => (
-            <div key={dayHeader} className="border-r border-slate-200 py-2.5 text-center text-xs font-bold uppercase tracking-wide text-slate-600 dark:border-slate-800 dark:text-slate-300">
-              {dayHeader}
+      <div className="btc-zoomable-table-scroll overflow-x-auto" data-training-table-scroll>
+        <div className="btc-zoomable-table" style={{ zoom }}>
+          <div
+            className="grid border-b border-slate-200 bg-slate-100 dark:border-slate-800 dark:bg-slate-900"
+            style={{ gridTemplateColumns: MONTH_GRID_TEMPLATE, minWidth: MONTH_GRID_MIN_WIDTH }}
+          >
+            {dayHeaders.map((dayHeader) => (
+              <div key={dayHeader} className="border-r border-slate-200 py-2.5 text-center text-xs font-bold uppercase tracking-wide text-slate-600 dark:border-slate-800 dark:text-slate-300">
+                {dayHeader}
+              </div>
+            ))}
+            <div className="sticky right-0 z-20 border-l border-slate-300 bg-slate-200 py-2.5 text-center text-xs font-bold uppercase tracking-wide text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 md:right-72">
+              Total
             </div>
-          ))}
-          <div className="sticky right-0 z-20 border-l border-slate-300 bg-slate-200 py-2.5 text-center text-xs font-bold uppercase tracking-wide text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 md:right-60">
-            Total
+            <div className="border-l border-slate-300 bg-slate-200 py-2.5 text-center text-xs font-bold uppercase tracking-wide text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 md:sticky md:right-0 md:z-20">
+              Feedback
+            </div>
           </div>
-          <div className="border-l border-slate-300 bg-slate-200 py-2.5 text-center text-xs font-bold uppercase tracking-wide text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 md:sticky md:right-0 md:z-20">
-            Feedback
-          </div>
-        </div>
 
-        {weeks.map((weekStart) => {
-          const weekKey = format(weekStart, 'yyyy-MM-dd');
-          const showInlineEditor = inlineEditor && selectedWeekKey === weekKey;
-          const trainingWeek = trainingWeeksByStart[weekKey];
+          {weeks.map((weekStart) => {
+            const weekKey = format(weekStart, 'yyyy-MM-dd');
+            const showInlineEditor = inlineEditor && selectedWeekKey === weekKey;
+            const trainingWeek = trainingWeeksByStart[weekKey];
 
-          return (
-            <React.Fragment key={weekKey}>
-              {showInlineEditor && (
-                <div
-                  className="border-b border-slate-200 bg-slate-50/90 dark:border-slate-800 dark:bg-slate-900/75"
-                  style={{ minWidth: MONTH_GRID_MIN_WIDTH }}
-                >
-                  <div className="sticky left-0 mx-auto w-[min(calc(100vw-2rem),82rem)] max-w-full p-3 sm:p-4">
-                    {inlineEditor}
+            return (
+              <React.Fragment key={weekKey}>
+                {showInlineEditor && (
+                  <div
+                    className="border-b border-slate-200 bg-slate-50/90 dark:border-slate-800 dark:bg-slate-900/75"
+                    style={{ minWidth: MONTH_GRID_MIN_WIDTH }}
+                  >
+                    <div className="sticky left-0 mx-auto w-[min(calc(100vw-2rem),82rem)] max-w-full p-3 sm:p-4">
+                      {inlineEditor}
+                    </div>
                   </div>
-                </div>
-              )}
-              <WeekRow
-                weekStart={weekStart}
-                trainingWeek={trainingWeek}
-                allDayPlans={allDayPlans}
-                onWeekClick={onWeekClick}
-                onDayClick={onDayClick}
-                selectedDate={selectedDate}
-              />
-            </React.Fragment>
-          );
-        })}
+                )}
+                <WeekRow
+                  weekStart={weekStart}
+                  trainingWeek={trainingWeek}
+                  allDayPlans={allDayPlans}
+                  onWeekClick={onWeekClick}
+                  onDayClick={onDayClick}
+                  selectedDate={selectedDate}
+                  showMonthContext={showMonthContext}
+                />
+              </React.Fragment>
+            );
+          })}
+        </div>
       </div>
     </div>
   );

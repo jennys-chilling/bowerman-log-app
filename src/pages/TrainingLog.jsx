@@ -13,6 +13,8 @@ import AthleteLogEditor from '@/components/training/AthleteLogEditor';
 import SplitsEditor from '@/components/training/SplitsEditor';
 import MonthView from '@/components/training/MonthView';
 import CopyWeekToAthletesDialog from '@/components/training/CopyWeekToAthletesDialog';
+import RoleLegend from '@/components/training/RoleLegend';
+import TableZoomControls from '@/components/training/TableZoomControls';
 import { AppHeader, AppPage, PagePanel } from '@/components/AppChrome';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -50,6 +52,45 @@ import {
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 const DEFAULT_MONTH_RANGE_WEEKS = 5;
 const MAX_MONTH_RANGE_WEEKS = 16;
+const TABLE_ZOOM_STORAGE_KEY = 'btc-training-table-zoom-v1';
+const TABLE_ZOOM_MIN = 0.35;
+const TABLE_ZOOM_MAX = 1.2;
+const TABLE_ZOOM_STEP = 0.05;
+const WEEK_TABLE_MIN_WIDTH_PX = 1120;
+const MONTH_TABLE_MIN_WIDTH_PX = 1576;
+
+const clampTableZoom = (value) => {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return 1;
+  return Math.min(TABLE_ZOOM_MAX, Math.max(TABLE_ZOOM_MIN, Number(parsed.toFixed(2))));
+};
+
+const getDefaultTableZooms = () => {
+  const isMobile = typeof window !== 'undefined' && window.matchMedia('(max-width: 640px)').matches;
+
+  return {
+    week: isMobile ? 0.65 : 1,
+    month: isMobile ? 0.55 : 0.9,
+  };
+};
+
+const getInitialTableZooms = () => {
+  const defaults = getDefaultTableZooms();
+
+  if (typeof window === 'undefined') {
+    return defaults;
+  }
+
+  try {
+    const saved = JSON.parse(window.localStorage.getItem(TABLE_ZOOM_STORAGE_KEY) || '{}');
+    return {
+      week: saved.week ? clampTableZoom(saved.week) : defaults.week,
+      month: saved.month ? clampTableZoom(saved.month) : defaults.month,
+    };
+  } catch {
+    return defaults;
+  }
+};
 
 const getDisplayName = (athlete = {}) => {
   const structuredName = `${athlete.first_name || ''} ${athlete.last_name || ''}`.trim();
@@ -205,6 +246,7 @@ export default function TrainingLog() {
   const [copyDialogOpen, setCopyDialogOpen] = useState(false);
   const [factorSettingsOpen, setFactorSettingsOpen] = useState(false);
   const [factorDraftKeys, setFactorDraftKeys] = useState([]);
+  const [tableZooms, setTableZooms] = useState(getInitialTableZooms);
   const [monthViewPreferencesReady, setMonthViewPreferencesReady] = useState(false);
   const hasExplicitMonthRangeRef = React.useRef(searchParams.has('rangeStart') || searchParams.has('rangeWeeks'));
   const monthViewPreferenceHydrationStartedRef = React.useRef(false);
@@ -230,6 +272,37 @@ export default function TrainingLog() {
     () => TRAINING_FACTOR_OPTIONS.filter((option) => activeTrainingFactorKeys.includes(option.key)),
     [activeTrainingFactorKeys]
   );
+  const currentTableZoom = tableZooms[viewMode] || 1;
+
+  const setCurrentTableZoom = React.useCallback((nextZoom) => {
+    setTableZooms((current) => ({
+      ...current,
+      [viewMode]: clampTableZoom(nextZoom),
+    }));
+  }, [viewMode]);
+
+  const resetCurrentTableZoom = React.useCallback(() => {
+    setTableZooms((current) => ({
+      ...current,
+      [viewMode]: getDefaultTableZooms()[viewMode],
+    }));
+  }, [viewMode]);
+
+  const fitCurrentTableZoom = React.useCallback(() => {
+    const scrollArea = document.querySelector('[data-training-table-scroll]');
+    const availableWidth = scrollArea?.clientWidth || Math.max(window.innerWidth - 32, 320);
+    const tableWidth = viewMode === 'month' ? MONTH_TABLE_MIN_WIDTH_PX : WEEK_TABLE_MIN_WIDTH_PX;
+    const nextZoom = Math.floor((availableWidth / tableWidth) * 100) / 100;
+    setCurrentTableZoom(nextZoom);
+  }, [setCurrentTableZoom, viewMode]);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(TABLE_ZOOM_STORAGE_KEY, JSON.stringify(tableZooms));
+    } catch {
+      // Ignore storage failures; zoom still works for the current session.
+    }
+  }, [tableZooms]);
 
   useEffect(() => {
     if (!user || monthViewPreferenceHydrationStartedRef.current) return;
@@ -1084,6 +1157,17 @@ export default function TrainingLog() {
               <Calendar className="w-4 h-4 mr-1.5" /> Month
             </Button>
           </div>
+          <RoleLegend className="sm:mx-auto" />
+          <TableZoomControls
+            value={currentTableZoom}
+            min={TABLE_ZOOM_MIN}
+            max={TABLE_ZOOM_MAX}
+            step={TABLE_ZOOM_STEP}
+            onChange={setCurrentTableZoom}
+            onFit={fitCurrentTableZoom}
+            onReset={resetCurrentTableZoom}
+            className="w-full sm:w-auto"
+          />
           {isCoach && viewMode === 'week' && trainingWeek && (
             <Button
               variant="outline"
@@ -1130,6 +1214,7 @@ export default function TrainingLog() {
                 }}
                 onDayClick={isCoach ? handleMonthEditDay : undefined}
                 selectedDate={editorState.coachEditor ? editorState.selectedDay : null}
+                zoom={currentTableZoom}
                 inlineEditor={isCoach && editorState.coachEditor ? (
                   <CoachPlanEditor
                     variant="panel"
@@ -1171,8 +1256,11 @@ export default function TrainingLog() {
           <>
             {/* Weekly Grid */}
             <div className="btc-panel mt-5 overflow-hidden sm:mt-6">
-              <div className="overflow-x-auto">
-                <div className="flex min-w-[756px] w-full sm:min-w-[896px] lg:min-w-[980px]">
+              <div className="btc-zoomable-table-scroll overflow-x-auto" data-training-table-scroll>
+                <div
+                  className="btc-zoomable-table flex min-w-[70rem] w-full sm:min-w-[77rem] lg:min-w-[84rem]"
+                  style={{ zoom: currentTableZoom }}
+                >
                   {DAYS.map((day, index) => (
                     <DayColumn
                       key={day}

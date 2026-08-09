@@ -102,9 +102,9 @@ export default function AuthScreen() {
     return (
       <div className="btc-auth-shell px-4 py-10">
         <div className="relative mx-auto max-w-2xl">
-          <Card className="btc-surface border-amber-200 shadow-sm dark:border-amber-900/60">
+          <Card className="btc-surface shadow-sm">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-amber-900 dark:text-amber-200">
+              <CardTitle className="flex items-center gap-2 text-red-900 dark:text-red-200">
                 <AlertTriangle className="h-5 w-5" />
                 Supabase Setup Required
               </CardTitle>
@@ -248,7 +248,7 @@ export default function AuthScreen() {
             )}
 
             {authMessage && (
-              <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700 dark:border-emerald-900/60 dark:bg-emerald-950/50 dark:text-emerald-200">
+              <div className="btc-confirmation-panel rounded-lg border px-3 py-2 text-sm">
                 <div className="flex items-start gap-2">
                   <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
                   <span>{authMessage}</span>

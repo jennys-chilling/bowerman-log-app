@@ -149,9 +149,9 @@ export default function ShoeInventory() {
   const getMileagePercent = (shoe) => Math.min(((shoe.current_mileage || 0) / getMaxMileage(shoe)) * 100, 100);
   const getMileageColor = (shoe) => {
     const percent = getMileagePercent(shoe);
-    if (percent < 50) return 'bg-emerald-500';
-    if (percent < 75) return 'bg-amber-500';
-    return 'bg-red-500';
+    if (percent < 50) return 'btc-progress-low';
+    if (percent < 75) return 'btc-progress-mid';
+    return 'btc-progress-high';
   };
   
   if (!user) {
@@ -198,7 +198,7 @@ export default function ShoeInventory() {
             <Card className="btc-panel mb-4 sm:mb-6">
               <CardHeader className="px-4 py-4 sm:px-6">
                 <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                  <span className="btc-status-dot-active w-2 h-2 rounded-full"></span>
                   Active Shoes ({activeShoes.length})
                 </CardTitle>
               </CardHeader>

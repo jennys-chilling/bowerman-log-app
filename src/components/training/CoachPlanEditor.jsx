@@ -24,7 +24,14 @@ import {
   sanitizeCoachLift,
 } from "./sessionUtils";
 
+const AUTOSAVE_DELAY_MS = 1800;
+
 const createCoachActivity = () => ({ ...emptyCoachActivity });
+
+const getEditorDateKey = (dayPlan, date) => {
+  if (date) return format(date, 'yyyy-MM-dd');
+  return dayPlan?.date || dayPlan?.log_date || dayPlan?.id || 'new';
+};
 
 const buildPayload = (formData, dayPlan) => {
   const liftCoach = sanitizeCoachLift(formData.lift_coach);
@@ -244,15 +251,46 @@ export default function CoachPlanEditor({ open, onClose, dayPlan, date, onSave, 
   });
   const [hasUserEdited, setHasUserEdited] = useState(false);
   const autoSaveTimer = useRef(null);
+  const editVersionRef = useRef(0);
+  const hasUserEditedRef = useRef(false);
+  const loadedDateKeyRef = useRef(null);
+
+  const markEdited = () => {
+    editVersionRef.current += 1;
+    hasUserEditedRef.current = true;
+    setHasUserEdited(true);
+  };
+
+  const markClean = () => {
+    hasUserEditedRef.current = false;
+    setHasUserEdited(false);
+  };
 
   useEffect(() => {
+    if (!open) {
+      loadedDateKeyRef.current = null;
+      return;
+    }
+
+    const nextDateKey = getEditorDateKey(dayPlan, date);
+    const isNewSelection = loadedDateKeyRef.current !== nextDateKey;
+
+    if (hasUserEditedRef.current && !isNewSelection) {
+      return;
+    }
+
+    const amActivities = getCoachActivities(dayPlan?.am_coach);
+    const pmActivities = getCoachActivities(dayPlan?.pm_coach);
+
     setFormData({
-      am_coach: getCoachActivities(dayPlan?.am_coach).length ? getCoachActivities(dayPlan.am_coach) : [createCoachActivity()],
-      pm_coach: getCoachActivities(dayPlan?.pm_coach).length ? getCoachActivities(dayPlan.pm_coach) : [createCoachActivity()],
+      am_coach: amActivities.length ? amActivities : [createCoachActivity()],
+      pm_coach: pmActivities.length ? pmActivities : [createCoachActivity()],
       lift_coach: { ...emptyCoachLift, ...(dayPlan?.lift_coach || {}) },
     });
-    setHasUserEdited(false);
-  }, [dayPlan, open]);
+    loadedDateKeyRef.current = nextDateKey;
+    editVersionRef.current = 0;
+    markClean();
+  }, [date, dayPlan, open]);
 
   useEffect(() => {
     if (!open || !hasUserEdited || !onAutoSave) {
@@ -261,21 +299,30 @@ export default function CoachPlanEditor({ open, onClose, dayPlan, date, onSave, 
 
     window.clearTimeout(autoSaveTimer.current);
     autoSaveTimer.current = window.setTimeout(() => {
-      onAutoSave(buildPayload(formData, dayPlan));
-    }, 900);
+      const versionAtSave = editVersionRef.current;
+
+      Promise.resolve(onAutoSave(buildPayload(formData, dayPlan)))
+        .then(() => {
+          if (editVersionRef.current === versionAtSave) {
+            markClean();
+          }
+        })
+        .catch(() => {});
+    }, AUTOSAVE_DELAY_MS);
 
     return () => window.clearTimeout(autoSaveTimer.current);
   }, [dayPlan, formData, hasUserEdited, onAutoSave, open]);
 
   const updateActivities = (sessionKey, activities) => {
-    setHasUserEdited(true);
+    markEdited();
     setFormData((current) => ({ ...current, [sessionKey]: activities }));
   };
 
   const commitDeletedEntry = async (nextFormData) => {
     window.clearTimeout(autoSaveTimer.current);
+    editVersionRef.current += 1;
     setFormData(nextFormData);
-    setHasUserEdited(false);
+    markClean();
 
     if (onAutoSave) {
       await onAutoSave(buildPayload(nextFormData, dayPlan));
@@ -298,7 +345,7 @@ export default function CoachPlanEditor({ open, onClose, dayPlan, date, onSave, 
   };
 
   const updateLift = (updates) => {
-    setHasUserEdited(true);
+    markEdited();
     setFormData((current) => ({
       ...current,
       lift_coach: { ...current.lift_coach, ...updates },
@@ -315,6 +362,8 @@ export default function CoachPlanEditor({ open, onClose, dayPlan, date, onSave, 
 
   const handleSave = () => {
     window.clearTimeout(autoSaveTimer.current);
+    editVersionRef.current += 1;
+    markClean();
     onSave(buildPayload(formData, dayPlan));
   };
 
@@ -460,7 +509,7 @@ export default function CoachPlanEditor({ open, onClose, dayPlan, date, onSave, 
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-h-[90vh] max-w-5xl overflow-y-auto">
+      <DialogContent className="btc-editor-dialog max-h-[90vh] max-w-5xl overflow-y-auto">
         {editorContent}
       </DialogContent>
     </Dialog>

@@ -7,6 +7,8 @@ import { cn } from "@/lib/utils";
 import { usePersistentBoolean } from "@/hooks/usePersistentBoolean";
 import { getSessionMileage } from "./sessionUtils";
 
+const AUTOSAVE_DELAY_MS = 1800;
+
 const formatGoalValue = (value) => {
   if (value === null || value === undefined || value === '') return '';
   const number = Number(value);
@@ -84,10 +86,33 @@ export default function WeeklyMileageGoal({ trainingWeek, isCoach, onSave, dayPl
   const [goalText, setGoalText] = useState('');
   const [hasUserEdited, setHasUserEdited] = useState(false);
   const saveTimer = useRef(null);
+  const editVersionRef = useRef(0);
+  const hasUserEditedRef = useRef(false);
+  const loadedWeekKeyRef = useRef(null);
+
+  const markEdited = () => {
+    editVersionRef.current += 1;
+    hasUserEditedRef.current = true;
+    setHasUserEdited(true);
+  };
+
+  const markClean = () => {
+    hasUserEditedRef.current = false;
+    setHasUserEdited(false);
+  };
 
   useEffect(() => {
+    const nextWeekKey = trainingWeek?.id || 'none';
+    const isNewWeek = loadedWeekKeyRef.current !== nextWeekKey;
+
+    if (hasUserEditedRef.current && !isNewWeek) {
+      return;
+    }
+
     setGoalText(formatGoalText(trainingWeek?.goal_mileage_min, trainingWeek?.goal_mileage_max));
-    setHasUserEdited(false);
+    loadedWeekKeyRef.current = nextWeekKey;
+    editVersionRef.current = 0;
+    markClean();
   }, [trainingWeek?.id, trainingWeek?.goal_mileage_min, trainingWeek?.goal_mileage_max]);
 
   const parsedGoal = useMemo(() => parseGoalText(goalText), [goalText]);
@@ -102,11 +127,20 @@ export default function WeeklyMileageGoal({ trainingWeek, isCoach, onSave, dayPl
 
     window.clearTimeout(saveTimer.current);
     saveTimer.current = window.setTimeout(() => {
-      onSave({
+      const versionAtSave = editVersionRef.current;
+      const payload = {
         goal_mileage_min: parsedGoal.goalMin,
         goal_mileage_max: parsedGoal.goalMax,
-      });
-    }, 700);
+      };
+
+      Promise.resolve(onSave(payload))
+        .then(() => {
+          if (editVersionRef.current === versionAtSave) {
+            markClean();
+          }
+        })
+        .catch(() => {});
+    }, AUTOSAVE_DELAY_MS);
 
     return () => window.clearTimeout(saveTimer.current);
   }, [hasUserEdited, isCoach, onSave, parsedGoal, trainingWeek?.id]);
@@ -155,7 +189,7 @@ export default function WeeklyMileageGoal({ trainingWeek, isCoach, onSave, dayPl
               value={goalText}
               onChange={(event) => {
                 setGoalText(event.target.value);
-                setHasUserEdited(true);
+                markEdited();
               }}
             />
             {!parsedGoal.isValid && (

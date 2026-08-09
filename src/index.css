@@ -4,15 +4,21 @@
 
 @layer base {
   :root {
-    --btc-red: 358 82% 45%;
-    --btc-red-bright: 350 92% 56%;
-    --btc-orange: 18 96% 56%;
-    --btc-navy: 236 54% 14%;
-    --btc-pink: 334 92% 72%;
-    --btc-ice: 206 70% 94%;
-    --btc-ink: 232 42% 7%;
-    --btc-cream: 220 20% 97%;
-    --background: 0 0% 100%;
+    --btc-red: 354 71.8% 43.1%;
+    --btc-red-deep: 353 70.2% 40.8%;
+    --btc-red-bright: 3 76.2% 49.4%;
+    --btc-orange: 0 90.1% 47.6%;
+    --btc-navy: 0 0% 5%;
+    --btc-pink: 0 38.2% 89.2%;
+    --btc-maroon: 0 92.3% 20.4%;
+    --btc-warm-gray: 0 2.8% 27.8%;
+    --btc-athlete-green: 145 46% 39%;
+    --btc-ice: 0 0% 100%;
+    --btc-ink: 0 0% 7%;
+    --btc-cream: 0 38.2% 89.2%;
+    --btc-athlete-font: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --btc-coach-font: "Proxima Nova", "Proximia Nova", "Helvetica Neue", Arial, var(--btc-athlete-font);
+    --background: 0 38.2% 89.2%;
     --foreground: 0 0% 3.9%;
     --card: 0 0% 100%;
     --card-foreground: 0 0% 3.9%;
@@ -20,16 +26,16 @@
     --popover-foreground: 0 0% 3.9%;
     --primary: var(--btc-red);
     --primary-foreground: 0 0% 100%;
-    --secondary: 0 0% 96.1%;
+    --secondary: 0 38.2% 89.2%;
     --secondary-foreground: 0 0% 9%;
-    --muted: 0 0% 96.1%;
-    --muted-foreground: 0 0% 45.1%;
-    --accent: 0 0% 96.1%;
+    --muted: 0 38.2% 92%;
+    --muted-foreground: var(--btc-warm-gray);
+    --accent: 0 38.2% 94%;
     --accent-foreground: 0 0% 9%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 89.8%;
-    --input: 0 0% 89.8%;
+    --border: 0 17% 78%;
+    --input: 0 17% 78%;
     --ring: var(--btc-red);
     --chart-1: var(--btc-red);
     --chart-2: 173 58% 39%;
@@ -45,49 +51,73 @@
     --sidebar-accent-foreground: 222 24% 10%;
     --sidebar-border: 220 14% 86%;
     --sidebar-ring: var(--btc-red);
+    --rpe-1: 126 187 250;
+    --rpe-2: 151 234 250;
+    --rpe-3: 159 247 161;
+    --rpe-4: 205 248 115;
+    --rpe-5: 252 249 94;
+    --rpe-6: 239 203 89;
+    --rpe-7: 233 158 91;
+    --rpe-8: 231 130 78;
+    --rpe-9: 226 104 65;
+    --rpe-10: 232 84 44;
   }
 
   .dark {
-    --btc-red: 358 84% 50%;
-    --btc-red-bright: 350 94% 62%;
-    --btc-orange: 18 96% 58%;
-    --btc-navy: 0 0% 8%;
-    --btc-pink: 334 88% 68%;
-    --btc-ice: 208 62% 92%;
-    --btc-ink: 0 0% 4%;
-    --btc-cream: 220 20% 97%;
-    --background: 0 0% 5%;
-    --foreground: 0 0% 98%;
-    --card: 0 0% 13%;
-    --card-foreground: 0 0% 98%;
+    --btc-red: 354 52% 43%;
+    --btc-red-deep: 354 46% 31%;
+    --btc-red-bright: 3 50% 47%;
+    --btc-orange: 6 46% 48%;
+    --btc-navy: 0 0% 10%;
+    --btc-pink: 0 18% 76%;
+    --btc-maroon: 0 44% 28%;
+    --btc-warm-gray: 0 2% 54%;
+    --btc-athlete-green: 145 34% 46%;
+    --btc-ice: 0 0% 100%;
+    --btc-ink: 0 0% 7%;
+    --btc-cream: 0 0% 88%;
+    --background: 0 0% 6%;
+    --foreground: 0 0% 86%;
+    --card: 0 0% 15%;
+    --card-foreground: 0 0% 86%;
     --popover: 0 0% 13%;
-    --popover-foreground: 0 0% 98%;
+    --popover-foreground: 0 0% 86%;
     --primary: var(--btc-red);
     --primary-foreground: 0 0% 100%;
-    --secondary: 0 0% 17%;
-    --secondary-foreground: 0 0% 98%;
+    --secondary: 0 0% 18%;
+    --secondary-foreground: 0 0% 84%;
     --muted: 0 0% 17%;
-    --muted-foreground: 0 0% 78%;
+    --muted-foreground: 0 0% 62%;
     --accent: 0 0% 20%;
-    --accent-foreground: 0 0% 98%;
+    --accent-foreground: 0 0% 86%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 34%;
-    --input: 0 0% 34%;
-    --ring: var(--btc-red-bright);
+    --border: 0 0% 25%;
+    --input: 0 0% 26%;
+    --ring: var(--btc-red);
     --chart-1: var(--btc-red);
-    --chart-2: 160 60% 45%;
-    --chart-3: 220 16% 72%;
+    --chart-2: 166 44% 39%;
+    --chart-3: 0 0% 66%;
     --chart-4: var(--btc-orange);
     --chart-5: var(--btc-red-bright);
     --sidebar-background: 0 0% 13%;
-    --sidebar-foreground: 0 0% 96%;
+    --sidebar-foreground: 0 0% 84%;
     --sidebar-primary: var(--btc-red);
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 0% 20%;
-    --sidebar-accent-foreground: 0 0% 96%;
-    --sidebar-border: 0 0% 34%;
-    --sidebar-ring: var(--btc-red-bright);
+    --sidebar-accent: 0 0% 18%;
+    --sidebar-accent-foreground: 0 0% 84%;
+    --sidebar-border: 0 0% 25%;
+    --sidebar-ring: var(--btc-red);
+    --rpe-1: 88 139 190;
+    --rpe-2: 82 158 175;
+    --rpe-3: 88 171 91;
+    --rpe-4: 142 171 74;
+    --rpe-5: 178 165 67;
+    --rpe-6: 180 126 65;
+    --rpe-7: 179 94 57;
+    --rpe-8: 170 75 49;
+    --rpe-9: 160 57 44;
+    --rpe-10: 166 50 34;
   }
 }
 
@@ -98,21 +128,12 @@
     min-height: 100vh;
     overflow-x: hidden;
     background:
-      radial-gradient(circle at 18% 8%, hsl(var(--btc-orange) / 0.10), transparent 30rem),
-      radial-gradient(circle at 82% 22%, hsl(var(--btc-pink) / 0.09), transparent 26rem),
-      linear-gradient(128deg, transparent 0 11%, hsl(var(--btc-red-bright) / 0.10) 11% 12.2%, transparent 12.2% 100%),
-      linear-gradient(128deg, transparent 0 28%, hsl(var(--btc-orange) / 0.08) 28% 29.5%, transparent 29.5% 100%),
-      linear-gradient(128deg, transparent 0 70%, hsl(var(--btc-pink) / 0.10) 70% 71.6%, transparent 71.6% 100%),
-      linear-gradient(180deg, hsl(0 0% 100%), hsl(0 0% 98%) 48%, hsl(0 0% 94%));
+      linear-gradient(180deg, hsl(var(--btc-ice)) 0%, hsl(0 0% 98%) 42%, hsl(var(--btc-pink)) 100%);
   }
 
   .dark .btc-app-shell {
     background:
-      radial-gradient(circle at 20% 10%, hsl(var(--btc-red) / 0.10), transparent 28rem),
-      radial-gradient(circle at 86% 22%, hsl(var(--btc-pink) / 0.06), transparent 24rem),
-      linear-gradient(128deg, transparent 0 10%, hsl(var(--btc-red-bright) / 0.09) 10% 11.5%, transparent 11.5% 100%),
-      linear-gradient(128deg, transparent 0 72%, hsl(var(--btc-orange) / 0.07) 72% 74%, transparent 74% 100%),
-      linear-gradient(180deg, hsl(0 0% 5%), hsl(0 0% 6%) 48%, hsl(0 0% 3%));
+      linear-gradient(180deg, hsl(0 0% 6%) 0%, hsl(0 0% 7%) 52%, hsl(0 0% 5%) 100%);
   }
 
   .btc-app-shell .btc-app-shell {
@@ -133,25 +154,23 @@
     inset: 0;
     z-index: 0;
     background-image:
-      radial-gradient(circle, hsl(var(--btc-red) / 0.10) 0 1px, transparent 1.35px),
-      linear-gradient(132deg, transparent 0 18%, hsl(var(--btc-red-bright) / 0.10) 18% 20%, transparent 20% 100%),
-      linear-gradient(132deg, transparent 0 42%, hsl(var(--btc-orange) / 0.10) 42% 44%, transparent 44% 100%),
-      linear-gradient(132deg, transparent 0 62%, hsl(var(--btc-pink) / 0.11) 62% 64%, transparent 64% 100%),
-      linear-gradient(132deg, transparent 0 78%, hsl(var(--btc-red) / 0.08) 78% 80.5%, transparent 80.5% 100%);
-    background-position: 0 0, 0 0, 96px 34px, 44px 10px, 160px 80px;
-    background-size: 14px 14px, 360px 220px, 420px 260px, 340px 220px, 480px 280px;
-    opacity: 0.58;
+      radial-gradient(circle, hsl(var(--btc-red) / 0.09) 0 0.8px, transparent 1.1px),
+      repeating-linear-gradient(132deg, transparent 0 82px, hsl(var(--btc-red) / 0.12) 82px 88px, transparent 88px 178px),
+      repeating-linear-gradient(132deg, transparent 0 148px, hsl(var(--btc-red-bright) / 0.09) 148px 158px, transparent 158px 286px),
+      repeating-linear-gradient(132deg, transparent 0 230px, hsl(var(--btc-red-deep) / 0.08) 230px 244px, transparent 244px 420px);
+    background-position: 0 0, -120px 0, 84px 40px, 220px 16px;
+    background-size: 16px 16px, 620px 420px, 760px 480px, 920px 520px;
+    opacity: 0.32;
   }
 
   .dark .btc-app-shell::before,
   .dark .btc-auth-shell::before {
     background-image:
-      radial-gradient(circle, hsl(var(--btc-red-bright) / 0.10) 0 1px, transparent 1.35px),
-      linear-gradient(132deg, transparent 0 17%, hsl(var(--btc-red-bright) / 0.14) 17% 19%, transparent 19% 100%),
-      linear-gradient(132deg, transparent 0 42%, hsl(var(--btc-orange) / 0.10) 42% 44%, transparent 44% 100%),
-      linear-gradient(132deg, transparent 0 62%, hsl(var(--btc-pink) / 0.08) 62% 64%, transparent 64% 100%),
-      linear-gradient(132deg, transparent 0 78%, hsl(var(--btc-red) / 0.12) 78% 80.5%, transparent 80.5% 100%);
-    opacity: 0.5;
+      radial-gradient(circle, hsl(0 0% 100% / 0.022) 0 0.8px, transparent 1.1px),
+      repeating-linear-gradient(132deg, transparent 0 82px, hsl(var(--btc-red) / 0.040) 82px 88px, transparent 88px 178px),
+      repeating-linear-gradient(132deg, transparent 0 148px, hsl(var(--btc-pink) / 0.018) 148px 158px, transparent 158px 286px),
+      repeating-linear-gradient(132deg, transparent 0 230px, hsl(0 0% 100% / 0.018) 230px 244px, transparent 244px 420px);
+    opacity: 0.16;
   }
 
   .btc-app-shell::after,
@@ -162,23 +181,17 @@
     inset: 0;
     z-index: 0;
     background:
-      linear-gradient(130deg, transparent 0 18%, hsl(var(--btc-orange) / 0.10) 18% 21%, transparent 21% 100%),
-      linear-gradient(130deg, transparent 0 35%, hsl(var(--btc-red) / 0.13) 35% 36.2%, transparent 36.2% 100%),
-      linear-gradient(130deg, transparent 0 55%, hsl(var(--btc-pink) / 0.09) 55% 57.5%, transparent 57.5% 100%),
-      linear-gradient(130deg, transparent 0 83%, hsl(var(--btc-red-bright) / 0.11) 83% 85%, transparent 85% 100%);
-    background-position: 0 0, 140px 48px, 70px 112px, 230px 26px;
-    background-size: 520px 300px, 460px 280px, 390px 240px, 560px 340px;
-    opacity: 0.44;
+      linear-gradient(180deg, hsl(0 0% 100% / 0.32), transparent 18rem),
+      linear-gradient(180deg, transparent 0%, hsl(0 0% 0% / 0.045) 100%);
+    opacity: 1;
   }
 
   .dark .btc-app-shell::after,
   .dark .btc-auth-shell::after {
     background:
-      linear-gradient(130deg, transparent 0 18%, hsl(var(--btc-orange) / 0.13) 18% 21%, transparent 21% 100%),
-      linear-gradient(130deg, transparent 0 35%, hsl(var(--btc-red-bright) / 0.16) 35% 36.4%, transparent 36.4% 100%),
-      linear-gradient(130deg, transparent 0 55%, hsl(var(--btc-pink) / 0.08) 55% 57.5%, transparent 57.5% 100%),
-      linear-gradient(130deg, transparent 0 83%, hsl(var(--btc-red) / 0.15) 83% 85%, transparent 85% 100%);
-    opacity: 0.42;
+      linear-gradient(180deg, hsl(0 0% 100% / 0.014), transparent 15rem),
+      linear-gradient(180deg, transparent 0%, hsl(0 0% 0% / 0.30) 100%);
+    opacity: 1;
   }
 
   .btc-auth-shell {
@@ -187,18 +200,12 @@
     min-height: 100vh;
     overflow: hidden;
     background:
-      radial-gradient(circle at 18% 8%, hsl(var(--btc-orange) / 0.16), transparent 28rem),
-      linear-gradient(132deg, transparent 0 18%, hsl(var(--btc-red-bright) / 0.14) 18% 20%, transparent 20% 100%),
-      linear-gradient(132deg, transparent 0 62%, hsl(var(--btc-pink) / 0.16) 62% 64%, transparent 64% 100%),
-      linear-gradient(180deg, hsl(0 0% 100%), hsl(220 34% 97%) 52%, hsl(220 28% 93%));
+      linear-gradient(180deg, hsl(var(--btc-ice)), hsl(0 0% 98%) 52%, hsl(var(--btc-pink)));
   }
 
   .dark .btc-auth-shell {
     background:
-      radial-gradient(circle at 18% 8%, hsl(var(--btc-red) / 0.12), transparent 28rem),
-      linear-gradient(132deg, transparent 0 18%, hsl(var(--btc-red-bright) / 0.16) 18% 20%, transparent 20% 100%),
-      linear-gradient(132deg, transparent 0 62%, hsl(var(--btc-pink) / 0.08) 62% 64%, transparent 64% 100%),
-      linear-gradient(180deg, hsl(0 0% 5%), hsl(0 0% 6%) 54%, hsl(0 0% 3%));
+      linear-gradient(180deg, hsl(0 0% 6%), hsl(0 0% 7%) 54%, hsl(0 0% 5%));
   }
 
   .btc-app-shell > *,
@@ -208,18 +215,18 @@
   }
 
   .btc-surface {
-    border-color: hsl(var(--btc-red) / 0.18);
-    box-shadow: 0 18px 50px hsl(var(--btc-ink) / 0.09);
+    border-color: hsl(var(--border));
+    box-shadow: 0 18px 42px hsl(0 0% 0% / 0.12);
   }
 
   .dark .btc-surface {
-    border-color: hsl(var(--btc-red-bright) / 0.28);
-    box-shadow: 0 18px 50px hsl(0 0% 0% / 0.46);
+    border-color: hsl(var(--border));
+    box-shadow: 0 18px 38px hsl(0 0% 0% / 0.34);
   }
 
   .btc-stripe {
     height: 0.25rem;
-    background: linear-gradient(90deg, hsl(var(--btc-red)), hsl(var(--btc-orange)), hsl(var(--btc-pink)), hsl(var(--btc-navy)));
+    background: linear-gradient(90deg, hsl(var(--btc-red)), hsl(var(--btc-red-bright)), hsl(var(--btc-red-deep)), hsl(var(--btc-navy)));
   }
 
   .btc-brand-lockup {
@@ -232,14 +239,14 @@
     width: 3rem;
     height: 3rem;
     border-radius: 9999px;
-    border: 1px solid hsl(var(--btc-red) / 0.22);
+    border: 1px solid hsl(0 0% 80%);
     background: hsl(0 0% 100%);
     padding: 0.25rem;
-    box-shadow: 0 10px 24px hsl(var(--btc-ink) / 0.12);
+    box-shadow: 0 8px 18px hsl(0 0% 0% / 0.10);
   }
 
   .dark .btc-logo-mark {
-    border-color: hsl(var(--btc-red) / 0.36);
+    border-color: hsl(0 0% 72%);
     background: hsl(0 0% 98%);
   }
 
@@ -258,7 +265,7 @@
     position: absolute;
     inset: auto 0 0;
     height: 0.35rem;
-    background: linear-gradient(90deg, hsl(var(--btc-red)), hsl(var(--btc-orange)), hsl(var(--btc-pink)), hsl(0 0% 0%));
+    background: linear-gradient(90deg, hsl(var(--btc-red)), hsl(var(--btc-red-bright)), hsl(var(--btc-red-deep)), hsl(0 0% 0%));
   }
 
   .btc-rail-card {
@@ -271,21 +278,22 @@
     position: absolute;
     inset: 0 auto 0 0;
     width: 0.25rem;
-    background: linear-gradient(180deg, hsl(var(--btc-red)), hsl(var(--btc-orange)), hsl(var(--btc-pink)));
+    background: hsl(var(--btc-red));
   }
 
   .btc-page-header,
   .btc-panel {
     border: 1px solid hsl(var(--border));
-    background: hsl(var(--card) / 0.96);
-    box-shadow: 0 14px 34px hsl(0 0% 0% / 0.10);
-    backdrop-filter: blur(12px);
+    background: hsl(var(--card) / 0.985);
+    box-shadow: 0 12px 28px hsl(0 0% 0% / 0.12);
+    backdrop-filter: blur(8px);
   }
 
   .dark .btc-page-header,
   .dark .btc-panel {
-    background: hsl(var(--card) / 0.97);
-    box-shadow: 0 18px 42px hsl(0 0% 0% / 0.42);
+    border-color: hsl(0 0% 26%);
+    background: hsl(0 0% 15% / 0.985);
+    box-shadow: 0 18px 34px hsl(0 0% 0% / 0.38);
   }
 
   .btc-page-header {
@@ -296,7 +304,7 @@
     align-items: center;
     justify-content: space-between;
     gap: 0.75rem;
-    border-radius: 1rem;
+    border-radius: 0.875rem;
     padding: 0.65rem 0.75rem;
   }
 
@@ -305,8 +313,8 @@
     position: absolute;
     inset: 0 auto 0 0;
     width: 0.25rem;
-    border-radius: 1rem 0 0 1rem;
-    background: linear-gradient(180deg, hsl(var(--btc-red)), hsl(var(--btc-orange)), hsl(var(--btc-pink)));
+    border-radius: 0.875rem 0 0 0.875rem;
+    background: hsl(var(--btc-red));
   }
 
   .btc-header-actions {
@@ -318,7 +326,7 @@
   }
 
   .btc-panel {
-    border-radius: 0.875rem;
+    border-radius: 0.75rem;
   }
 
   .btc-control-bar {
@@ -328,15 +336,16 @@
     justify-content: space-between;
     gap: 0.75rem;
     border: 1px solid hsl(var(--border));
-    border-radius: 0.875rem;
-    background: hsl(var(--card) / 0.96);
+    border-radius: 0.75rem;
+    background: hsl(var(--card) / 0.985);
     padding: 0.75rem;
-    box-shadow: 0 10px 26px hsl(0 0% 0% / 0.08);
+    box-shadow: 0 10px 24px hsl(0 0% 0% / 0.10);
   }
 
   .dark .btc-control-bar {
-    background: hsl(var(--card) / 0.97);
-    box-shadow: 0 14px 34px hsl(0 0% 0% / 0.32);
+    border-color: hsl(0 0% 26%);
+    background: hsl(0 0% 15% / 0.985);
+    box-shadow: 0 14px 28px hsl(0 0% 0% / 0.34);
   }
 
   .btc-section-title {
@@ -345,6 +354,606 @@
     letter-spacing: 0.04em;
     text-transform: uppercase;
     color: hsl(var(--muted-foreground));
+  }
+
+  .btc-editor-dialog {
+    --background: 0 0% 100%;
+    --card: 0 0% 100%;
+    --popover: 0 0% 100%;
+    --muted: 0 0% 96%;
+    --accent: 0 0% 96%;
+    --border: 0 0% 86%;
+    --input: 0 0% 86%;
+    --warm-50: 0 0% 98%;
+    --warm-100: 0 0% 96%;
+    --warm-200: 0 0% 88%;
+    --warm-300: 0 0% 78%;
+    --warm-400: 0 0% 60%;
+    --warm-500: 0 0% 46%;
+    --warm-600: 0 0% 36%;
+    --warm-700: 0 0% 28%;
+    --warm-800: 0 0% 18%;
+    --warm-900: 0 0% 10%;
+    --warm-950: 0 0% 6%;
+    background-color: hsl(var(--background));
+  }
+
+  .dark .btc-editor-dialog {
+    --background: 0 0% 12%;
+    --card: 0 0% 15%;
+    --popover: 0 0% 14%;
+    --muted: 0 0% 18%;
+    --accent: 0 0% 20%;
+    --border: 0 0% 28%;
+    --input: 0 0% 28%;
+    --warm-50: 0 0% 90%;
+    --warm-100: 0 0% 84%;
+    --warm-200: 0 0% 76%;
+    --warm-300: 0 0% 64%;
+    --warm-400: 0 0% 54%;
+    --warm-500: 0 0% 45%;
+    --warm-600: 0 0% 36%;
+    --warm-700: 0 0% 27%;
+    --warm-800: 0 0% 18%;
+    --warm-900: 0 0% 13%;
+    --warm-950: 0 0% 8%;
+    background-color: hsl(var(--background));
+  }
+
+  .btc-stat-icon-primary {
+    color: hsl(var(--btc-red));
+  }
+
+  .btc-stat-icon-secondary {
+    color: hsl(var(--btc-red-bright));
+  }
+
+  .btc-stat-icon-deep {
+    color: hsl(var(--btc-red-deep));
+  }
+
+  .dark .btc-stat-icon-primary,
+  .dark .btc-stat-icon-secondary,
+  .dark .btc-stat-icon-deep {
+    color: hsl(var(--btc-red) / 0.88);
+  }
+
+  .btc-current-week-label {
+    color: hsl(var(--btc-red-deep));
+  }
+
+  .dark .btc-current-week-label {
+    color: hsl(var(--btc-red) / 0.86);
+  }
+
+  .btc-today-cell {
+    background-color: hsl(var(--btc-red) / 0.035);
+  }
+
+  .dark .btc-today-cell {
+    background-color: hsl(var(--btc-red) / 0.08);
+  }
+
+  .btc-today-header {
+    background-color: hsl(var(--btc-pink) / 0.72);
+  }
+
+  .dark .btc-today-header {
+    background-color: hsl(var(--btc-red-deep) / 0.22);
+  }
+
+  .btc-today-text {
+    color: hsl(var(--btc-red-deep));
+  }
+
+  .dark .btc-today-text {
+    color: hsl(var(--btc-pink) / 0.86);
+  }
+
+  .btc-today-pill {
+    border: 1px solid hsl(var(--btc-red) / 0.22);
+    background-color: hsl(var(--btc-red) / 0.10);
+    color: hsl(var(--btc-red-deep));
+  }
+
+  .dark .btc-today-pill {
+    border-color: hsl(var(--btc-red) / 0.28);
+    background-color: hsl(var(--btc-red) / 0.10);
+    color: hsl(var(--btc-pink) / 0.88);
+  }
+
+  .btc-feedback-card {
+    border: 1px solid hsl(var(--border));
+    box-shadow: inset 0.25rem 0 0 hsl(var(--btc-warm-gray));
+  }
+
+  .btc-feedback-card-athlete {
+    border-color: hsl(var(--btc-athlete-green) / 0.26);
+    background-color: hsl(var(--btc-ice) / 0.90);
+    color: hsl(var(--btc-warm-gray));
+    font-family: var(--btc-athlete-font);
+    letter-spacing: 0;
+    box-shadow: inset 0.25rem 0 0 hsl(var(--btc-athlete-green));
+  }
+
+  .btc-feedback-card-coach {
+    border-color: hsl(var(--btc-warm-gray) / 0.28);
+    background-color: hsl(var(--btc-ice) / 0.82);
+    color: hsl(var(--btc-warm-gray));
+    font-family: var(--btc-coach-font);
+    font-weight: 400;
+    letter-spacing: 0;
+    box-shadow: inset 0.25rem 0 0 hsl(var(--btc-red));
+  }
+
+  .dark .btc-feedback-card-athlete {
+    border-color: hsl(var(--btc-athlete-green) / 0.30);
+    background-color: hsl(0 0% 18% / 0.76);
+    color: hsl(var(--foreground));
+    box-shadow: inset 0.25rem 0 0 hsl(var(--btc-athlete-green) / 0.74);
+  }
+
+  .dark .btc-feedback-card-coach {
+    border-color: hsl(0 0% 36% / 0.58);
+    background-color: hsl(0 0% 18% / 0.76);
+    color: hsl(var(--foreground));
+    box-shadow: inset 0.25rem 0 0 hsl(var(--btc-red) / 0.74);
+  }
+
+  .btc-warning-panel {
+    border-color: hsl(var(--btc-red) / 0.24);
+    background-color: hsl(var(--btc-pink) / 0.62);
+    color: hsl(var(--btc-maroon));
+  }
+
+  .dark .btc-warning-panel {
+    border-color: hsl(var(--btc-red) / 0.30);
+    background-color: hsl(var(--btc-red) / 0.10);
+    color: hsl(var(--foreground));
+  }
+
+  .btc-confirmation-panel {
+    border-color: hsl(var(--btc-warm-gray) / 0.24);
+    background-color: hsl(var(--btc-ice) / 0.84);
+    color: hsl(var(--btc-warm-gray));
+  }
+
+  .dark .btc-confirmation-panel {
+    border-color: hsl(0 0% 36% / 0.58);
+    background-color: hsl(0 0% 18% / 0.76);
+    color: hsl(var(--foreground));
+  }
+
+  .btc-status-dot-active {
+    background-color: hsl(var(--btc-red));
+  }
+
+  .btc-progress-low {
+    background-color: hsl(var(--btc-warm-gray));
+  }
+
+  .btc-progress-mid {
+    background-color: hsl(var(--btc-red));
+  }
+
+  .btc-progress-high {
+    background-color: hsl(var(--btc-red-bright));
+  }
+
+  .btc-role-legend {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem 0.75rem;
+    border: 1px solid hsl(var(--border));
+    border-radius: 9999px;
+    background-color: hsl(var(--card) / 0.88);
+    padding: 0.35rem 0.55rem;
+    color: hsl(var(--muted-foreground));
+    font-size: 0.75rem;
+    font-weight: 700;
+  }
+
+  .dark .btc-role-legend {
+    background-color: hsl(0 0% 16% / 0.78);
+  }
+
+  .btc-role-legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    white-space: nowrap;
+  }
+
+  .btc-role-legend-swatch {
+    position: relative;
+    display: inline-block;
+    width: 1rem;
+    height: 0.7rem;
+    overflow: hidden;
+    border: 1px solid hsl(var(--border));
+    border-radius: 0.2rem;
+  }
+
+  .btc-role-legend-swatch::before {
+    content: "";
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 0.22rem;
+  }
+
+  .btc-role-legend-swatch-coach {
+    border-color: hsl(var(--btc-red) / 0.42);
+    background-color: hsl(var(--btc-ice) / 0.96);
+  }
+
+  .btc-role-legend-swatch-coach::before {
+    background-color: hsl(var(--btc-red));
+  }
+
+  .btc-role-legend-swatch-athlete {
+    border-color: hsl(var(--btc-athlete-green) / 0.34);
+    background-color: hsl(var(--btc-ice));
+  }
+
+  .btc-role-legend-swatch-athlete::before {
+    background-color: hsl(var(--btc-athlete-green));
+  }
+
+  .dark .btc-role-legend-swatch-coach {
+    border-color: hsl(var(--btc-red) / 0.30);
+    background-color: hsl(0 0% 18% / 0.88);
+  }
+
+  .dark .btc-role-legend-swatch-coach::before {
+    background-color: hsl(var(--btc-red) / 0.78);
+  }
+
+  .dark .btc-role-legend-swatch-athlete {
+    border-color: hsl(var(--btc-athlete-green) / 0.34);
+    background-color: hsl(0 0% 18% / 0.88);
+  }
+
+  .dark .btc-role-legend-swatch-athlete::before {
+    background-color: hsl(var(--btc-athlete-green) / 0.78);
+  }
+
+  .btc-table-zoom-control {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    min-width: min(100%, 18rem);
+    max-width: 100%;
+    border: 1px solid hsl(var(--border));
+    border-radius: 9999px;
+    background-color: hsl(var(--card) / 0.88);
+    padding: 0.2rem;
+  }
+
+  .dark .btc-table-zoom-control {
+    background-color: hsl(0 0% 16% / 0.78);
+  }
+
+  .btc-zoomable-table {
+    transform-origin: top left;
+  }
+
+  .btc-zoomable-table-scroll {
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .btc-zoomable-table-scroll::-webkit-scrollbar {
+    height: 0.75rem;
+  }
+
+  .btc-zoomable-table-scroll::-webkit-scrollbar-thumb {
+    border: 3px solid transparent;
+    border-radius: 9999px;
+    background-clip: padding-box;
+    background-color: hsl(var(--btc-warm-gray) / 0.28);
+  }
+
+  .dark .btc-zoomable-table-scroll::-webkit-scrollbar-thumb {
+    background-color: hsl(0 0% 70% / 0.24);
+  }
+
+  .btc-role-zone {
+    border-color: hsl(var(--border));
+  }
+
+  .btc-panel.btc-role-zone {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .btc-panel.btc-role-zone::before {
+    content: "";
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 0.25rem;
+  }
+
+  .btc-panel.btc-role-zone-coach::before {
+    background-color: hsl(var(--btc-red));
+  }
+
+  .btc-panel.btc-role-zone-athlete::before {
+    background-color: hsl(var(--btc-athlete-green));
+  }
+
+  .btc-role-zone-coach {
+    border-color: hsl(var(--btc-red) / 0.38);
+    background-color: hsl(var(--btc-ice) / 0.94);
+    font-family: var(--btc-coach-font);
+    font-weight: 400;
+    letter-spacing: 0;
+    box-shadow: inset 0 0 0 1px hsl(var(--btc-red) / 0.08);
+  }
+
+  .btc-role-zone-athlete {
+    border-color: hsl(var(--btc-athlete-green) / 0.26);
+    background-color: hsl(var(--btc-ice) / 0.96);
+    font-family: var(--btc-athlete-font);
+    letter-spacing: 0;
+  }
+
+  .dark .btc-role-zone-coach {
+    border-color: hsl(var(--btc-red) / 0.24);
+    background-color: hsl(0 0% 16% / 0.96);
+    box-shadow: inset 0 0 0 1px hsl(var(--btc-red) / 0.055);
+  }
+
+  .dark .btc-role-zone-athlete {
+    border-color: hsl(var(--btc-athlete-green) / 0.24);
+    background-color: hsl(0 0% 14% / 0.96);
+  }
+
+  .btc-role-card {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .btc-role-card::before {
+    content: "";
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 0.25rem;
+  }
+
+  .btc-role-card-coach {
+    font-family: var(--btc-coach-font);
+    letter-spacing: 0;
+    font-weight: 400;
+    line-height: 1.42;
+    box-shadow:
+      inset 0 0 0 1px hsl(var(--btc-red) / 0.20),
+      0 1px 2px hsl(0 0% 0% / 0.08);
+  }
+
+  .btc-role-card-coach::before {
+    background-color: hsl(var(--btc-red));
+  }
+
+  .btc-role-card-athlete {
+    font-family: var(--btc-athlete-font);
+    letter-spacing: 0;
+    box-shadow:
+      inset 0 0 0 1px hsl(var(--btc-athlete-green) / 0.18),
+      0 1px 2px hsl(0 0% 0% / 0.08);
+  }
+
+  .btc-role-card-athlete::before {
+    background-color: hsl(var(--btc-athlete-green));
+  }
+
+  .dark .btc-role-card-coach {
+    box-shadow:
+      inset 0 0 0 1px hsl(var(--btc-red) / 0.12),
+      0 1px 2px hsl(0 0% 0% / 0.24);
+  }
+
+  .dark .btc-role-card-coach::before {
+    background-color: hsl(var(--btc-red) / 0.58);
+  }
+
+  .dark .btc-role-card-athlete {
+    box-shadow:
+      inset 0 0 0 1px hsl(var(--btc-athlete-green) / 0.16),
+      0 1px 2px hsl(0 0% 0% / 0.24);
+  }
+
+  .dark .btc-role-card-athlete::before {
+    background-color: hsl(var(--btc-athlete-green) / 0.74);
+  }
+
+  .rpe-1 {
+    --rpe-color: var(--rpe-1);
+    --rpe-ink: 20 70 118;
+    --rpe-surface-foreground: rgb(11 32 54);
+  }
+
+  .rpe-2 {
+    --rpe-color: var(--rpe-2);
+    --rpe-ink: 17 87 102;
+    --rpe-surface-foreground: rgb(7 48 57);
+  }
+
+  .rpe-3 {
+    --rpe-color: var(--rpe-3);
+    --rpe-ink: 31 105 43;
+    --rpe-surface-foreground: rgb(16 58 24);
+  }
+
+  .rpe-4 {
+    --rpe-color: var(--rpe-4);
+    --rpe-ink: 75 96 22;
+    --rpe-surface-foreground: rgb(47 58 12);
+  }
+
+  .rpe-5 {
+    --rpe-color: var(--rpe-5);
+    --rpe-ink: 104 93 14;
+    --rpe-surface-foreground: rgb(61 51 8);
+  }
+
+  .rpe-6 {
+    --rpe-color: var(--rpe-6);
+    --rpe-ink: 110 77 18;
+    --rpe-surface-foreground: rgb(65 43 8);
+  }
+
+  .rpe-7 {
+    --rpe-color: var(--rpe-7);
+    --rpe-ink: 126 64 22;
+    --rpe-surface-foreground: rgb(66 31 9);
+  }
+
+  .rpe-8 {
+    --rpe-color: var(--rpe-8);
+    --rpe-ink: 124 48 28;
+    --rpe-surface-foreground: rgb(68 25 10);
+  }
+
+  .rpe-9 {
+    --rpe-color: var(--rpe-9);
+    --rpe-ink: 122 39 27;
+    --rpe-surface-foreground: rgb(72 21 12);
+  }
+
+  .rpe-10 {
+    --rpe-color: var(--rpe-10);
+    --rpe-ink: 124 33 19;
+    --rpe-surface-foreground: rgb(76 18 8);
+  }
+
+  .rpe-neutral {
+    --rpe-color: 115 111 111;
+    --rpe-ink: 73 69 69;
+    --rpe-surface-foreground: hsl(var(--foreground));
+  }
+
+  .rpe-badge {
+    border-color: rgb(var(--rpe-color) / 0.72);
+    background-color: rgb(var(--rpe-color) / 0.28);
+    color: rgb(var(--rpe-ink));
+  }
+
+  .rpe-surface {
+    --rpe-support-background: hsl(0 0% 100% / 0.68);
+    --rpe-support-border: rgb(var(--rpe-ink) / 0.28);
+    border-color: rgb(var(--rpe-color) / 0.68);
+    background-color: rgb(var(--rpe-color) / 0.16);
+    color: var(--rpe-surface-foreground);
+  }
+
+  .rpe-surface .text-slate-800,
+  .rpe-surface .text-slate-700,
+  .rpe-surface .text-slate-600,
+  .rpe-surface .text-slate-500 {
+    color: var(--rpe-surface-foreground);
+  }
+
+  .rpe-surface .opacity-75,
+  .rpe-surface .opacity-80,
+  .rpe-surface .opacity-85,
+  .rpe-surface .opacity-90 {
+    opacity: 0.94;
+  }
+
+  .rpe-surface .rpe-badge,
+  .rpe-surface .btc-workout-type-badge {
+    border-color: var(--rpe-support-border);
+    background-color: var(--rpe-support-background);
+    color: var(--rpe-surface-foreground);
+  }
+
+  .rpe-label {
+    color: rgb(var(--rpe-ink));
+  }
+
+  .rpe-range {
+    background-color: rgb(var(--rpe-color));
+  }
+
+  .rpe-track {
+    background-color: rgb(var(--rpe-color) / 0.24);
+  }
+
+  .rpe-thumb {
+    border-color: rgb(var(--rpe-color));
+    --tw-ring-color: rgb(var(--rpe-color) / 0.55);
+  }
+
+  .rpe-solid {
+    background-color: rgb(var(--rpe-color));
+    color: rgb(var(--rpe-ink));
+  }
+
+  .dark .rpe-badge {
+    border-color: hsl(0 0% 100% / 0.26);
+    background-color: hsl(0 0% 0% / 0.22);
+    color: hsl(0 0% 94%);
+  }
+
+  .dark .rpe-surface {
+    --rpe-surface-foreground: hsl(0 0% 96%);
+    --rpe-support-background: hsl(0 0% 0% / 0.24);
+    --rpe-support-border: hsl(0 0% 100% / 0.26);
+    border-color: rgb(var(--rpe-color) / 0.72);
+    background-color: rgb(var(--rpe-color));
+    color: var(--rpe-surface-foreground);
+    text-shadow: 0 1px 1px hsl(0 0% 0% / 0.24);
+  }
+
+  .dark :where(.rpe-1, .rpe-2, .rpe-3, .rpe-4, .rpe-5, .rpe-6).rpe-surface {
+    --rpe-surface-foreground: hsl(0 0% 8%);
+    --rpe-support-background: hsl(0 0% 100% / 0.34);
+    --rpe-support-border: hsl(0 0% 0% / 0.22);
+    text-shadow: none;
+  }
+
+  .dark .rpe-surface .dark\:text-slate-100,
+  .dark .rpe-surface .dark\:text-slate-200,
+  .dark .rpe-surface .dark\:text-slate-300,
+  .dark .rpe-surface .dark\:text-slate-400,
+  .dark .rpe-surface .dark\:text-slate-500,
+  .dark .rpe-surface .text-slate-100,
+  .dark .rpe-surface .text-slate-200,
+  .dark .rpe-surface .text-slate-300,
+  .dark .rpe-surface .text-slate-400,
+  .dark .rpe-surface .text-slate-500 {
+    color: var(--rpe-surface-foreground);
+  }
+
+  .dark .rpe-surface .rpe-badge,
+  .dark .rpe-surface .btc-workout-type-badge {
+    border-color: var(--rpe-support-border);
+    background-color: var(--rpe-support-background);
+    color: var(--rpe-surface-foreground);
+  }
+
+  .dark .rpe-label {
+    color: hsl(var(--muted-foreground));
+  }
+
+  .dark .rpe-track {
+    background-color: hsl(0 0% 27%);
+  }
+
+  .dark .rpe-thumb {
+    border-color: rgb(var(--rpe-color) / 0.56);
+    --tw-ring-color: rgb(var(--rpe-color) / 0.22);
+  }
+
+  .dark .rpe-range {
+    background-color: rgb(var(--rpe-color));
+  }
+
+  .dark .rpe-solid {
+    border: 1px solid rgb(var(--rpe-color) / 0.78);
+    background-color: rgb(var(--rpe-color));
+    color: hsl(0 0% 96%);
   }
 
   .btc-page-header .btc-brand-lockup {
@@ -404,30 +1013,30 @@
 }
 
 :root {
-  --warm-50: 0 0% 98%;
-  --warm-100: 0 0% 95%;
-  --warm-200: 0 0% 88%;
-  --warm-300: 0 0% 76%;
-  --warm-400: 0 0% 58%;
-  --warm-500: 0 0% 45%;
-  --warm-600: 0 0% 35%;
-  --warm-700: 0 0% 26%;
-  --warm-800: 0 0% 18%;
-  --warm-900: 0 0% 12%;
-  --warm-950: 0 0% 7%;
+  --warm-50: 0 0% 100%;
+  --warm-100: 0 38.2% 96%;
+  --warm-200: 0 38.2% 89.2%;
+  --warm-300: 0 17% 78%;
+  --warm-400: 0 8% 62%;
+  --warm-500: 0 5% 48%;
+  --warm-600: 0 2.8% 35%;
+  --warm-700: 0 2.8% 27.8%;
+  --warm-800: 0 2.8% 18%;
+  --warm-900: 0 0% 7%;
+  --warm-950: 0 0% 0%;
 }
 
 .dark {
-  --warm-50: 0 0% 97%;
-  --warm-100: 0 0% 93%;
-  --warm-200: 0 0% 86%;
-  --warm-300: 0 0% 76%;
-  --warm-400: 0 0% 66%;
-  --warm-500: 0 0% 56%;
-  --warm-600: 0 0% 46%;
-  --warm-700: 0 0% 36%;
-  --warm-800: 0 0% 21%;
-  --warm-900: 0 0% 14%;
+  --warm-50: 0 0% 90%;
+  --warm-100: 0 0% 84%;
+  --warm-200: 0 0% 76%;
+  --warm-300: 0 0% 64%;
+  --warm-400: 0 0% 54%;
+  --warm-500: 0 0% 45%;
+  --warm-600: 0 0% 36%;
+  --warm-700: 0 0% 27%;
+  --warm-800: 0 0% 18%;
+  --warm-900: 0 0% 13%;
   --warm-950: 0 0% 8%;
 }
 
@@ -584,4 +1193,55 @@
 
 .dark .dark\:ring-offset-slate-950 {
   --tw-ring-offset-color: hsl(var(--warm-950)) !important;
+}
+
+.dark .dark\:bg-red-600 {
+  background-color: hsl(var(--btc-red) / 0.92) !important;
+}
+
+.dark .dark\:hover\:bg-red-500:hover {
+  background-color: hsl(var(--btc-red-bright) / 0.86) !important;
+}
+
+.dark .dark\:bg-red-950 {
+  background-color: hsl(var(--btc-red-deep) / 0.16) !important;
+}
+
+.dark .dark\:bg-red-950\/20 {
+  background-color: hsl(var(--btc-red-deep) / 0.08) !important;
+}
+
+.dark .dark\:bg-red-950\/30 {
+  background-color: hsl(var(--btc-red-deep) / 0.10) !important;
+}
+
+.dark .dark\:bg-red-950\/40 {
+  background-color: hsl(var(--btc-red-deep) / 0.12) !important;
+}
+
+.dark .dark\:bg-red-950\/50 {
+  background-color: hsl(var(--btc-red-deep) / 0.14) !important;
+}
+
+.dark .dark\:hover\:bg-red-900\/60:hover {
+  background-color: hsl(var(--btc-red-deep) / 0.18) !important;
+}
+
+.dark .dark\:border-red-500 {
+  border-color: hsl(var(--btc-red) / 0.38) !important;
+}
+
+.dark .dark\:border-red-900,
+.dark .dark\:border-red-900\/60 {
+  border-color: hsl(var(--btc-red) / 0.28) !important;
+}
+
+.dark .dark\:text-red-100,
+.dark .dark\:text-red-200,
+.dark .dark\:text-red-300 {
+  color: hsl(var(--btc-pink) / 0.82) !important;
+}
+
+.dark .dark\:ring-red-400 {
+  --tw-ring-color: hsl(var(--btc-red) / 0.42) !important;
 }

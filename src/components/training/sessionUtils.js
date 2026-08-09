@@ -182,7 +182,7 @@ export const emptyCoachLift = {
 };
 
 export const neutralWorkoutBadgeClass =
-  'border-slate-300 bg-white text-slate-800 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100';
+  'btc-workout-type-badge border-slate-300 bg-white text-slate-800 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100';
 
 export const hasAthleteActivityData = (activity = {}) => (
   Boolean(activity.session_type) ||

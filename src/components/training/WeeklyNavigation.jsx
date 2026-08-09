@@ -19,7 +19,7 @@ export default function WeekNavigation({ currentWeekStart, onWeekChange }) {
             {format(currentWeekStart, 'MMM d')} - {format(weekEnd, 'MMM d, yyyy')}
           </div>
           {isCurrentWeek && (
-            <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">Current Week</span>
+            <span className="btc-current-week-label text-xs font-medium">Current Week</span>
           )}
         </div>
 

@@ -121,17 +121,17 @@ function WeeklyTotalsShell({ totals, StatCard }) {
 
       <CollapsibleContent className="pt-3 sm:pt-4">
         <div className="grid grid-cols-2 gap-2 sm:gap-3 md:grid-cols-4 lg:grid-cols-6">
-          <StatCard icon={Footprints} label="Mileage" value={`${totals.totalMileage} mi`} color="text-red-600" />
-          <StatCard icon={Clock} label="Run Time" value={totals.totalRunTime} color="text-emerald-500" />
-          <StatCard icon={Bike} label="X-Train" value={totals.totalXTrainTime} color="text-amber-500" />
-          <StatCard icon={Dumbbell} label="Lifts" value={totals.totalLifts} color="text-red-800" />
-          <StatCard icon={Activity} label="Avg RPE" value={totals.avgRPE} color="text-orange-500" />
+          <StatCard icon={Footprints} label="Mileage" value={`${totals.totalMileage} mi`} color="btc-stat-icon-primary" />
+          <StatCard icon={Clock} label="Run Time" value={totals.totalRunTime} color="btc-stat-icon-deep" />
+          <StatCard icon={Bike} label="X-Train" value={totals.totalXTrainTime} color="btc-stat-icon-secondary" />
+          <StatCard icon={Dumbbell} label="Lifts" value={totals.totalLifts} color="btc-stat-icon-deep" />
+          <StatCard icon={Activity} label="Avg RPE" value={totals.avgRPE} color="btc-stat-icon-primary" />
           <StatCard
             icon={TrendingUp}
             label="Hardest Day"
             value={totals.highestDifficulty}
             subValue={totals.highestDifficultyDay}
-            color="text-red-500"
+            color="btc-stat-icon-secondary"
           />
         </div>
       </CollapsibleContent>

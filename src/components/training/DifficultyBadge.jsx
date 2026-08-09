@@ -1,21 +1,10 @@
 import React from 'react';
 import { cn } from "@/lib/utils";
-
-const difficultyColors = {
-  1: 'bg-emerald-400 text-emerald-950',
-  2: 'bg-emerald-500 text-white',
-  3: 'bg-lime-500 text-lime-950',
-  4: 'bg-yellow-400 text-yellow-950',
-  5: 'bg-amber-500 text-white',
-  6: 'bg-orange-500 text-white',
-  7: 'bg-orange-600 text-white',
-  8: 'bg-red-500 text-white',
-  9: 'bg-red-700 text-white',
-  10: 'bg-red-900 text-white',
-};
+import { getRpeColorClasses } from "./rpeColors";
 
 export default function DifficultyBadge({ level, size = 'md', showLabel = true }) {
   if (!level) return null;
+  const rpeColors = getRpeColorClasses(level);
   
   const sizeClasses = {
     sm: 'w-6 h-6 text-xs',
@@ -27,7 +16,7 @@ export default function DifficultyBadge({ level, size = 'md', showLabel = true }
     <div className="flex items-center gap-2">
       <div className={cn(
         "rounded-full flex items-center justify-center font-bold shadow-sm",
-        difficultyColors[level] || 'bg-gray-200',
+        rpeColors.solid,
         sizeClasses[size]
       )}>
         {level}
@@ -46,7 +35,7 @@ export function DifficultyKey() {
           key={level}
           className={cn(
             "w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold",
-            difficultyColors[level]
+            getRpeColorClasses(level).solid
           )}
         >
           {level}

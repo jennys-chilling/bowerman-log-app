@@ -81,7 +81,7 @@ export default function DayColumn({ date, dayPlan, onEdit, isCoach, shoes = [] }
       const rpeColors = getRpeColorClasses(activity.rpe);
 
       return (
-        <div key={`${label}-${index}`} className={cn("space-y-1 rounded-lg border p-1.5 shadow-sm sm:p-2", rpeColors.surface)}>
+        <div key={`${label}-${index}`} className={cn("btc-role-card btc-role-card-athlete space-y-1 rounded-lg border p-1.5 pl-2.5 shadow-sm sm:p-2 sm:pl-3", rpeColors.surface)}>
           <div className="flex items-center justify-between gap-2 text-xs opacity-75">
             <span className="flex items-center gap-1">
               <Icon className="h-3 w-3" />
@@ -129,7 +129,7 @@ export default function DayColumn({ date, dayPlan, onEdit, isCoach, shoes = [] }
       const rpeColors = getRpeColorClasses(activity.planned_difficulty);
 
       return (
-      <div key={`${label}-${index}`} className={cn("space-y-1 rounded-lg border p-1.5 shadow-sm sm:p-2", rpeColors.surface)}>
+      <div key={`${label}-${index}`} className={cn("btc-role-card btc-role-card-coach space-y-1 rounded-lg border p-1.5 pl-2.5 shadow-sm sm:p-2 sm:pl-3", rpeColors.surface)}>
         <div className="flex items-center justify-between gap-2 text-xs opacity-75">
           <span className="flex items-center gap-1">
             <Icon className="h-3 w-3" />
@@ -147,10 +147,10 @@ export default function DayColumn({ date, dayPlan, onEdit, isCoach, shoes = [] }
         </div>
 
         {activity.prescription?.trim() && (
-          <p className="whitespace-pre-wrap text-[10px] leading-snug">{activity.prescription.trim()}</p>
+          <p className="whitespace-pre-wrap text-[11px] leading-snug sm:text-xs">{activity.prescription.trim()}</p>
         )}
         {activity.coach_notes?.trim() && (
-          <p className="border-t border-current/15 pt-1 whitespace-pre-wrap text-[10px] italic opacity-80">{activity.coach_notes.trim()}</p>
+          <p className="border-t border-current/15 pt-1 whitespace-pre-wrap text-[11px] opacity-85 sm:text-xs">{activity.coach_notes.trim()}</p>
         )}
       </div>
       );
@@ -161,7 +161,7 @@ export default function DayColumn({ date, dayPlan, onEdit, isCoach, shoes = [] }
     if (!hasCoachLiftData(lift)) return null;
 
     return (
-      <div className="space-y-1 rounded-lg border border-slate-200 bg-white p-1.5 shadow-sm dark:border-slate-700 dark:bg-slate-950 sm:p-2">
+      <div className="btc-role-card btc-role-card-coach space-y-1 rounded-lg border border-slate-200 bg-white p-1.5 pl-2.5 shadow-sm dark:border-slate-700 dark:bg-slate-950 sm:p-2 sm:pl-3">
         <div className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
           <Dumbbell className="h-3 w-3" />
           Lift
@@ -173,10 +173,10 @@ export default function DayColumn({ date, dayPlan, onEdit, isCoach, shoes = [] }
           )}
         </div>
         {lift.prescription?.trim() && (
-          <p className="text-[10px] leading-snug text-slate-700 dark:text-slate-300">{lift.prescription.trim()}</p>
+          <p className="text-[11px] leading-snug text-slate-700 dark:text-slate-300 sm:text-xs">{lift.prescription.trim()}</p>
         )}
         {lift.coach_notes?.trim() && (
-          <p className="border-t border-slate-100 pt-1 text-[10px] italic text-slate-400 dark:border-slate-800 dark:text-slate-500">{lift.coach_notes.trim()}</p>
+          <p className="border-t border-slate-100 pt-1 text-[11px] text-slate-500 dark:border-slate-800 dark:text-slate-400 sm:text-xs">{lift.coach_notes.trim()}</p>
         )}
       </div>
     );
@@ -186,7 +186,7 @@ export default function DayColumn({ date, dayPlan, onEdit, isCoach, shoes = [] }
     if (trainingFactorEntries.length === 0) return null;
 
     return (
-      <div className="rounded-lg border border-slate-200 bg-slate-50 p-1.5 shadow-sm dark:border-slate-700 dark:bg-slate-900 sm:p-2">
+      <div className="btc-role-card btc-role-card-athlete rounded-lg border border-slate-200 bg-slate-50 p-1.5 pl-2.5 shadow-sm dark:border-slate-700 dark:bg-slate-900 sm:p-2 sm:pl-3">
         <div className="mb-1 text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
           Factors
         </div>
@@ -206,29 +206,28 @@ export default function DayColumn({ date, dayPlan, onEdit, isCoach, shoes = [] }
 
   return (
     <div className={cn(
-      "flex min-h-[360px] min-w-[108px] flex-1 flex-col border-r border-slate-300 last:border-r-0 dark:border-slate-700 sm:min-h-[420px] sm:min-w-[128px] lg:min-h-[460px] lg:min-w-[140px]",
-      today && "bg-amber-50/30 dark:bg-amber-950/20"
+      "flex min-h-[360px] min-w-[10rem] flex-1 flex-col border-r border-slate-300 last:border-r-0 dark:border-slate-700 sm:min-h-[420px] sm:min-w-[11rem] lg:min-h-[460px] lg:min-w-[12rem]",
+      today && "btc-today-cell"
     )}>
       <div className={cn(
         "border-b border-slate-300 py-1.5 text-center dark:border-slate-700 sm:py-2",
-        today ? "bg-amber-100 dark:bg-amber-950/50" : "bg-white dark:bg-slate-900"
+        today ? "btc-today-header" : "bg-white dark:bg-slate-900"
       )}>
         <div className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">{dayName}</div>
         <div className={cn(
           "text-base font-bold sm:text-lg",
-          today ? "text-amber-700 dark:text-amber-300" : "text-slate-800 dark:text-slate-100"
+          today ? "btc-today-text" : "text-slate-800 dark:text-slate-100"
         )}>{dayNum}</div>
       </div>
 
-      <div className="flex-1 border-b border-slate-300 bg-slate-100 p-1.5 dark:border-slate-700 dark:bg-slate-900 sm:p-2">
-        <div className="mb-1.5 flex items-center justify-between sm:mb-2">
-          <span className="text-[10px] font-medium uppercase tracking-wider text-slate-400 dark:text-slate-500">Coach</span>
-          {isCoach && (
+      <div className="btc-role-zone btc-role-zone-coach flex-1 border-b-2 p-1.5 sm:p-2">
+        {isCoach && (
+          <div className="mb-1.5 flex justify-end sm:mb-2">
             <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => onEdit(dayPlan, 'coach', date)}>
               <Pencil className="h-3 w-3" />
             </Button>
-          )}
-        </div>
+          </div>
+        )}
 
         <div className="space-y-1.5 sm:space-y-2">
           <CoachSessionBlock session={dayPlan?.am_coach} label="AM" icon={Sun} />
@@ -237,15 +236,14 @@ export default function DayColumn({ date, dayPlan, onEdit, isCoach, shoes = [] }
         </div>
       </div>
 
-      <div className="flex-1 bg-white p-1.5 dark:bg-slate-950 sm:p-2">
-        <div className="mb-1.5 flex items-center justify-between sm:mb-2">
-          <span className="text-[10px] font-medium uppercase tracking-wider text-slate-400 dark:text-slate-500">Athlete</span>
-          {!isCoach && (
+      <div className="btc-role-zone btc-role-zone-athlete flex-1 p-1.5 sm:p-2">
+        {!isCoach && (
+          <div className="mb-1.5 flex justify-end sm:mb-2">
             <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => onEdit(dayPlan, 'athlete', date)}>
               <Pencil className="h-3 w-3" />
             </Button>
-          )}
-        </div>
+          </div>
+        )}
 
         <div className="space-y-1.5 sm:space-y-2">
           <TrainingFactorsBlock />
@@ -253,7 +251,7 @@ export default function DayColumn({ date, dayPlan, onEdit, isCoach, shoes = [] }
           <AthleteSessionBlock session={dayPlan?.pm_session} label="PM" icon={Moon} />
 
           {hasAthleteLift(dayPlan?.lift) && (
-            <div className="rounded-lg border border-slate-200 bg-slate-50 p-1.5 shadow-sm dark:border-slate-700 dark:bg-slate-900 sm:p-2">
+            <div className="btc-role-card btc-role-card-athlete rounded-lg border border-slate-200 bg-slate-50 p-1.5 pl-2.5 shadow-sm dark:border-slate-700 dark:bg-slate-900 sm:p-2 sm:pl-3">
               <div className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
                 <Dumbbell className="h-3 w-3" />
                 Lift

@@ -42,7 +42,13 @@ import {
   makeAthleteSession,
 } from "./sessionUtils";
 
+const AUTOSAVE_DELAY_MS = 1800;
 const emptyLift = { duration_minutes: 0, lift_type: '' };
+
+const getEditorDateKey = (dayPlan, date) => {
+  if (date) return format(date, 'yyyy-MM-dd');
+  return dayPlan?.date || dayPlan?.log_date || dayPlan?.id || 'new';
+};
 
 const createAthleteActivity = () => ({
   ...emptyAthleteActivity,
@@ -512,8 +518,34 @@ export default function AthleteLogEditor({
   });
   const [hasUserEdited, setHasUserEdited] = useState(false);
   const autoSaveTimer = useRef(null);
+  const editVersionRef = useRef(0);
+  const hasUserEditedRef = useRef(false);
+  const loadedDateKeyRef = useRef(null);
+
+  const markEdited = () => {
+    editVersionRef.current += 1;
+    hasUserEditedRef.current = true;
+    setHasUserEdited(true);
+  };
+
+  const markClean = () => {
+    hasUserEditedRef.current = false;
+    setHasUserEdited(false);
+  };
 
   useEffect(() => {
+    if (!open) {
+      loadedDateKeyRef.current = null;
+      return;
+    }
+
+    const nextDateKey = getEditorDateKey(dayPlan, date);
+    const isNewSelection = loadedDateKeyRef.current !== nextDateKey;
+
+    if (hasUserEditedRef.current && !isNewSelection) {
+      return;
+    }
+
     const amActivities = getAthleteActivities(dayPlan?.am_session);
     const pmActivities = getAthleteActivities(dayPlan?.pm_session);
 
@@ -523,8 +555,10 @@ export default function AthleteLogEditor({
       lift: { ...emptyLift, ...(dayPlan?.lift || {}) },
       training_factors: { ...(dayPlan?.training_factors || {}) },
     });
-    setHasUserEdited(false);
-  }, [dayPlan, open]);
+    loadedDateKeyRef.current = nextDateKey;
+    editVersionRef.current = 0;
+    markClean();
+  }, [date, dayPlan, open]);
 
   useEffect(() => {
     if (!open || !hasUserEdited || !onAutoSave) {
@@ -533,21 +567,30 @@ export default function AthleteLogEditor({
 
     window.clearTimeout(autoSaveTimer.current);
     autoSaveTimer.current = window.setTimeout(() => {
-      onAutoSave(buildPayload(formData));
-    }, 900);
+      const versionAtSave = editVersionRef.current;
+
+      Promise.resolve(onAutoSave(buildPayload(formData)))
+        .then(() => {
+          if (editVersionRef.current === versionAtSave) {
+            markClean();
+          }
+        })
+        .catch(() => {});
+    }, AUTOSAVE_DELAY_MS);
 
     return () => window.clearTimeout(autoSaveTimer.current);
   }, [formData, hasUserEdited, onAutoSave, open]);
 
   const updateActivities = (sessionKey, activities) => {
-    setHasUserEdited(true);
+    markEdited();
     setFormData((current) => ({ ...current, [sessionKey]: activities }));
   };
 
   const commitDeletedEntry = async (nextFormData) => {
     window.clearTimeout(autoSaveTimer.current);
+    editVersionRef.current += 1;
     setFormData(nextFormData);
-    setHasUserEdited(false);
+    markClean();
 
     if (onDeleteEntry) {
       await onDeleteEntry(buildPayload(nextFormData));
@@ -574,12 +617,12 @@ export default function AthleteLogEditor({
   };
 
   const updateLift = (updates) => {
-    setHasUserEdited(true);
+    markEdited();
     setFormData((current) => ({ ...current, lift: { ...current.lift, ...updates } }));
   };
 
   const updateTrainingFactor = (key, value) => {
-    setHasUserEdited(true);
+    markEdited();
     setFormData((current) => ({
       ...current,
       training_factors: {
@@ -601,12 +644,14 @@ export default function AthleteLogEditor({
 
   const handleSave = () => {
     window.clearTimeout(autoSaveTimer.current);
+    editVersionRef.current += 1;
+    markClean();
     onSave(buildPayload(formData));
   };
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto">
+      <DialogContent className="btc-editor-dialog max-h-[90vh] max-w-4xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <span className="text-sm text-slate-400">Athlete Log:</span>

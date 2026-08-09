@@ -1,104 +1,40 @@
-export const rpeColorScale = {
-  1: {
-    label: 'Very easy',
-    badge: 'border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-200/40 dark:bg-emerald-200/10 dark:text-emerald-100',
-    surface: 'border-emerald-200 bg-emerald-50/80 text-emerald-950 dark:border-emerald-200/30 dark:bg-emerald-200/10 dark:text-emerald-50',
-    labelText: 'text-emerald-700 dark:text-emerald-200',
-    range: 'bg-emerald-300 dark:bg-emerald-200/70',
-    track: 'bg-emerald-100 dark:bg-emerald-200/20',
-    thumb: 'border-emerald-300 focus-visible:ring-emerald-300 dark:border-emerald-200 dark:focus-visible:ring-emerald-200/60',
-  },
-  2: {
-    label: 'Easy',
-    badge: 'border-teal-200 bg-teal-50 text-teal-800 dark:border-teal-200/40 dark:bg-teal-200/10 dark:text-teal-100',
-    surface: 'border-teal-200 bg-teal-50/80 text-teal-950 dark:border-teal-200/30 dark:bg-teal-200/10 dark:text-teal-50',
-    labelText: 'text-teal-700 dark:text-teal-200',
-    range: 'bg-teal-300 dark:bg-teal-200/70',
-    track: 'bg-teal-100 dark:bg-teal-200/20',
-    thumb: 'border-teal-300 focus-visible:ring-teal-300 dark:border-teal-200 dark:focus-visible:ring-teal-200/60',
-  },
-  3: {
-    label: 'Controlled',
-    badge: 'border-lime-200 bg-lime-50 text-lime-800 dark:border-lime-200/40 dark:bg-lime-200/10 dark:text-lime-100',
-    surface: 'border-lime-200 bg-lime-50/80 text-lime-950 dark:border-lime-200/30 dark:bg-lime-200/10 dark:text-lime-50',
-    labelText: 'text-lime-700 dark:text-lime-200',
-    range: 'bg-lime-300 dark:bg-lime-200/70',
-    track: 'bg-lime-100 dark:bg-lime-200/20',
-    thumb: 'border-lime-300 focus-visible:ring-lime-300 dark:border-lime-200 dark:focus-visible:ring-lime-200/60',
-  },
-  4: {
-    label: 'Moderate',
-    badge: 'border-yellow-200 bg-yellow-50 text-yellow-800 dark:border-yellow-200/40 dark:bg-yellow-200/10 dark:text-yellow-100',
-    surface: 'border-yellow-200 bg-yellow-50/80 text-yellow-950 dark:border-yellow-200/30 dark:bg-yellow-200/10 dark:text-yellow-50',
-    labelText: 'text-yellow-700 dark:text-yellow-200',
-    range: 'bg-yellow-300 dark:bg-yellow-200/70',
-    track: 'bg-yellow-100 dark:bg-yellow-200/20',
-    thumb: 'border-yellow-300 focus-visible:ring-yellow-300 dark:border-yellow-200 dark:focus-visible:ring-yellow-200/60',
-  },
-  5: {
-    label: 'Steady',
-    badge: 'border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-200/40 dark:bg-amber-200/10 dark:text-amber-100',
-    surface: 'border-amber-200 bg-amber-50/80 text-amber-950 dark:border-amber-200/30 dark:bg-amber-200/10 dark:text-amber-50',
-    labelText: 'text-amber-700 dark:text-amber-200',
-    range: 'bg-amber-300 dark:bg-amber-200/70',
-    track: 'bg-amber-100 dark:bg-amber-200/20',
-    thumb: 'border-amber-300 focus-visible:ring-amber-300 dark:border-amber-200 dark:focus-visible:ring-amber-200/60',
-  },
-  6: {
-    label: 'Working',
-    badge: 'border-orange-200 bg-orange-50 text-orange-800 dark:border-orange-200/40 dark:bg-orange-200/10 dark:text-orange-100',
-    surface: 'border-orange-200 bg-orange-50/80 text-orange-950 dark:border-orange-200/30 dark:bg-orange-200/10 dark:text-orange-50',
-    labelText: 'text-orange-700 dark:text-orange-200',
-    range: 'bg-orange-300 dark:bg-orange-200/70',
-    track: 'bg-orange-100 dark:bg-orange-200/20',
-    thumb: 'border-orange-300 focus-visible:ring-orange-300 dark:border-orange-200 dark:focus-visible:ring-orange-200/60',
-  },
-  7: {
-    label: 'Hard',
-    badge: 'border-orange-200 bg-orange-100/80 text-orange-900 dark:border-orange-200/40 dark:bg-orange-200/20 dark:text-orange-100',
-    surface: 'border-orange-200 bg-orange-100/70 text-orange-950 dark:border-orange-200/40 dark:bg-orange-200/10 dark:text-orange-50',
-    labelText: 'text-orange-800 dark:text-orange-200',
-    range: 'bg-orange-300 dark:bg-orange-200/75',
-    track: 'bg-orange-100 dark:bg-orange-200/20',
-    thumb: 'border-orange-300 focus-visible:ring-orange-300 dark:border-orange-200 dark:focus-visible:ring-orange-200/60',
-  },
-  8: {
-    label: 'Very hard',
-    badge: 'border-rose-200 bg-rose-50 text-rose-800 dark:border-rose-200/40 dark:bg-rose-200/20 dark:text-rose-100',
-    surface: 'border-rose-200 bg-rose-50/80 text-rose-950 dark:border-rose-200/40 dark:bg-rose-200/10 dark:text-rose-50',
-    labelText: 'text-rose-700 dark:text-rose-200',
-    range: 'bg-rose-300 dark:bg-rose-200/75',
-    track: 'bg-rose-100 dark:bg-rose-200/20',
-    thumb: 'border-rose-300 focus-visible:ring-rose-300 dark:border-rose-200 dark:focus-visible:ring-rose-200/60',
-  },
-  9: {
-    label: 'Near max',
-    badge: 'border-red-200 bg-red-50 text-red-800 dark:border-red-200/40 dark:bg-red-200/20 dark:text-red-100',
-    surface: 'border-red-200 bg-red-50/80 text-red-950 dark:border-red-200/40 dark:bg-red-200/10 dark:text-red-50',
-    labelText: 'text-red-700 dark:text-red-200',
-    range: 'bg-red-300 dark:bg-red-200/75',
-    track: 'bg-red-100 dark:bg-red-200/20',
-    thumb: 'border-red-300 focus-visible:ring-red-300 dark:border-red-200 dark:focus-visible:ring-red-200/60',
-  },
-  10: {
-    label: 'Max',
-    badge: 'border-pink-200 bg-pink-50 text-pink-800 dark:border-pink-200/40 dark:bg-pink-200/20 dark:text-pink-100',
-    surface: 'border-pink-200 bg-pink-50/80 text-pink-950 dark:border-pink-200/40 dark:bg-pink-200/10 dark:text-pink-50',
-    labelText: 'text-pink-700 dark:text-pink-200',
-    range: 'bg-pink-300 dark:bg-pink-200/75',
-    track: 'bg-pink-100 dark:bg-pink-200/20',
-    thumb: 'border-pink-300 focus-visible:ring-pink-300 dark:border-pink-200 dark:focus-visible:ring-pink-200/60',
-  },
-};
+const rpeDefinitions = [
+  [1, 'Very easy', 'rpe-1'],
+  [2, 'Easy', 'rpe-2'],
+  [3, 'Controlled', 'rpe-3'],
+  [4, 'Moderate', 'rpe-4'],
+  [5, 'Steady', 'rpe-5'],
+  [6, 'Working', 'rpe-6'],
+  [7, 'Hard', 'rpe-7'],
+  [8, 'Very hard', 'rpe-8'],
+  [9, 'Near max', 'rpe-9'],
+  [10, 'Max', 'rpe-10'],
+];
+
+const makeRpeColorClasses = (className, label) => ({
+  label,
+  badge: `rpe-badge ${className}`,
+  surface: `rpe-surface ${className}`,
+  labelText: `rpe-label ${className}`,
+  range: `rpe-range ${className}`,
+  track: `rpe-track ${className}`,
+  thumb: `rpe-thumb ${className}`,
+  solid: `rpe-solid ${className}`,
+});
+
+export const rpeColorScale = Object.fromEntries(
+  rpeDefinitions.map(([level, label, className]) => [level, makeRpeColorClasses(className, label)])
+);
 
 export const neutralRpeColor = {
   label: 'Not set',
-  badge: 'border-slate-200 bg-slate-100 text-slate-500 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400',
-  surface: 'border-slate-300 bg-white text-slate-900 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100',
-  labelText: 'text-slate-500 dark:text-slate-400',
-  range: 'bg-slate-400',
-  track: 'bg-slate-200 dark:bg-slate-800',
-  thumb: 'border-slate-400 focus-visible:ring-slate-400',
+  badge: 'rpe-badge rpe-neutral',
+  surface: 'rpe-surface rpe-neutral',
+  labelText: 'rpe-label rpe-neutral',
+  range: 'rpe-range rpe-neutral',
+  track: 'rpe-track rpe-neutral',
+  thumb: 'rpe-thumb rpe-neutral',
+  solid: 'rpe-solid rpe-neutral',
 };
 
 export function getRpeColorClasses(rpe) {
