@@ -3,7 +3,6 @@ import { addDays, format, startOfWeek } from 'date-fns';
 import { Link, useLocation } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
-  ArrowLeft,
   CalendarDays,
   Copy,
   Dumbbell,
@@ -375,7 +374,7 @@ function DayTemplateCard({ day, shortDay, onChange }) {
   const showLift = isDraftLiftOpen(day.lift_coach);
 
   return (
-    <div className="flex min-h-[360px] min-w-[150px] flex-1 flex-col border-r border-slate-300 bg-slate-100 last:border-r-0 dark:border-slate-700 dark:bg-slate-900">
+    <div className="flex min-h-[280px] w-full flex-col border-b border-slate-300 bg-slate-100 last:border-b-0 dark:border-slate-700 dark:bg-slate-900 sm:min-h-[360px] sm:min-w-[150px] sm:flex-1 sm:border-b-0 sm:border-r sm:last:border-r-0">
       <div className="border-b border-slate-300 bg-white px-2 py-2 text-center dark:border-slate-700 dark:bg-slate-950">
         <div className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">{shortDay}</div>
         <div className="truncate text-sm font-bold text-slate-900 dark:text-slate-100">{day.day_of_week}</div>
@@ -893,22 +892,15 @@ export default function WeekTemplates() {
         <AppHeader
           title="Bowerman Training Log"
           subtitle="Templates"
-          actions={(
-            <>
-              <Link to={trainingLogUrl}>
-                <Button variant="outline" className="h-9 rounded-full px-3 text-sm font-semibold sm:px-4">
-                  <ArrowLeft className="mr-2 h-4 w-4" />
-                  Log
-                </Button>
-              </Link>
-              <Link to={accountUrl}>
-                <Button variant="outline" className="h-9 rounded-full px-3 text-sm font-semibold sm:px-4">
-                  <UserCircle className="mr-2 h-4 w-4" />
-                  Account
-                </Button>
-              </Link>
-            </>
-          )}
+          backTo={trainingLogUrl}
+          menuItems={[
+            {
+              key: 'account',
+              label: 'Account',
+              icon: UserCircle,
+              to: accountUrl,
+            },
+          ]}
         />
 
         <div className="grid min-w-0 gap-5 lg:grid-cols-[300px_minmax(0,1fr)] 2xl:grid-cols-[340px_minmax(0,1fr)]">
@@ -1047,7 +1039,7 @@ export default function WeekTemplates() {
 
         {draft && (
           <div className="btc-panel mt-5 max-w-full overflow-x-auto">
-            <div className="flex min-w-[1080px] w-full">
+            <div className="flex w-full flex-col sm:min-w-[1080px] sm:flex-row">
               {draft.days.map((day, index) => (
                 <DayTemplateCard
                   key={day.day_of_week}

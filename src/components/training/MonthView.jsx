@@ -1,10 +1,13 @@
 import React from 'react';
+import { useDragScroll } from '@/hooks/useDragScroll';
 import { addDays, format, isToday, parseISO, startOfWeek } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { ChevronLeft, ChevronRight, MessageSquare, Pencil } from 'lucide-react';
+import { ChevronDown, ChevronLeft, ChevronRight, MessageSquare, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { usePersistentBoolean } from '@/hooks/usePersistentBoolean';
 import { getRpeColorClasses } from './rpeColors';
 import { getTrainingFactorEntries } from './trainingFactors';
 import {
@@ -17,7 +20,6 @@ import {
   hasAthleteSessionData,
   hasCoachSessionData,
   isXTrainType,
-  neutralWorkoutBadgeClass,
   XTRAIN_OTHER_TYPE,
 } from './sessionUtils';
 
@@ -75,8 +77,6 @@ const compactSessionType = (sessionType = 'Session', xtrainOther = '') => {
     .join(' / ');
 };
 
-const hasText = (value) => Boolean(String(value || '').trim());
-
 const getWeekStats = (days, allDayPlans) => {
   let mileage = 0;
   let runMinutes = 0;
@@ -120,6 +120,48 @@ const getWeekStats = (days, allDayPlans) => {
   };
 };
 
+const formatGoalRange = (trainingWeek) => {
+  const min = trainingWeek?.goal_mileage_min;
+  const max = trainingWeek?.goal_mileage_max;
+  const hasMin = min !== null && min !== undefined && Number.isFinite(Number(min));
+  const hasMax = max !== null && max !== undefined && Number.isFinite(Number(max));
+
+  if (!hasMin && !hasMax) return null;
+
+  const formatValue = (value) => {
+    const number = Number(value);
+    return Number.isInteger(number) ? String(number) : number.toFixed(1).replace(/\.0$/, '');
+  };
+
+  if (hasMin && hasMax) {
+    if (Number(min) === Number(max)) return `${formatValue(min)} mi`;
+    return `${formatValue(min)}-${formatValue(max)} mi`;
+  }
+
+  return `${formatValue(hasMin ? min : max)} mi`;
+};
+
+function MonthRoleSection({ role, children }) {
+  const isCoach = role === 'coach';
+
+  return (
+    <div className={cn(
+      'btc-month-role-section space-y-1 rounded-md px-1.5 py-1',
+      isCoach ? 'btc-month-role-section-coach' : 'btc-month-role-section-athlete'
+    )}>
+      <div className={cn(
+        'text-[9px] font-extrabold uppercase tracking-wide',
+        isCoach ? 'text-red-700 dark:text-red-300' : 'text-slate-700 dark:text-slate-200'
+      )}>
+        {isCoach ? 'Coach plan' : 'Athlete log'}
+      </div>
+      <div className="space-y-1">
+        {children}
+      </div>
+    </div>
+  );
+}
+
 function AthleteActivitySummary({ label, activity, index, total }) {
   const mileage = Number(activity.mileage) || 0;
   const minutes = Number(activity.duration_minutes) || 0;
@@ -136,37 +178,35 @@ function AthleteActivitySummary({ label, activity, index, total }) {
   }
 
   return (
-    <div className={cn("btc-month-entry-card btc-role-card btc-role-card-athlete rounded-lg border px-2 py-1.5 pl-3 shadow-sm", rpeColors.surface)}>
-      <div className="btc-month-entry-header flex min-w-0 items-start justify-between gap-1.5">
-        <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide opacity-75">
-          {label}{total > 1 ? index + 1 : ''}
-        </span>
-        <span className={cn(
-          'btc-month-entry-badge min-w-0 rounded border px-1.5 py-0.5 text-[10px] font-semibold leading-none',
-          neutralWorkoutBadgeClass
-        )}
-          title={sessionType}
-        >
+    <div className={cn(
+      "btc-month-entry btc-month-entry-athlete space-y-0.5 rounded-md py-1.5 pl-2 pr-2",
+      activity.rpe != null ? rpeColors.surface : "bg-transparent"
+    )}>
+      <div className="btc-month-entry-header flex min-w-0 items-baseline justify-between gap-1.5">
+        <span className="min-w-0 truncate text-[11px] font-semibold" title={sessionType}>
+          <span className="mr-1 text-[9px] font-bold uppercase tracking-wide opacity-75">
+            {label}{total > 1 ? index + 1 : ''}
+          </span>
           {compactSessionType(sessionType, activity.xtrain_other || '')}
         </span>
-      </div>
-
-      <div className="btc-month-entry-text mt-1 flex flex-wrap items-center gap-1 text-[11px] font-medium leading-tight">
-        {metricItems.length > 0 && <span>{metricItems.join(' · ')}</span>}
         {activity.rpe !== null && activity.rpe !== undefined && (
-          <span className={cn("rounded border px-1.5 py-0.5 text-[9px] font-bold leading-none", rpeColors.badge)}>
+          <span className={cn("shrink-0 rounded border px-1 py-0.5 text-[9px] font-bold leading-none", rpeColors.badge)}>
             RPE {activity.rpe}
           </span>
         )}
-        {activity.strides && (
-          <span className="rounded border border-slate-300 bg-white px-1.5 py-0.5 text-[9px] font-bold leading-none text-slate-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200">
-            Strides
-          </span>
-        )}
       </div>
 
+      {(metricItems.length > 0 || activity.strides) && (
+        <div className="btc-month-entry-text text-[10px] leading-tight opacity-90">
+          {[
+            ...metricItems,
+            activity.strides ? 'Strides' : null,
+          ].filter(Boolean).join(' · ')}
+        </div>
+      )}
+
       {activity.comments?.trim() && (
-        <div className="btc-month-entry-text mt-1 hidden whitespace-pre-wrap text-[9px] italic opacity-80 sm:block">
+        <div className="btc-month-entry-text hidden whitespace-pre-wrap text-[9px] italic opacity-80 sm:block">
           {activity.comments.trim()}
         </div>
       )}
@@ -196,16 +236,8 @@ function TrainingFactorSummary({ factors }) {
   }
 
   return (
-    <div className="flex flex-wrap gap-1">
-      {entries.map((entry) => (
-        <span
-          key={entry.key}
-          className="btc-month-entry-badge rounded border border-slate-200 bg-white px-1.5 py-0.5 text-[9px] font-semibold leading-none text-slate-600 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200"
-          title={entry.label}
-        >
-          {entry.shortLabel}: {entry.value}
-        </span>
-      ))}
+    <div className="text-[9px] leading-snug text-slate-500 dark:text-slate-400">
+      {entries.map((entry) => `${entry.shortLabel}: ${entry.value}`).join(' · ')}
     </div>
   );
 }
@@ -215,26 +247,35 @@ function CoachActivitySummary({ label, activity, index, total }) {
   const workoutType = activity.workout_type || 'Plan';
 
   return (
-    <div className={cn("btc-month-entry-card btc-role-card btc-role-card-coach rounded-lg border px-2 py-1.5 pl-3 shadow-sm", rpeColors.surface)}>
-      <div className="btc-month-entry-header flex min-w-0 items-start justify-between gap-1.5">
-        <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide opacity-75">
-          {label}{total > 1 ? index + 1 : ''}
-        </span>
-        <span className={cn('btc-month-entry-badge min-w-0 rounded border px-1.5 py-0.5 text-[10px] font-semibold leading-none', neutralWorkoutBadgeClass)}>
+    <div className={cn(
+      "btc-month-entry btc-month-entry-coach space-y-0.5 rounded-md py-1.5 pl-2 pr-2",
+      activity.planned_difficulty != null ? rpeColors.surface : "bg-transparent"
+    )}>
+      <div className="btc-month-entry-header flex min-w-0 items-baseline justify-between gap-1.5">
+        <span className="min-w-0 truncate text-[11px] font-medium" title={workoutType}>
+          <span className="mr-1 text-[9px] font-bold uppercase tracking-wide opacity-75">
+            {label}{total > 1 ? index + 1 : ''}
+          </span>
           {compactSessionType(workoutType, activity.xtrain_other || '')}
         </span>
+        {activity.planned_difficulty !== null && activity.planned_difficulty !== undefined && (
+          <span className={cn("shrink-0 rounded border px-1 py-0.5 text-[9px] font-bold leading-none", rpeColors.badge)}>
+            RPE {activity.planned_difficulty}
+          </span>
+        )}
       </div>
-      {activity.planned_difficulty !== null && activity.planned_difficulty !== undefined && (
-        <div className="mt-1 text-[10px] font-bold leading-none">RPE {activity.planned_difficulty}</div>
-      )}
       {activity.strides && (
-        <div className="mt-1 text-[10px] font-bold leading-none">Strides</div>
+        <div className="text-[10px] opacity-85">Strides</div>
       )}
       {activity.prescription?.trim() && (
-        <div className="btc-month-entry-text mt-1 whitespace-pre-wrap text-[11px] leading-snug">{activity.prescription.trim()}</div>
+        <div className="btc-month-entry-text whitespace-pre-wrap text-[10px] leading-snug opacity-90">
+          {activity.prescription.trim()}
+        </div>
       )}
       {activity.coach_notes?.trim() && (
-        <div className="btc-month-entry-text mt-1 border-t border-current/15 pt-1 whitespace-pre-wrap text-[10px] leading-snug opacity-90">{activity.coach_notes.trim()}</div>
+        <div className="btc-month-entry-text whitespace-pre-wrap text-[9px] leading-snug opacity-80">
+          {activity.coach_notes.trim()}
+        </div>
       )}
     </div>
   );
@@ -254,8 +295,9 @@ function CoachSessionSummary({ label, session }) {
   ));
 }
 
-function FeedbackPanel({ label, value, tone, className }) {
+function FeedbackPanel({ label, value, tone, storageKey }) {
   const text = String(value || '').trim();
+  const [isOpen, setIsOpen] = usePersistentBoolean(storageKey, true);
 
   if (!text) {
     return null;
@@ -267,51 +309,65 @@ function FeedbackPanel({ label, value, tone, className }) {
   };
 
   return (
-    <div className={cn('flex min-h-0 flex-col overflow-hidden rounded-lg px-3 py-2', toneClasses[tone], className)}>
-      <div className="mb-1 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide opacity-80">
-        <MessageSquare className="h-3 w-3" />
-        {label}
-      </div>
-      <div className="min-h-0 flex-1 overflow-y-auto whitespace-pre-wrap text-[11px] leading-snug sm:text-xs">
-        {text}
-      </div>
-    </div>
+    <Collapsible
+      open={isOpen}
+      onOpenChange={setIsOpen}
+      className={cn('overflow-hidden rounded-lg', toneClasses[tone])}
+    >
+      <CollapsibleTrigger asChild>
+        <button
+          type="button"
+          className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left"
+          aria-label={`${isOpen ? 'Collapse' : 'Expand'} ${label} feedback`}
+        >
+          <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide opacity-80">
+            <MessageSquare className="h-3 w-3" />
+            {label}
+          </span>
+          <ChevronDown className={cn(
+            'h-3.5 w-3.5 shrink-0 opacity-70 transition-transform',
+            isOpen && 'rotate-180'
+          )} />
+        </button>
+      </CollapsibleTrigger>
+      <CollapsibleContent>
+        <div className="max-h-36 overflow-y-auto whitespace-pre-wrap px-3 pb-2 text-[11px] leading-snug sm:text-xs">
+          {text}
+        </div>
+      </CollapsibleContent>
+    </Collapsible>
   );
 }
 
-function WeekFeedbackColumn({ trainingWeek }) {
-  const hasAthleteReflection = hasText(trainingWeek?.athlete_reflection);
-  const hasCoachFeedback = hasText(trainingWeek?.coach_feedback);
+function WeekFeedbackColumn({ trainingWeek, weekStart }) {
+  const athleteReflection = String(trainingWeek?.athlete_reflection || '').trim();
+  const coachFeedback = String(trainingWeek?.coach_feedback || '').trim();
+  const weekKey = trainingWeek?.id || format(weekStart, 'yyyy-MM-dd');
 
   return (
-    <div className="btc-month-feedback-cell relative min-h-[220px] min-w-0 overflow-hidden border-l border-slate-300 bg-slate-50 dark:border-slate-700 dark:bg-slate-900 sm:min-h-[260px] md:sticky md:right-0 md:z-10">
-      <div className="absolute inset-0 flex min-h-0 flex-col overflow-hidden p-2">
-        <div className="mb-2 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-300">
-          <MessageSquare className="h-3.5 w-3.5 text-red-600 dark:text-red-300" />
-          Feedback
-        </div>
-
-        {hasAthleteReflection || hasCoachFeedback ? (
-          <div className="flex min-h-0 flex-1 flex-col gap-2">
-            <FeedbackPanel
-              label="Coach"
-              value={trainingWeek?.coach_feedback}
-              tone="coach"
-              className={hasAthleteReflection && hasCoachFeedback ? 'basis-1/2' : 'basis-full'}
-            />
-            <FeedbackPanel
-              label="Athlete"
-              value={trainingWeek?.athlete_reflection}
-              tone="athlete"
-              className={hasAthleteReflection && hasCoachFeedback ? 'basis-1/2' : 'basis-full'}
-            />
-          </div>
-        ) : (
-          <div className="flex min-h-0 flex-1 items-center justify-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-center text-[11px] font-medium text-slate-400 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-500">
-            No feedback
-          </div>
-        )}
+    <div className="btc-month-feedback-cell min-h-[220px] min-w-0 border-l border-slate-200 bg-white p-2 dark:border-slate-800 dark:bg-slate-950 sm:min-h-[260px]">
+      <div className="mb-2 text-[10px] font-bold uppercase tracking-wide text-slate-400 dark:text-slate-500">
+        Feedback
       </div>
+
+      {coachFeedback || athleteReflection ? (
+        <div className="flex flex-col gap-2">
+          <FeedbackPanel
+            label="Coach"
+            value={coachFeedback}
+            tone="coach"
+            storageKey={`btc.monthFeedback.coach.${weekKey}`}
+          />
+          <FeedbackPanel
+            label="Athlete"
+            value={athleteReflection}
+            tone="athlete"
+            storageKey={`btc.monthFeedback.athlete.${weekKey}`}
+          />
+        </div>
+      ) : (
+        <div className="text-[11px] text-slate-400 dark:text-slate-500">No feedback</div>
+      )}
     </div>
   );
 }
@@ -319,6 +375,7 @@ function WeekFeedbackColumn({ trainingWeek }) {
 function WeekRow({ weekStart, trainingWeek, allDayPlans, onWeekClick, onDayClick, selectedDate, showMonthContext }) {
   const days = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
   const weekStats = getWeekStats(days, allDayPlans);
+  const goalRange = formatGoalRange(trainingWeek);
   const avgRpeColors = getRpeColorClasses(weekStats.avgRpe ? Math.round(weekStats.avgRpe) : null);
   const selectedDateStr = selectedDate ? format(selectedDate, 'yyyy-MM-dd') : null;
   const weekLabel = days.some((day) => format(day, 'MMM') !== format(weekStart, 'MMM'))
@@ -351,8 +408,9 @@ function WeekRow({ weekStart, trainingWeek, allDayPlans, onWeekClick, onDayClick
         return (
           <div
             key={dateStr}
-            role={onDayClick ? 'button' : undefined}
+            role={onDayClick ? 'gridcell' : undefined}
             tabIndex={onDayClick ? 0 : undefined}
+            data-drag-scroll-surface=""
             onClick={() => onDayClick?.({ date: day, dayPlan: plan })}
             onKeyDown={(event) => {
               if (!onDayClick || !['Enter', ' '].includes(event.key)) return;
@@ -361,9 +419,9 @@ function WeekRow({ weekStart, trainingWeek, allDayPlans, onWeekClick, onDayClick
             }}
             className={cn(
               'btc-month-day-cell min-h-[220px] border-r border-slate-200 bg-white p-2 outline-none dark:border-slate-800 dark:bg-slate-950 sm:min-h-[260px] sm:p-2.5',
-              onDayClick && 'cursor-pointer transition-colors hover:bg-red-50/60 focus-visible:ring-2 focus-visible:ring-red-600 focus-visible:ring-inset dark:hover:bg-red-950/20',
+              onDayClick && 'cursor-pointer transition-colors hover:bg-slate-50 focus-visible:ring-2 focus-visible:ring-red-600 focus-visible:ring-inset dark:hover:bg-slate-900',
               today && 'btc-today-cell',
-              selected && 'bg-red-50 ring-2 ring-inset ring-red-700 dark:bg-red-950/30 dark:ring-red-400',
+              selected && 'bg-red-50/70 ring-1 ring-inset ring-red-700 dark:bg-red-950/20 dark:ring-red-400',
             )}
           >
             <div className="mb-2 flex items-start justify-between gap-2">
@@ -388,47 +446,57 @@ function WeekRow({ weekStart, trainingWeek, allDayPlans, onWeekClick, onDayClick
                   Today
                 </span>
               )}
-              {onDayClick && !today && (
-                <Pencil className={cn(
-                  "h-3.5 w-3.5 text-slate-400 opacity-0 transition-opacity group-hover:opacity-100 dark:text-slate-500",
-                  selected && "text-red-700 opacity-100 dark:text-red-300"
-                )} />
+              {onDayClick && (
+                <button
+                  type="button"
+                  data-no-drag-scroll
+                  aria-label={`Edit ${format(day, 'EEEE, MMMM d')}`}
+                  className={cn(
+                    'rounded p-0.5 text-slate-400 opacity-0 transition-opacity hover:text-red-700 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600 group-hover:opacity-100 dark:text-slate-500 dark:hover:text-red-300',
+                    selected && 'text-red-700 opacity-100 dark:text-red-300',
+                  )}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    onDayClick({ date: day, dayPlan: plan });
+                  }}
+                >
+                  <Pencil className="h-3.5 w-3.5" />
+                </button>
               )}
             </div>
 
             <div className="space-y-2">
               {coachSessions.length > 0 && (
-                <div className="btc-role-zone btc-role-zone-coach space-y-1.5 rounded-lg border p-1.5">
+                <MonthRoleSection role="coach">
                   {coachSessions.map(([label, session]) => (
                     <CoachSessionSummary key={label} label={label} session={session} />
                   ))}
-                </div>
+                </MonthRoleSection>
               )}
 
-              {(athleteSessions.length > 0 || trainingFactorEntries.length > 0) && (
-                <div className="btc-role-zone btc-role-zone-athlete space-y-1.5 rounded-lg border p-1.5">
+              {(athleteSessions.length > 0 || trainingFactorEntries.length > 0 || hasLift(lift)) && (
+                <MonthRoleSection role="athlete">
                   {trainingFactorEntries.length > 0 && (
                     <TrainingFactorSummary factors={plan?.training_factors} />
                   )}
                   {athleteSessions.map(([label, session]) => (
                     <AthleteSessionSummary key={label} label={label} session={session} />
                   ))}
-                </div>
-              )}
-
-              {hasLift(lift) && (
-                <div className="btc-month-entry-card btc-role-card btc-role-card-athlete rounded-lg border border-slate-200 bg-slate-50 px-2 py-1.5 pl-3 text-[11px] leading-tight text-slate-600 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300">
-                  <div className="font-semibold">Lift</div>
-                  <div className="btc-month-entry-text">
-                    {Number(lift.duration_minutes) > 0 && <span>{formatMinutes(lift.duration_minutes)}</span>}
-                    {lift.lift_type?.trim() && (
-                      <span className="text-slate-500 dark:text-slate-400">
-                        {Number(lift.duration_minutes) > 0 ? ' · ' : ''}
-                        {lift.lift_type.trim()}
-                      </span>
-                    )}
-                  </div>
-                </div>
+                  {hasLift(lift) && (
+                    <div className="btc-month-entry btc-month-entry-athlete rounded-md py-1.5 pl-2 pr-2 text-[11px] leading-tight text-slate-600 dark:text-slate-300">
+                      <div className="font-semibold text-slate-800 dark:text-slate-100">Lift</div>
+                      <div className="btc-month-entry-text text-[10px]">
+                        {Number(lift.duration_minutes) > 0 && <span>{formatMinutes(lift.duration_minutes)}</span>}
+                        {lift.lift_type?.trim() && (
+                          <span>
+                            {Number(lift.duration_minutes) > 0 ? ' · ' : ''}
+                            {lift.lift_type.trim()}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </MonthRoleSection>
               )}
             </div>
           </div>
@@ -436,21 +504,31 @@ function WeekRow({ weekStart, trainingWeek, allDayPlans, onWeekClick, onDayClick
       })}
 
       <div
-        className="btc-month-total-cell sticky right-0 z-10 flex min-h-[220px] cursor-pointer flex-col items-center justify-center gap-1 border-l border-slate-300 bg-slate-100 p-2 text-center transition-colors hover:bg-slate-200 dark:border-slate-700 dark:bg-slate-900 dark:hover:bg-slate-800 sm:min-h-[260px] md:right-72"
+        className="btc-month-total-cell flex min-h-[220px] cursor-pointer flex-col items-center justify-center gap-1 border-l border-slate-200 bg-white p-2 text-center transition-colors hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-950 dark:hover:bg-slate-900 sm:min-h-[260px]"
+        data-drag-scroll-surface=""
         onClick={() => onWeekClick(weekStart)}
         title="Open this week"
       >
         <div className="btc-month-total-label mb-1 w-full text-[10px] font-extrabold uppercase tracking-wide text-red-700 dark:text-red-300">
           {weekLabel}
         </div>
+        {goalRange && (
+          <div className="w-full text-[10px] font-semibold leading-tight text-slate-600 dark:text-slate-300">
+            <div className="text-[9px] font-bold uppercase tracking-wide text-slate-400 dark:text-slate-500">Goal</div>
+            {goalRange}
+          </div>
+        )}
         {weekStats.mileage > 0 && (
           <div className="text-base font-extrabold leading-tight text-slate-900 dark:text-slate-100">
             {weekStats.mileage.toFixed(1)}
-            <span className="block text-xs font-bold">mi</span>
+            <span className="block text-xs font-bold">mi logged</span>
           </div>
         )}
+        {weekStats.mileage === 0 && goalRange && (
+          <div className="text-[10px] font-medium text-slate-500 dark:text-slate-400">0 mi logged</div>
+        )}
         {weekStats.avgRpe !== null && (
-          <div className={cn("rounded border px-1.5 py-0.5 text-[10px] font-bold leading-none", avgRpeColors.badge)}>
+          <div className={cn("text-[10px] font-bold", avgRpeColors.labelText)}>
             RPE {weekStats.avgRpe.toFixed(1)}
           </div>
         )}
@@ -469,14 +547,14 @@ function WeekRow({ weekStart, trainingWeek, allDayPlans, onWeekClick, onDayClick
             {weekStats.liftCount} {weekStats.liftCount === 1 ? 'Lift' : 'Lifts'}
           </div>
         )}
-        {weekStats.mileage === 0 && weekStats.runMinutes === 0 && weekStats.avgRpe === null && weekStats.xTrainMinutes === 0 && weekStats.liftCount === 0 && (
+        {weekStats.mileage === 0 && weekStats.runMinutes === 0 && weekStats.avgRpe === null && weekStats.xTrainMinutes === 0 && weekStats.liftCount === 0 && !goalRange && (
           <div className="text-[10px] text-slate-400 dark:text-slate-500">No log</div>
         )}
         <div className="mt-1 text-[10px] text-red-600 opacity-0 transition-opacity group-hover:opacity-100 dark:text-red-300">
           Open
         </div>
       </div>
-      <WeekFeedbackColumn trainingWeek={trainingWeek} />
+      <WeekFeedbackColumn trainingWeek={trainingWeek} weekStart={weekStart} />
     </div>
   );
 }
@@ -498,6 +576,7 @@ export default function MonthView({
   zoomMax = 1.2,
 }) {
   const scrollRef = React.useRef(null);
+  useDragScroll({ enabled: true, scrollRef, verticalScrollTarget: 'window' });
   const zoomRef = React.useRef(zoom);
   const pinchStateRef = React.useRef(null);
   const [rangeWeeksDraft, setRangeWeeksDraft] = React.useState(String(rangeWeeks));
@@ -653,7 +732,11 @@ export default function MonthView({
         </div>
       </div>
 
-      <div ref={scrollRef} className="btc-zoomable-table-scroll overflow-x-auto" data-training-table-scroll>
+      <div
+        ref={scrollRef}
+        className="btc-zoomable-table-scroll btc-table-drag-scroll overflow-x-auto"
+        data-training-table-scroll
+      >
         <div className="btc-zoomable-table" style={{ zoom }}>
           <div
             className="grid border-b border-slate-200 bg-slate-100 dark:border-slate-800 dark:bg-slate-900"
@@ -664,10 +747,10 @@ export default function MonthView({
                 {dayHeader}
               </div>
             ))}
-            <div className="sticky right-0 z-20 border-l border-slate-300 bg-slate-200 py-2.5 text-center text-xs font-bold uppercase tracking-wide text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 md:right-72">
+            <div className="border-l border-slate-200 py-2.5 text-center text-xs font-bold uppercase tracking-wide text-slate-700 dark:border-slate-800 dark:text-slate-200">
               Total
             </div>
-            <div className="border-l border-slate-300 bg-slate-200 py-2.5 text-center text-xs font-bold uppercase tracking-wide text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 md:sticky md:right-0 md:z-20">
+            <div className="border-l border-slate-200 py-2.5 text-center text-xs font-bold uppercase tracking-wide text-slate-700 dark:border-slate-800 dark:text-slate-200">
               Feedback
             </div>
           </div>

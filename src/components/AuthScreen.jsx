@@ -15,6 +15,7 @@ export default function AuthScreen() {
     authMessage,
     signInWithMagicLink,
     signInWithPassword,
+    resetPasswordForEmail,
     signUpWithPassword,
     signInWithGoogle,
   } = useAuth();
@@ -81,6 +82,24 @@ export default function AuthScreen() {
       }
     } catch (error) {
       setLocalError(error.message || 'Unable to sign in right now.');
+    } finally {
+      setIsSubmitting('');
+    }
+  };
+
+  const handleResetPassword = async () => {
+    setLocalError('');
+
+    if (!validateEmail()) {
+      return;
+    }
+
+    setIsSubmitting('reset');
+
+    try {
+      await resetPasswordForEmail(normalizedEmail);
+    } catch (error) {
+      setLocalError(error.message || 'Unable to send a password reset email right now.');
     } finally {
       setIsSubmitting('');
     }
@@ -188,7 +207,17 @@ export default function AuthScreen() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="password">Password</Label>
+                    <div className="flex items-center justify-between gap-3">
+                      <Label htmlFor="password">Password</Label>
+                      <button
+                        type="button"
+                        className="text-xs font-medium text-red-700 hover:text-red-800 disabled:opacity-50 dark:text-red-300"
+                        disabled={!!isSubmitting}
+                        onClick={handleResetPassword}
+                      >
+                        {isSubmitting === 'reset' ? 'Sending reset...' : 'Reset password'}
+                      </button>
+                    </div>
                     <Input
                       id="password"
                       type="password"

@@ -81,7 +81,13 @@ export default function DayColumn({ date, dayPlan, onEdit, isCoach, shoes = [] }
       const rpeColors = getRpeColorClasses(activity.rpe);
 
       return (
-        <div key={`${label}-${index}`} className={cn("btc-role-card btc-role-card-athlete space-y-1 rounded-lg border p-1.5 pl-2.5 shadow-sm sm:p-2 sm:pl-3", rpeColors.surface)}>
+        <div
+          key={`${label}-${index}`}
+          className={cn(
+            "btc-role-card btc-role-card-athlete space-y-1 rounded-md py-1.5 pl-2 pr-2 sm:py-2",
+            activity.rpe != null ? rpeColors.surface : "bg-transparent"
+          )}
+        >
           <div className="flex items-center justify-between gap-2 text-xs opacity-75">
             <span className="flex items-center gap-1">
               <Icon className="h-3 w-3" />
@@ -129,7 +135,13 @@ export default function DayColumn({ date, dayPlan, onEdit, isCoach, shoes = [] }
       const rpeColors = getRpeColorClasses(activity.planned_difficulty);
 
       return (
-      <div key={`${label}-${index}`} className={cn("btc-role-card btc-role-card-coach space-y-1 rounded-lg border p-1.5 pl-2.5 shadow-sm sm:p-2 sm:pl-3", rpeColors.surface)}>
+      <div
+        key={`${label}-${index}`}
+        className={cn(
+          "btc-role-card btc-role-card-coach space-y-1 rounded-md py-1.5 pl-2 pr-2 sm:py-2",
+          activity.planned_difficulty != null ? rpeColors.surface : "bg-transparent"
+        )}
+      >
         <div className="flex items-center justify-between gap-2 text-xs opacity-75">
           <span className="flex items-center gap-1">
             <Icon className="h-3 w-3" />
@@ -161,7 +173,7 @@ export default function DayColumn({ date, dayPlan, onEdit, isCoach, shoes = [] }
     if (!hasCoachLiftData(lift)) return null;
 
     return (
-      <div className="btc-role-card btc-role-card-coach space-y-1 rounded-lg border border-slate-200 bg-white p-1.5 pl-2.5 shadow-sm dark:border-slate-700 dark:bg-slate-950 sm:p-2 sm:pl-3">
+      <div className="btc-role-card btc-role-card-coach space-y-1 rounded-md bg-transparent py-1.5 pl-2 pr-2 sm:py-2">
         <div className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
           <Dumbbell className="h-3 w-3" />
           Lift
@@ -186,7 +198,7 @@ export default function DayColumn({ date, dayPlan, onEdit, isCoach, shoes = [] }
     if (trainingFactorEntries.length === 0) return null;
 
     return (
-      <div className="btc-role-card btc-role-card-athlete rounded-lg border border-slate-200 bg-slate-50 p-1.5 pl-2.5 shadow-sm dark:border-slate-700 dark:bg-slate-900 sm:p-2 sm:pl-3">
+      <div className="btc-role-card btc-role-card-athlete rounded-md bg-transparent py-1.5 pl-2 pr-2 sm:py-2">
         <div className="mb-1 text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
           Factors
         </div>
@@ -206,7 +218,7 @@ export default function DayColumn({ date, dayPlan, onEdit, isCoach, shoes = [] }
 
   return (
     <div className={cn(
-      "flex min-h-[360px] min-w-[10rem] flex-1 flex-col border-r border-slate-300 last:border-r-0 dark:border-slate-700 sm:min-h-[420px] sm:min-w-[11rem] lg:min-h-[460px] lg:min-w-[12rem]",
+      "flex min-h-[360px] min-w-[8.5rem] flex-1 flex-col border-r border-slate-300 last:border-r-0 dark:border-slate-700 sm:min-h-[420px] sm:min-w-[11rem] lg:min-h-[460px] lg:min-w-[12rem]",
       today && "btc-today-cell"
     )}>
       <div className={cn(
@@ -220,14 +232,42 @@ export default function DayColumn({ date, dayPlan, onEdit, isCoach, shoes = [] }
         )}>{dayNum}</div>
       </div>
 
-      <div className="btc-role-zone btc-role-zone-coach flex-1 border-b-2 p-1.5 sm:p-2">
-        {isCoach && (
-          <div className="mb-1.5 flex justify-end sm:mb-2">
-            <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => onEdit(dayPlan, 'coach', date)}>
-              <Pencil className="h-3 w-3" />
-            </Button>
-          </div>
+      <div
+        className={cn(
+          "btc-role-zone btc-role-zone-coach flex-1 border-b p-1.5 sm:p-2",
+          isCoach && "cursor-pointer"
         )}
+        data-drag-scroll-surface=""
+        tabIndex={isCoach ? 0 : undefined}
+        aria-label={isCoach ? `Edit coach plan for ${dayName}` : undefined}
+        onClick={isCoach ? () => onEdit(dayPlan, 'coach', date) : undefined}
+        onKeyDown={isCoach ? (event) => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            onEdit(dayPlan, 'coach', date);
+          }
+        } : undefined}
+      >
+        <div className="mb-1.5 flex items-center justify-between gap-2 sm:mb-2">
+          <div className="text-[9px] font-extrabold uppercase tracking-wide text-red-700 dark:text-red-300">
+            Coach plan
+          </div>
+          {isCoach && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9 touch-manipulation sm:h-8 sm:w-8"
+              aria-label={`Edit coach plan for ${dayName}`}
+              onClick={(event) => {
+                event.stopPropagation();
+                onEdit(dayPlan, 'coach', date);
+              }}
+            >
+              <Pencil className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
 
         <div className="space-y-1.5 sm:space-y-2">
           <CoachSessionBlock session={dayPlan?.am_coach} label="AM" icon={Sun} />
@@ -236,14 +276,42 @@ export default function DayColumn({ date, dayPlan, onEdit, isCoach, shoes = [] }
         </div>
       </div>
 
-      <div className="btc-role-zone btc-role-zone-athlete flex-1 p-1.5 sm:p-2">
-        {!isCoach && (
-          <div className="mb-1.5 flex justify-end sm:mb-2">
-            <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => onEdit(dayPlan, 'athlete', date)}>
-              <Pencil className="h-3 w-3" />
-            </Button>
-          </div>
+      <div
+        className={cn(
+          "btc-role-zone btc-role-zone-athlete flex-1 p-1.5 sm:p-2",
+          !isCoach && "cursor-pointer"
         )}
+        data-drag-scroll-surface=""
+        tabIndex={!isCoach ? 0 : undefined}
+        aria-label={!isCoach ? `Edit athlete log for ${dayName}` : undefined}
+        onClick={!isCoach ? () => onEdit(dayPlan, 'athlete', date) : undefined}
+        onKeyDown={!isCoach ? (event) => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            onEdit(dayPlan, 'athlete', date);
+          }
+        } : undefined}
+      >
+        <div className="mb-1.5 flex items-center justify-between gap-2 sm:mb-2">
+          <div className="text-[9px] font-extrabold uppercase tracking-wide text-slate-700 dark:text-slate-200">
+            Athlete log
+          </div>
+          {!isCoach && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9 touch-manipulation sm:h-8 sm:w-8"
+              aria-label={`Edit athlete log for ${dayName}`}
+              onClick={(event) => {
+                event.stopPropagation();
+                onEdit(dayPlan, 'athlete', date);
+              }}
+            >
+              <Pencil className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
 
         <div className="space-y-1.5 sm:space-y-2">
           <TrainingFactorsBlock />
@@ -251,7 +319,7 @@ export default function DayColumn({ date, dayPlan, onEdit, isCoach, shoes = [] }
           <AthleteSessionBlock session={dayPlan?.pm_session} label="PM" icon={Moon} />
 
           {hasAthleteLift(dayPlan?.lift) && (
-            <div className="btc-role-card btc-role-card-athlete rounded-lg border border-slate-200 bg-slate-50 p-1.5 pl-2.5 shadow-sm dark:border-slate-700 dark:bg-slate-900 sm:p-2 sm:pl-3">
+            <div className="btc-role-card btc-role-card-athlete rounded-md bg-transparent py-1.5 pl-2 pr-2 sm:py-2">
               <div className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
                 <Dumbbell className="h-3 w-3" />
                 Lift

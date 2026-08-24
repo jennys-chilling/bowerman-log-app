@@ -322,12 +322,16 @@ export default function CoachPlanEditor({ open, onClose, dayPlan, date, onSave, 
     window.clearTimeout(autoSaveTimer.current);
     editVersionRef.current += 1;
     setFormData(nextFormData);
-    markClean();
 
-    if (onAutoSave) {
-      await onAutoSave(buildPayload(nextFormData, dayPlan));
-    } else {
-      await onSave(buildPayload(nextFormData, dayPlan));
+    try {
+      if (onAutoSave) {
+        await onAutoSave(buildPayload(nextFormData, dayPlan));
+      } else {
+        await onSave(buildPayload(nextFormData, dayPlan));
+      }
+      markClean();
+    } catch {
+      // Persist layer surfaces the error toast; keep editor dirty.
     }
   };
 
@@ -360,11 +364,30 @@ export default function CoachPlanEditor({ open, onClose, dayPlan, date, onSave, 
     void commitDeletedEntry({ ...formData, lift_coach: { ...emptyCoachLift } });
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     window.clearTimeout(autoSaveTimer.current);
-    editVersionRef.current += 1;
-    markClean();
-    onSave(buildPayload(formData, dayPlan));
+    try {
+      await onSave(buildPayload(formData, dayPlan));
+      markClean();
+    } catch {
+      // Persist layer surfaces the error toast; keep editor dirty.
+    }
+  };
+
+  const handleDismiss = () => {
+    window.clearTimeout(autoSaveTimer.current);
+
+    if (hasUserEditedRef.current && onAutoSave) {
+      void Promise.resolve(onAutoSave(buildPayload(formData, dayPlan)))
+        .then(() => {
+          markClean();
+          onClose();
+        })
+        .catch(() => {});
+      return;
+    }
+
+    onClose();
   };
 
   if (!open) {
@@ -489,7 +512,7 @@ export default function CoachPlanEditor({ open, onClose, dayPlan, date, onSave, 
           ? "-mx-3 -mb-3 px-3 py-2 [&_button]:h-8"
           : "-mx-6 -mb-6 px-6 py-3"
       )}>
-        <Button variant="outline" onClick={onClose}>Close</Button>
+        <Button variant="outline" onClick={handleDismiss}>Close</Button>
         <Button onClick={handleSave}>Save Plan</Button>
       </DialogFooter>
     </>
@@ -508,7 +531,7 @@ export default function CoachPlanEditor({ open, onClose, dayPlan, date, onSave, 
   }
 
   return (
-    <Dialog open={open} onOpenChange={onClose}>
+    <Dialog open={open} onOpenChange={(nextOpen) => { if (!nextOpen) handleDismiss(); }}>
       <DialogContent className="btc-editor-dialog max-h-[90vh] max-w-5xl overflow-y-auto">
         {editorContent}
       </DialogContent>

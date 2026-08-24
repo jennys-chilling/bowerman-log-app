@@ -491,3 +491,49 @@ using (
       and (training_weeks.athlete_id = auth.uid() or public.is_admin())
   )
 );
+
+create or replace function public.increment_shoe_mileage(
+  shoe_id uuid,
+  mileage_delta numeric
+)
+returns public.shoes
+language plpgsql
+security invoker
+set search_path = public
+as $$
+declare
+  updated_shoe public.shoes;
+begin
+  if auth.uid() is null then
+    raise exception 'Not authenticated';
+  end if;
+
+  if mileage_delta is null or mileage_delta = 0 then
+    select *
+    into updated_shoe
+    from public.shoes
+    where id = shoe_id
+      and (athlete_id = auth.uid() or public.is_admin());
+
+    if updated_shoe.id is null then
+      raise exception 'Shoe not found or not permitted';
+    end if;
+
+    return updated_shoe;
+  end if;
+
+  update public.shoes
+  set current_mileage = greatest(0, coalesce(current_mileage, 0) + mileage_delta)
+  where id = shoe_id
+    and (athlete_id = auth.uid() or public.is_admin())
+  returning * into updated_shoe;
+
+  if updated_shoe.id is null then
+    raise exception 'Shoe not found or not permitted';
+  end if;
+
+  return updated_shoe;
+end;
+$$;
+
+grant execute on function public.increment_shoe_mileage(uuid, numeric) to authenticated;

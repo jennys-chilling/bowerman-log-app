@@ -65,20 +65,62 @@ const getCurrentMileage = (dayPlans = []) => dayPlans.reduce((sum, dayPlan) => (
   sum + getSessionMileage(dayPlan.am_session) + getSessionMileage(dayPlan.pm_session)
 ), 0);
 
-const getMilesLeftLabel = ({ goalMin, goalMax }, currentMileage) => {
-  if (goalMin === null && goalMax === null) return '-';
+const getMilesLeftStatus = ({ goalMin, goalMax }, currentMileage) => {
+  if (goalMin === null && goalMax === null) {
+    return { badge: '-', detail: '-', detailLabel: 'Miles Left' };
+  }
 
   if (goalMax !== null && goalMin !== null && goalMax !== goalMin) {
-    const lowerLeft = Math.max(0, goalMin - currentMileage);
-    const upperLeft = Math.max(0, goalMax - currentMileage);
+    if (currentMileage < goalMin) {
+      const underMin = goalMin - currentMileage;
+      return {
+        badge: `${formatMileage(underMin)} to min`,
+        detail: `${formatMileage(underMin)} mi`,
+        detailLabel: 'To Goal Min',
+      };
+    }
 
-    if (upperLeft === 0) return '0 mi';
-    if (lowerLeft === upperLeft) return `${formatMileage(upperLeft)} mi`;
-    return `${formatMileage(lowerLeft)}-${formatMileage(upperLeft)} mi`;
+    if (currentMileage > goalMax) {
+      const overMax = currentMileage - goalMax;
+      return {
+        badge: `${formatMileage(overMax)} over`,
+        detail: `${formatMileage(overMax)} mi`,
+        detailLabel: 'Over Goal Max',
+      };
+    }
+
+    const toMax = goalMax - currentMileage;
+    return {
+      badge: toMax === 0 ? 'At max' : 'In range',
+      detail: toMax === 0 ? '0 mi' : `${formatMileage(toMax)} mi`,
+      detailLabel: toMax === 0 ? 'At Goal Max' : 'Room To Max',
+    };
   }
 
   const target = goalMin ?? goalMax;
-  return `${formatMileage(target - currentMileage)} mi`;
+  const remaining = target - currentMileage;
+
+  if (remaining > 0) {
+    return {
+      badge: `${formatMileage(remaining)} left`,
+      detail: `${formatMileage(remaining)} mi`,
+      detailLabel: 'Miles Left',
+    };
+  }
+
+  if (remaining < 0) {
+    return {
+      badge: `${formatMileage(Math.abs(remaining))} over`,
+      detail: `${formatMileage(Math.abs(remaining))} mi`,
+      detailLabel: 'Over Goal',
+    };
+  }
+
+  return {
+    badge: 'On goal',
+    detail: '0 mi',
+    detailLabel: 'Miles Left',
+  };
 };
 
 export default function WeeklyMileageGoal({ trainingWeek, isCoach, onSave, dayPlans = [] }) {
@@ -117,7 +159,7 @@ export default function WeeklyMileageGoal({ trainingWeek, isCoach, onSave, dayPl
 
   const parsedGoal = useMemo(() => parseGoalText(goalText), [goalText]);
   const currentMileage = useMemo(() => getCurrentMileage(dayPlans), [dayPlans]);
-  const milesLeft = getMilesLeftLabel(parsedGoal, currentMileage);
+  const milesLeftStatus = getMilesLeftStatus(parsedGoal, currentMileage);
   const hasGoal = parsedGoal.goalMin !== null || parsedGoal.goalMax !== null;
 
   useEffect(() => {
@@ -170,7 +212,7 @@ export default function WeeklyMileageGoal({ trainingWeek, isCoach, onSave, dayPl
           </span>
           <span className="flex items-center gap-2">
             <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-1 text-xs font-bold text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
-              {milesLeft} left
+              {milesLeftStatus.badge}
             </span>
             <ChevronDown className={cn(
               "h-4 w-4 text-slate-500 transition-transform dark:text-slate-400",
@@ -204,8 +246,8 @@ export default function WeeklyMileageGoal({ trainingWeek, isCoach, onSave, dayPl
 
         <div className="mt-3 grid flex-1 gap-2 sm:mt-4 sm:content-end sm:gap-3">
           <div className="rounded-lg border border-slate-200 bg-slate-50 p-2.5 dark:border-slate-700 dark:bg-slate-800 sm:p-3">
-            <div className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Miles Left</div>
-            <div className="mt-0.5 text-xl font-bold text-slate-900 dark:text-slate-100 sm:mt-1 sm:text-2xl">{milesLeft}</div>
+            <div className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">{milesLeftStatus.detailLabel}</div>
+            <div className="mt-0.5 text-xl font-bold text-slate-900 dark:text-slate-100 sm:mt-1 sm:text-2xl">{milesLeftStatus.detail}</div>
           </div>
           <div className="text-xs text-slate-500 dark:text-slate-400">
             {formatMileage(currentMileage)} mi logged this week

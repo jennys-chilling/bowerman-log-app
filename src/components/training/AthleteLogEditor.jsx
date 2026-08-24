@@ -103,6 +103,25 @@ const normalizeActivityShoeMileage = (activity = {}) => {
 
 const normalizeActivities = (activities = []) => activities.map(normalizeActivityShoeMileage);
 
+const activityHasShoeSplitMismatch = (activity = {}) => {
+  if (!countsAsRunMileage(activity.session_type)) return false;
+
+  const shoes = activity.shoes || [];
+  const mileage = Number(activity.mileage) || 0;
+  if (shoes.length === 0 || mileage <= 0) return false;
+
+  const splitTotal = Object.entries(activity.shoe_mileage || {})
+    .filter(([shoeId]) => shoes.includes(shoeId))
+    .reduce((sum, [, shoeMileage]) => sum + (Number(shoeMileage) || 0), 0);
+
+  return Math.abs(splitTotal - mileage) > 0.05;
+};
+
+const formHasShoeSplitMismatch = (formData = {}) => (
+  (formData.am_session || []).some(activityHasShoeSplitMismatch)
+  || (formData.pm_session || []).some(activityHasShoeSplitMismatch)
+);
+
 const buildPayload = (formData) => {
   const payload = {
     am_session: makeAthleteSession(normalizeActivities(formData.am_session)),
@@ -289,17 +308,31 @@ function ActivityForm({ activity, index, canDelete, onChange, onDelete, toggleSh
         <div className="space-y-1">
           <Label className="text-xs">Shoes</Label>
           <div className="flex flex-wrap gap-2">
-            {activeShoes.map((shoe) => (
-              <Badge
-                key={shoe.id}
-                variant={activity.shoes?.includes(shoe.id) ? "default" : "outline"}
-                className="cursor-pointer"
-                onClick={() => toggleShoe(shoe.id)}
-              >
-                {shoe.name}
-                {activity.shoes?.includes(shoe.id) && <X className="ml-1 h-3 w-3" />}
-              </Badge>
-            ))}
+            {activeShoes.map((shoe) => {
+              const selected = activity.shoes?.includes(shoe.id);
+              const shoeColor = shoe.color || 'bg-slate-700';
+              return (
+                <Badge
+                  key={shoe.id}
+                  variant="outline"
+                  className={cn(
+                    "cursor-pointer border px-2.5 py-1 font-medium transition-colors",
+                    selected
+                      ? cn(shoeColor, "border-transparent text-white shadow-sm", shoeColor.includes('bg-white') && "text-slate-900")
+                      : "border-slate-300 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:hover:bg-slate-900"
+                  )}
+                  onClick={() => toggleShoe(shoe.id)}
+                >
+                  <span className={cn(
+                    "mr-1.5 inline-block h-2.5 w-2.5 shrink-0 rounded-full border border-black/10",
+                    !selected && shoeColor,
+                    selected && "border-white/40 bg-white/90"
+                  )} />
+                  {shoe.name}
+                  {selected && <X className="ml-1 h-3 w-3" />}
+                </Badge>
+              );
+            })}
             {activeShoes.length === 0 && (
               <span className="text-xs text-slate-400">No active shoes. Add them in Shoe Inventory.</span>
             )}
@@ -308,7 +341,10 @@ function ActivityForm({ activity, index, canDelete, onChange, onDelete, toggleSh
             <div className="mt-3 space-y-2 rounded-lg border border-slate-200 bg-slate-50 p-2 dark:border-slate-700 dark:bg-slate-900">
               {selectedShoes.map((shoe) => (
                 <div key={shoe.id} className="grid grid-cols-[minmax(0,1fr)_6rem] items-center gap-2">
-                  <div className="min-w-0 text-xs font-medium text-slate-700 dark:text-slate-200">{shoe.name}</div>
+                  <div className="flex min-w-0 items-center gap-2 text-xs font-medium text-slate-700 dark:text-slate-200">
+                    <span className={cn("inline-block h-2.5 w-2.5 shrink-0 rounded-full border border-black/10", shoe.color || 'bg-slate-700')} />
+                    <span className="truncate">{shoe.name}</span>
+                  </div>
                   <Input
                     type="number"
                     min="0"
@@ -326,6 +362,30 @@ function ActivityForm({ activity, index, canDelete, onChange, onDelete, toggleSh
               )}>
                 Shoe total: {splitTotal.toFixed(1)} / {activityMileage.toFixed(1)} mi
               </div>
+              {hasSplitMismatch && (
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="text-xs text-red-700 dark:text-red-300">
+                    Split must match activity mileage before saving.
+                  </span>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-7 px-2 text-xs"
+                    onClick={() => {
+                      const shoes = activity.shoes || [];
+                      if (shoes.length === 0) return;
+                      const evenSplit = Math.floor((activityMileage / shoes.length) * 10) / 10;
+                      const nextSplits = Object.fromEntries(shoes.map((shoeId) => [shoeId, evenSplit]));
+                      const remainder = Number((activityMileage - (evenSplit * shoes.length)).toFixed(1));
+                      nextSplits[shoes[shoes.length - 1]] = Number((nextSplits[shoes[shoes.length - 1]] + remainder).toFixed(1));
+                      onChange('shoe_mileage', nextSplits);
+                    }}
+                  >
+                    Split evenly
+                  </Button>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -354,8 +414,21 @@ function ActivityForm({ activity, index, canDelete, onChange, onDelete, toggleSh
           rangeClassName={rpeColors.range}
           thumbClassName={rpeColors.thumb}
         />
-        <div className={cn("text-xs font-medium", rpeColors.labelText)}>
-          {rpeColors.label}
+        <div className="flex items-center justify-between gap-3">
+          <div className={cn("text-xs font-medium", rpeColors.labelText)}>
+            {activity.rpe == null ? 'Move the slider to set RPE' : rpeColors.label}
+          </div>
+          {activity.rpe != null && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-7 px-2 text-xs"
+              onClick={() => onChange('rpe', null)}
+            >
+              Clear
+            </Button>
+          )}
         </div>
       </div>
 
@@ -560,27 +633,6 @@ export default function AthleteLogEditor({
     markClean();
   }, [date, dayPlan, open]);
 
-  useEffect(() => {
-    if (!open || !hasUserEdited || !onAutoSave) {
-      return undefined;
-    }
-
-    window.clearTimeout(autoSaveTimer.current);
-    autoSaveTimer.current = window.setTimeout(() => {
-      const versionAtSave = editVersionRef.current;
-
-      Promise.resolve(onAutoSave(buildPayload(formData)))
-        .then(() => {
-          if (editVersionRef.current === versionAtSave) {
-            markClean();
-          }
-        })
-        .catch(() => {});
-    }, AUTOSAVE_DELAY_MS);
-
-    return () => window.clearTimeout(autoSaveTimer.current);
-  }, [formData, hasUserEdited, onAutoSave, open]);
-
   const updateActivities = (sessionKey, activities) => {
     markEdited();
     setFormData((current) => ({ ...current, [sessionKey]: activities }));
@@ -590,12 +642,16 @@ export default function AthleteLogEditor({
     window.clearTimeout(autoSaveTimer.current);
     editVersionRef.current += 1;
     setFormData(nextFormData);
-    markClean();
 
-    if (onDeleteEntry) {
-      await onDeleteEntry(buildPayload(nextFormData));
-    } else if (onAutoSave) {
-      await onAutoSave(buildPayload(nextFormData));
+    try {
+      if (onDeleteEntry) {
+        await onDeleteEntry(buildPayload(nextFormData));
+      } else if (onAutoSave) {
+        await onAutoSave(buildPayload(nextFormData));
+      }
+      markClean();
+    } catch {
+      // Persist layer surfaces the error toast; keep editor dirty.
     }
   };
 
@@ -641,16 +697,59 @@ export default function AthleteLogEditor({
   };
 
   const activeShoes = shoes.filter((shoe) => shoe.status === 'Active');
+  const hasShoeSplitMismatch = formHasShoeSplitMismatch(formData);
 
-  const handleSave = () => {
+  useEffect(() => {
+    if (!open || !hasUserEdited || !onAutoSave || hasShoeSplitMismatch) {
+      return undefined;
+    }
+
     window.clearTimeout(autoSaveTimer.current);
-    editVersionRef.current += 1;
-    markClean();
-    onSave(buildPayload(formData));
+    autoSaveTimer.current = window.setTimeout(() => {
+      const versionAtSave = editVersionRef.current;
+
+      Promise.resolve(onAutoSave(buildPayload(formData)))
+        .then(() => {
+          if (editVersionRef.current === versionAtSave) {
+            markClean();
+          }
+        })
+        .catch(() => {});
+    }, AUTOSAVE_DELAY_MS);
+
+    return () => window.clearTimeout(autoSaveTimer.current);
+  }, [formData, hasShoeSplitMismatch, hasUserEdited, onAutoSave, open]);
+
+  const handleSave = async () => {
+    window.clearTimeout(autoSaveTimer.current);
+    if (hasShoeSplitMismatch) return;
+
+    try {
+      await onSave(buildPayload(formData));
+      markClean();
+    } catch {
+      // Persist layer surfaces the error toast; keep editor dirty.
+    }
+  };
+
+  const handleDismiss = () => {
+    window.clearTimeout(autoSaveTimer.current);
+
+    if (hasUserEditedRef.current && onAutoSave && !hasShoeSplitMismatch) {
+      void Promise.resolve(onAutoSave(buildPayload(formData)))
+        .then(() => {
+          markClean();
+          onClose();
+        })
+        .catch(() => {});
+      return;
+    }
+
+    onClose();
   };
 
   return (
-    <Dialog open={open} onOpenChange={onClose}>
+    <Dialog open={open} onOpenChange={(nextOpen) => { if (!nextOpen) handleDismiss(); }}>
       <DialogContent className="btc-editor-dialog max-h-[90vh] max-w-4xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -733,8 +832,11 @@ export default function AthleteLogEditor({
         </Tabs>
 
         <DialogFooter className="sticky bottom-0 -mx-6 -mb-6 border-t border-slate-200 bg-white/95 px-6 py-3 backdrop-blur dark:border-slate-800 dark:bg-slate-950/95">
-          <Button variant="outline" onClick={onClose}>Close</Button>
-          <Button onClick={handleSave}>Save Log</Button>
+          <div className="mr-auto hidden text-xs text-red-700 dark:text-red-300 sm:block">
+            {hasShoeSplitMismatch ? 'Fix shoe mileage splits before saving.' : null}
+          </div>
+          <Button variant="outline" onClick={handleDismiss}>Close</Button>
+          <Button onClick={handleSave} disabled={hasShoeSplitMismatch}>Save Log</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

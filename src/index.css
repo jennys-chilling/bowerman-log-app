@@ -12,7 +12,7 @@
     --btc-pink: 0 38.2% 89.2%;
     --btc-maroon: 0 92.3% 20.4%;
     --btc-warm-gray: 0 2.8% 27.8%;
-    --btc-athlete-green: 145 46% 39%;
+    --btc-athlete-green: 0 0% 12%;
     --btc-ice: 0 0% 100%;
     --btc-ink: 0 0% 7%;
     --btc-cream: 0 38.2% 89.2%;
@@ -64,60 +64,60 @@
   }
 
   .dark {
-    --btc-red: 354 52% 43%;
-    --btc-red-deep: 354 46% 31%;
-    --btc-red-bright: 3 50% 47%;
-    --btc-orange: 6 46% 48%;
-    --btc-navy: 0 0% 10%;
-    --btc-pink: 0 18% 76%;
-    --btc-maroon: 0 44% 28%;
-    --btc-warm-gray: 0 2% 54%;
-    --btc-athlete-green: 145 34% 46%;
+    --btc-red: 354 58% 52%;
+    --btc-red-deep: 354 50% 38%;
+    --btc-red-bright: 3 62% 56%;
+    --btc-orange: 6 52% 52%;
+    --btc-navy: 0 0% 8%;
+    --btc-pink: 0 22% 82%;
+    --btc-maroon: 0 40% 30%;
+    --btc-warm-gray: 0 0% 64%;
+    --btc-athlete-green: 0 0% 86%;
     --btc-ice: 0 0% 100%;
     --btc-ink: 0 0% 7%;
-    --btc-cream: 0 0% 88%;
-    --background: 0 0% 6%;
-    --foreground: 0 0% 86%;
-    --card: 0 0% 15%;
-    --card-foreground: 0 0% 86%;
-    --popover: 0 0% 13%;
-    --popover-foreground: 0 0% 86%;
+    --btc-cream: 0 0% 92%;
+    --background: 0 0% 7%;
+    --foreground: 0 0% 94%;
+    --card: 0 0% 12%;
+    --card-foreground: 0 0% 94%;
+    --popover: 0 0% 11%;
+    --popover-foreground: 0 0% 94%;
     --primary: var(--btc-red);
     --primary-foreground: 0 0% 100%;
-    --secondary: 0 0% 18%;
-    --secondary-foreground: 0 0% 84%;
-    --muted: 0 0% 17%;
-    --muted-foreground: 0 0% 62%;
-    --accent: 0 0% 20%;
-    --accent-foreground: 0 0% 86%;
-    --destructive: 0 62.8% 30.6%;
+    --secondary: 0 0% 16%;
+    --secondary-foreground: 0 0% 92%;
+    --muted: 0 0% 16%;
+    --muted-foreground: 0 0% 72%;
+    --accent: 0 0% 18%;
+    --accent-foreground: 0 0% 94%;
+    --destructive: 0 62.8% 40%;
     --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 25%;
-    --input: 0 0% 26%;
+    --border: 0 0% 24%;
+    --input: 0 0% 24%;
     --ring: var(--btc-red);
     --chart-1: var(--btc-red);
-    --chart-2: 166 44% 39%;
-    --chart-3: 0 0% 66%;
+    --chart-2: 166 44% 42%;
+    --chart-3: 0 0% 70%;
     --chart-4: var(--btc-orange);
     --chart-5: var(--btc-red-bright);
-    --sidebar-background: 0 0% 13%;
-    --sidebar-foreground: 0 0% 84%;
+    --sidebar-background: 0 0% 11%;
+    --sidebar-foreground: 0 0% 92%;
     --sidebar-primary: var(--btc-red);
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 0% 18%;
-    --sidebar-accent-foreground: 0 0% 84%;
-    --sidebar-border: 0 0% 25%;
+    --sidebar-accent: 0 0% 16%;
+    --sidebar-accent-foreground: 0 0% 92%;
+    --sidebar-border: 0 0% 24%;
     --sidebar-ring: var(--btc-red);
-    --rpe-1: 88 139 190;
-    --rpe-2: 82 158 175;
-    --rpe-3: 88 171 91;
-    --rpe-4: 142 171 74;
-    --rpe-5: 178 165 67;
-    --rpe-6: 180 126 65;
-    --rpe-7: 179 94 57;
-    --rpe-8: 170 75 49;
-    --rpe-9: 160 57 44;
-    --rpe-10: 166 50 34;
+    --rpe-1: 98 148 198;
+    --rpe-2: 92 164 178;
+    --rpe-3: 104 176 118;
+    --rpe-4: 156 178 102;
+    --rpe-5: 188 178 96;
+    --rpe-6: 190 146 92;
+    --rpe-7: 188 118 86;
+    --rpe-8: 182 98 78;
+    --rpe-9: 176 82 72;
+    --rpe-10: 180 74 62;
   }
 }
 
@@ -133,7 +133,7 @@
 
   .dark .btc-app-shell {
     background:
-      linear-gradient(180deg, hsl(0 0% 6%) 0%, hsl(0 0% 7%) 52%, hsl(0 0% 5%) 100%);
+      linear-gradient(180deg, hsl(0 0% 7%) 0%, hsl(0 0% 8%) 52%, hsl(0 0% 6%) 100%);
   }
 
   .btc-app-shell .btc-app-shell {
@@ -205,7 +205,7 @@
 
   .dark .btc-auth-shell {
     background:
-      linear-gradient(180deg, hsl(0 0% 6%), hsl(0 0% 7%) 54%, hsl(0 0% 5%));
+      linear-gradient(180deg, hsl(0 0% 7%), hsl(0 0% 8%) 54%, hsl(0 0% 6%));
   }
 
   .btc-app-shell > *,
@@ -291,9 +291,9 @@
 
   .dark .btc-page-header,
   .dark .btc-panel {
-    border-color: hsl(0 0% 26%);
-    background: hsl(0 0% 15% / 0.985);
-    box-shadow: 0 18px 34px hsl(0 0% 0% / 0.38);
+    border-color: hsl(0 0% 24%);
+    background: hsl(0 0% 12% / 0.96);
+    box-shadow: 0 16px 30px hsl(0 0% 0% / 0.38);
   }
 
   .btc-page-header {
@@ -343,8 +343,8 @@
   }
 
   .dark .btc-control-bar {
-    border-color: hsl(0 0% 26%);
-    background: hsl(0 0% 15% / 0.985);
+    border-color: hsl(0 0% 24%);
+    background: hsl(0 0% 12% / 0.96);
     box-shadow: 0 14px 28px hsl(0 0% 0% / 0.34);
   }
 
@@ -386,17 +386,17 @@
     --accent: 0 0% 20%;
     --border: 0 0% 28%;
     --input: 0 0% 28%;
-    --warm-50: 0 0% 90%;
-    --warm-100: 0 0% 84%;
-    --warm-200: 0 0% 76%;
-    --warm-300: 0 0% 64%;
-    --warm-400: 0 0% 54%;
-    --warm-500: 0 0% 45%;
-    --warm-600: 0 0% 36%;
-    --warm-700: 0 0% 27%;
+    --warm-50: 0 0% 92%;
+    --warm-100: 0 0% 86%;
+    --warm-200: 0 0% 78%;
+    --warm-300: 0 0% 68%;
+    --warm-400: 0 0% 58%;
+    --warm-500: 0 0% 48%;
+    --warm-600: 0 0% 38%;
+    --warm-700: 0 0% 28%;
     --warm-800: 0 0% 18%;
-    --warm-900: 0 0% 13%;
-    --warm-950: 0 0% 8%;
+    --warm-900: 0 0% 12%;
+    --warm-950: 0 0% 7%;
     background-color: hsl(var(--background));
   }
 
@@ -555,7 +555,7 @@
   }
 
   .dark .btc-role-legend {
-    background-color: hsl(0 0% 16% / 0.78);
+    background-color: hsl(0 0% 16% / 0.88);
   }
 
   .btc-role-legend-item {
@@ -571,51 +571,29 @@
     width: 1rem;
     height: 0.7rem;
     overflow: hidden;
-    border: 1px solid hsl(var(--border));
     border-radius: 0.2rem;
-  }
-
-  .btc-role-legend-swatch::before {
-    content: "";
-    position: absolute;
-    inset: 0 auto 0 0;
-    width: 0.22rem;
+    background-color: transparent;
+    border-left: 3px solid transparent;
   }
 
   .btc-role-legend-swatch-coach {
-    border-color: hsl(var(--btc-red) / 0.42);
-    background-color: hsl(var(--btc-ice) / 0.96);
-  }
-
-  .btc-role-legend-swatch-coach::before {
-    background-color: hsl(var(--btc-red));
+    border-left-color: hsl(var(--btc-red));
+    background-color: hsl(var(--btc-red) / 0.05);
   }
 
   .btc-role-legend-swatch-athlete {
-    border-color: hsl(var(--btc-athlete-green) / 0.34);
-    background-color: hsl(var(--btc-ice));
-  }
-
-  .btc-role-legend-swatch-athlete::before {
-    background-color: hsl(var(--btc-athlete-green));
+    border-left-color: hsl(var(--btc-athlete-green));
+    background-color: hsl(0 0% 0% / 0.035);
   }
 
   .dark .btc-role-legend-swatch-coach {
-    border-color: hsl(var(--btc-red) / 0.30);
-    background-color: hsl(0 0% 18% / 0.88);
-  }
-
-  .dark .btc-role-legend-swatch-coach::before {
-    background-color: hsl(var(--btc-red) / 0.78);
+    border-left-color: hsl(var(--btc-red) / 0.78);
+    background-color: hsl(var(--btc-red) / 0.10);
   }
 
   .dark .btc-role-legend-swatch-athlete {
-    border-color: hsl(var(--btc-athlete-green) / 0.34);
-    background-color: hsl(0 0% 18% / 0.88);
-  }
-
-  .dark .btc-role-legend-swatch-athlete::before {
-    background-color: hsl(var(--btc-athlete-green) / 0.78);
+    border-left-color: hsl(var(--btc-athlete-green) / 0.78);
+    background-color: hsl(0 0% 100% / 0.05);
   }
 
   .btc-table-zoom-control {
@@ -631,12 +609,17 @@
   }
 
   .dark .btc-table-zoom-control {
-    background-color: hsl(0 0% 16% / 0.78);
+    background-color: hsl(0 0% 16% / 0.88);
   }
 
   @media (hover: none), (pointer: coarse) {
     .btc-table-zoom-control {
-      display: none;
+      min-width: min(100%, 14rem);
+      padding: 0.15rem;
+    }
+
+    .btc-table-zoom-control [data-slot="slider"] {
+      min-width: 4.5rem;
     }
   }
 
@@ -650,13 +633,67 @@
     -webkit-overflow-scrolling: touch;
   }
 
+  .btc-table-drag-scroll {
+    cursor: grab;
+  }
+
+  .btc-table-drag-scroll.btc-drag-scroll-active {
+    cursor: grabbing;
+    user-select: none;
+    touch-action: none;
+  }
+
   .btc-month-view {
-    --btc-month-grid-template: repeat(7, minmax(11rem, 1fr)) minmax(6rem, 6.5rem) 18rem;
-    --btc-month-grid-min-width: 101.5rem;
+    --btc-month-grid-template: repeat(7, minmax(11rem, 1fr)) minmax(6rem, 6.5rem) 16rem;
+    --btc-month-grid-min-width: 99.5rem;
   }
 
   .btc-month-feedback-cell {
     align-self: stretch;
+  }
+
+  .btc-month-entry {
+    min-width: 0;
+    max-width: 100%;
+    border-left-width: 3px;
+    border-left-style: solid;
+  }
+
+  .btc-month-entry-coach {
+    border-left-color: hsl(var(--btc-red));
+  }
+
+  .btc-month-entry-athlete {
+    border-left-color: hsl(var(--btc-athlete-green));
+  }
+
+  .dark .btc-month-entry-coach {
+    border-left-color: hsl(var(--btc-red) / 0.78);
+  }
+
+  .dark .btc-month-entry-athlete {
+    border-left-color: hsl(var(--btc-athlete-green) / 0.78);
+  }
+
+  .btc-month-entry.rpe-surface {
+    border-left-width: 3px;
+    border-left-style: solid;
+  }
+
+  .btc-month-role-section-coach {
+    background-color: hsl(var(--btc-red) / 0.05);
+  }
+
+  .btc-month-role-section-athlete {
+    background-color: hsl(0 0% 0% / 0.035);
+  }
+
+  .dark .btc-month-role-section-coach {
+    background-color: hsl(var(--btc-red) / 0.10);
+  }
+
+  .dark .btc-month-role-section-athlete {
+    background-color: hsl(0 0% 100% / 0.05);
   }
 
   .btc-month-entry-card,
@@ -699,7 +736,7 @@
 
     .btc-month-view .btc-zoomable-table-scroll {
       overflow-x: auto;
-      overscroll-behavior: contain auto;
+      overscroll-behavior-x: contain;
       touch-action: pan-x pan-y;
     }
 
@@ -711,15 +748,6 @@
 
     .btc-month-feedback-cell {
       min-height: 12.5rem;
-    }
-
-    .btc-month-day-cell .btc-role-zone {
-      padding: 0.35rem;
-    }
-
-    .btc-month-day-cell .btc-role-card {
-      border-radius: 0.55rem;
-      padding: 0.35rem 0.45rem 0.35rem 0.65rem;
     }
   }
 
@@ -735,7 +763,7 @@
   }
 
   .dark .btc-zoomable-table-scroll::-webkit-scrollbar-thumb {
-    background-color: hsl(0 0% 70% / 0.24);
+    background-color: hsl(0 0% 70% / 0.28);
   }
 
   .btc-role-zone {
@@ -763,88 +791,63 @@
   }
 
   .btc-role-zone-coach {
-    border-color: hsl(var(--btc-red) / 0.38);
-    background-color: hsl(var(--btc-ice) / 0.94);
+    border-color: hsl(var(--border));
+    background-color: hsl(var(--btc-red) / 0.05);
     font-family: var(--btc-coach-font);
     font-weight: 400;
     letter-spacing: 0;
-    box-shadow: inset 0 0 0 1px hsl(var(--btc-red) / 0.08);
   }
 
   .btc-role-zone-athlete {
-    border-color: hsl(var(--btc-athlete-green) / 0.26);
-    background-color: hsl(var(--btc-ice) / 0.96);
+    border-color: hsl(var(--border));
+    background-color: hsl(0 0% 0% / 0.035);
     font-family: var(--btc-athlete-font);
     letter-spacing: 0;
   }
 
   .dark .btc-role-zone-coach {
-    border-color: hsl(var(--btc-red) / 0.24);
-    background-color: hsl(0 0% 16% / 0.96);
-    box-shadow: inset 0 0 0 1px hsl(var(--btc-red) / 0.055);
+    border-color: hsl(var(--border));
+    background-color: hsl(var(--btc-red) / 0.10);
   }
 
   .dark .btc-role-zone-athlete {
-    border-color: hsl(var(--btc-athlete-green) / 0.24);
-    background-color: hsl(0 0% 14% / 0.96);
+    border-color: hsl(var(--border));
+    background-color: hsl(0 0% 100% / 0.05);
   }
 
   .btc-role-card {
-    position: relative;
-    overflow: hidden;
+    min-width: 0;
+    max-width: 100%;
+    border-left-width: 3px;
+    border-left-style: solid;
+    background-color: transparent;
   }
 
-  .btc-role-card::before {
-    content: "";
-    position: absolute;
-    inset: 0 auto 0 0;
-    width: 0.25rem;
+  .btc-role-card.rpe-surface {
+    border-left-width: 3px;
+    border-left-style: solid;
   }
 
   .btc-role-card-coach {
+    border-left-color: hsl(var(--btc-red));
     font-family: var(--btc-coach-font);
     letter-spacing: 0;
     font-weight: 400;
     line-height: 1.42;
-    box-shadow:
-      inset 0 0 0 1px hsl(var(--btc-red) / 0.20),
-      0 1px 2px hsl(0 0% 0% / 0.08);
-  }
-
-  .btc-role-card-coach::before {
-    background-color: hsl(var(--btc-red));
   }
 
   .btc-role-card-athlete {
+    border-left-color: hsl(var(--btc-athlete-green));
     font-family: var(--btc-athlete-font);
     letter-spacing: 0;
-    box-shadow:
-      inset 0 0 0 1px hsl(var(--btc-athlete-green) / 0.18),
-      0 1px 2px hsl(0 0% 0% / 0.08);
-  }
-
-  .btc-role-card-athlete::before {
-    background-color: hsl(var(--btc-athlete-green));
   }
 
   .dark .btc-role-card-coach {
-    box-shadow:
-      inset 0 0 0 1px hsl(var(--btc-red) / 0.12),
-      0 1px 2px hsl(0 0% 0% / 0.24);
-  }
-
-  .dark .btc-role-card-coach::before {
-    background-color: hsl(var(--btc-red) / 0.58);
+    border-left-color: hsl(var(--btc-red) / 0.78);
   }
 
   .dark .btc-role-card-athlete {
-    box-shadow:
-      inset 0 0 0 1px hsl(var(--btc-athlete-green) / 0.16),
-      0 1px 2px hsl(0 0% 0% / 0.24);
-  }
-
-  .dark .btc-role-card-athlete::before {
-    background-color: hsl(var(--btc-athlete-green) / 0.74);
+    border-left-color: hsl(var(--btc-athlete-green) / 0.78);
   }
 
   .rpe-1 {
@@ -927,6 +930,27 @@
     color: var(--rpe-surface-foreground);
   }
 
+  /* Keep role accents on the left edge even when RPE paints border-color. */
+  .btc-role-card-coach.rpe-surface,
+  .btc-month-entry-coach.rpe-surface {
+    border-left-color: hsl(var(--btc-red));
+  }
+
+  .btc-role-card-athlete.rpe-surface,
+  .btc-month-entry-athlete.rpe-surface {
+    border-left-color: hsl(var(--btc-athlete-green));
+  }
+
+  .dark .btc-role-card-coach.rpe-surface,
+  .dark .btc-month-entry-coach.rpe-surface {
+    border-left-color: hsl(var(--btc-red) / 0.78);
+  }
+
+  .dark .btc-role-card-athlete.rpe-surface,
+  .dark .btc-month-entry-athlete.rpe-surface {
+    border-left-color: hsl(var(--btc-athlete-green) / 0.78);
+  }
+
   .rpe-surface .text-slate-800,
   .rpe-surface .text-slate-700,
   .rpe-surface .text-slate-600,
@@ -971,25 +995,32 @@
   }
 
   .dark .rpe-badge {
-    border-color: hsl(0 0% 100% / 0.26);
-    background-color: hsl(0 0% 0% / 0.22);
-    color: hsl(0 0% 94%);
+    border-color: hsl(0 0% 100% / 0.28);
+    background-color: hsl(0 0% 6% / 0.82);
+    color: hsl(0 0% 98%);
   }
 
   .dark .rpe-surface {
-    --rpe-surface-foreground: hsl(0 0% 96%);
-    --rpe-support-background: hsl(0 0% 0% / 0.24);
-    --rpe-support-border: hsl(0 0% 100% / 0.26);
-    border-color: rgb(var(--rpe-color) / 0.72);
-    background-color: rgb(var(--rpe-color));
+    --rpe-surface-foreground: hsl(0 0% 94%);
+    --rpe-support-background: hsl(0 0% 6% / 0.82);
+    --rpe-support-border: hsl(0 0% 100% / 0.28);
+    border-color: rgb(var(--rpe-color) / 0.38);
+    background-color: rgb(var(--rpe-color) / 0.22);
     color: var(--rpe-surface-foreground);
-    text-shadow: 0 1px 1px hsl(0 0% 0% / 0.24);
+    text-shadow: none;
   }
 
   .dark :where(.rpe-1, .rpe-2, .rpe-3, .rpe-4, .rpe-5, .rpe-6).rpe-surface {
-    --rpe-surface-foreground: hsl(0 0% 8%);
-    --rpe-support-background: hsl(0 0% 100% / 0.34);
-    --rpe-support-border: hsl(0 0% 0% / 0.22);
+    --rpe-surface-foreground: hsl(0 0% 94%);
+    --rpe-support-background: hsl(0 0% 6% / 0.82);
+    --rpe-support-border: hsl(0 0% 100% / 0.28);
+    text-shadow: none;
+  }
+
+  .dark :where(.rpe-7, .rpe-8, .rpe-9, .rpe-10).rpe-surface {
+    --rpe-surface-foreground: hsl(0 0% 96%);
+    --rpe-support-background: hsl(0 0% 6% / 0.82);
+    --rpe-support-border: hsl(0 0% 100% / 0.28);
     text-shadow: none;
   }
 
@@ -1008,9 +1039,9 @@
 
   .dark .rpe-surface .rpe-badge,
   .dark .rpe-surface .btc-workout-type-badge {
-    border-color: var(--rpe-support-border);
-    background-color: var(--rpe-support-background);
-    color: var(--rpe-surface-foreground);
+    border-color: hsl(0 0% 100% / 0.28);
+    background-color: hsl(0 0% 6% / 0.82);
+    color: hsl(0 0% 98%);
   }
 
   .dark .rpe-label {
@@ -1027,13 +1058,13 @@
   }
 
   .dark .rpe-range {
-    background-color: rgb(var(--rpe-color));
+    background-color: rgb(var(--rpe-color) / 0.86);
   }
 
   .dark .rpe-solid {
-    border: 1px solid rgb(var(--rpe-color) / 0.78);
-    background-color: rgb(var(--rpe-color));
-    color: hsl(0 0% 96%);
+    border: 1px solid rgb(var(--rpe-color) / 0.48);
+    background-color: rgb(var(--rpe-color) / 0.78);
+    color: hsl(0 0% 98%);
   }
 
   .btc-page-header .btc-brand-lockup {
@@ -1064,13 +1095,15 @@
     }
 
     .btc-header-actions {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
       width: 100%;
     }
 
     .btc-header-actions > * {
       min-width: 0;
+      flex: 1 1 calc(50% - 0.25rem);
     }
 
     .btc-header-actions a,
@@ -1107,17 +1140,17 @@
 }
 
 .dark {
-  --warm-50: 0 0% 90%;
-  --warm-100: 0 0% 84%;
-  --warm-200: 0 0% 76%;
-  --warm-300: 0 0% 64%;
-  --warm-400: 0 0% 54%;
-  --warm-500: 0 0% 45%;
-  --warm-600: 0 0% 36%;
-  --warm-700: 0 0% 27%;
+  --warm-50: 0 0% 92%;
+  --warm-100: 0 0% 86%;
+  --warm-200: 0 0% 78%;
+  --warm-300: 0 0% 68%;
+  --warm-400: 0 0% 58%;
+  --warm-500: 0 0% 48%;
+  --warm-600: 0 0% 38%;
+  --warm-700: 0 0% 28%;
   --warm-800: 0 0% 18%;
-  --warm-900: 0 0% 13%;
-  --warm-950: 0 0% 8%;
+  --warm-900: 0 0% 12%;
+  --warm-950: 0 0% 7%;
 }
 
 .bg-slate-50,
@@ -1283,6 +1316,16 @@
   background-color: hsl(var(--btc-red-bright) / 0.86) !important;
 }
 
+.dark .dark\:text-red-100,
+.dark .dark\:text-red-200,
+.dark .dark\:text-red-300 {
+  color: hsl(var(--btc-pink) / 0.88) !important;
+}
+
+.dark .dark\:ring-red-400 {
+  --tw-ring-color: hsl(var(--btc-red) / 0.42) !important;
+}
+
 .dark .dark\:bg-red-950 {
   background-color: hsl(var(--btc-red-deep) / 0.16) !important;
 }
@@ -1314,14 +1357,4 @@
 .dark .dark\:border-red-900,
 .dark .dark\:border-red-900\/60 {
   border-color: hsl(var(--btc-red) / 0.28) !important;
-}
-
-.dark .dark\:text-red-100,
-.dark .dark\:text-red-200,
-.dark .dark\:text-red-300 {
-  color: hsl(var(--btc-pink) / 0.82) !important;
-}
-
-.dark .dark\:ring-red-400 {
-  --tw-ring-color: hsl(var(--btc-red) / 0.42) !important;
 }

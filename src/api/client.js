@@ -335,6 +335,18 @@ export const appClient = {
 
       return data;
     },
+    async resetPasswordForEmail(email, redirectTo) {
+      const supabase = assertSupabaseConfigured();
+      const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo,
+      });
+
+      if (error) {
+        throw normalizeSupabaseError(error, 'Failed to send password reset email');
+      }
+
+      return data;
+    },
     async signUpWithPassword(email, password, redirectTo) {
       const supabase = assertSupabaseConfigured();
       const { data, error } = await supabase.auth.signUp({
@@ -426,6 +438,21 @@ export const appClient = {
 
       const { data } = supabase.storage.from('profile-pictures').getPublicUrl(path);
       return data.publicUrl;
+    },
+  },
+  rpc: {
+    async incrementShoeMileage(shoeId, mileageDelta) {
+      const supabase = assertSupabaseConfigured();
+      const { data, error } = await supabase.rpc('increment_shoe_mileage', {
+        shoe_id: shoeId,
+        mileage_delta: mileageDelta,
+      });
+
+      if (error) {
+        throw normalizeSupabaseError(error, 'Failed to update shoe mileage');
+      }
+
+      return data;
     },
   },
   appLogs: {

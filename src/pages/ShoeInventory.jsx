@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Plus, Pencil, Archive, Loader2, LogOut, UserCircle, Trash2, Footprints } from 'lucide-react';
-import { Link, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 
 const SHOE_TYPES = ['Trainer', 'Workout', 'Spike', 'Trail', 'Racing Flat'];
@@ -170,22 +170,26 @@ export default function ShoeInventory() {
           subtitle="Shoes"
           backTo={trainingLogUrl}
           actions={(
-            <>
-              <Button className="h-9 rounded-full px-3 text-sm font-semibold sm:px-4" onClick={() => setShowEditor(true)}>
-                <Plus className="w-4 h-4 mr-2" /> Add Shoe
-              </Button>
-              <Link to={accountUrl}>
-                <Button variant="outline" size="sm" className="h-9 rounded-full px-3 text-sm font-semibold sm:px-4">
-                  <UserCircle className="mr-1.5 h-4 w-4" />
-                  Account
-                </Button>
-              </Link>
-              <Button variant="ghost" size="sm" className="h-9 rounded-full px-3" onClick={() => logout()}>
-                <LogOut className="mr-1.5 h-4 w-4" />
-                Sign Out
-              </Button>
-            </>
+            <Button className="h-9 rounded-full px-3 text-sm font-semibold sm:px-4" onClick={() => setShowEditor(true)}>
+              <Plus className="w-4 h-4 mr-2" /> Add Shoe
+            </Button>
           )}
+          menuItems={[
+            {
+              key: 'account',
+              label: 'Account',
+              icon: UserCircle,
+              to: accountUrl,
+            },
+            {
+              key: 'sign-out',
+              label: 'Sign Out',
+              icon: LogOut,
+              variant: 'ghost',
+              separatorBefore: true,
+              onClick: () => logout(),
+            },
+          ]}
         />
         
         {isLoading ? (
@@ -327,7 +331,7 @@ export default function ShoeInventory() {
       
       {/* Shoe Editor */}
       <Dialog open={showEditor} onOpenChange={(open) => { if (!open) { setShowEditor(false); resetForm(); } }}>
-        <DialogContent className="max-h-[90vh] w-[calc(100vw-1.5rem)] max-w-lg overflow-y-auto p-4 sm:p-6">
+        <DialogContent className="btc-editor-dialog max-h-[90vh] w-[calc(100vw-1.5rem)] max-w-lg overflow-y-auto p-4 sm:p-6">
           <DialogHeader>
             <DialogTitle>{editingShoe ? 'Edit Shoe' : 'Add New Shoe'}</DialogTitle>
           </DialogHeader>

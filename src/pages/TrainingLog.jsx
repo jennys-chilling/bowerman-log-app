@@ -4,6 +4,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { startOfWeek, addDays, format, parseISO, isValid, differenceInCalendarDays } from 'date-fns';
 import WeekNavigation from '@/components/training/WeeklyNavigation';
 import { useAuth } from '@/lib/AuthContext';
+import { usePinchZoom } from '@/hooks/usePinchZoom';
+import { useDragScroll } from '@/hooks/useDragScroll';
 import DayColumn from '@/components/training/DayColumn';
 import WeeklyTotals from '@/components/training/WeeklyTotals';
 import WeeklyReflection from '@/components/training/WeeklyReflection';
@@ -56,19 +58,14 @@ const TABLE_ZOOM_STORAGE_KEY = 'btc-training-table-zoom-v1';
 const TABLE_ZOOM_MIN = 0.35;
 const TABLE_ZOOM_MAX = 1.2;
 const TABLE_ZOOM_STEP = 0.05;
-const WEEK_TABLE_MIN_WIDTH_PX = 1120;
+const WEEK_TABLE_MIN_WIDTH_PX = 952;
 const MONTH_TABLE_MIN_WIDTH_PX = 1624;
-const TOUCH_TABLE_MEDIA_QUERY = '(max-width: 640px), (hover: none), (pointer: coarse)';
 
 const clampTableZoom = (value) => {
   const parsed = Number(value);
   if (!Number.isFinite(parsed)) return 1;
   return Math.min(TABLE_ZOOM_MAX, Math.max(TABLE_ZOOM_MIN, Number(parsed.toFixed(2))));
 };
-
-const getIsTouchTableView = () => (
-  typeof window !== 'undefined' && window.matchMedia(TOUCH_TABLE_MEDIA_QUERY).matches
-);
 
 const getDefaultTableZooms = () => {
   const isMobile = typeof window !== 'undefined' && window.matchMedia('(max-width: 640px)').matches;
@@ -133,8 +130,21 @@ const getShoeMileageById = (session = {}) => {
       return;
     }
 
-    (activity.shoes || []).forEach((shoeId) => {
-      mileageByShoe.set(shoeId, (mileageByShoe.get(shoeId) || 0) + mileage);
+    const shoes = activity.shoes || [];
+    if (shoes.length === 0) return;
+
+    if (shoes.length === 1) {
+      mileageByShoe.set(shoes[0], (mileageByShoe.get(shoes[0]) || 0) + mileage);
+      return;
+    }
+
+    // Match AthleteLogEditor: split evenly when no explicit shoe_mileage map exists.
+    const evenSplit = Math.floor((mileage / shoes.length) * 10) / 10;
+    shoes.forEach((shoeId, index) => {
+      const portion = index === shoes.length - 1
+        ? Number((mileage - (evenSplit * (shoes.length - 1))).toFixed(1))
+        : evenSplit;
+      mileageByShoe.set(shoeId, (mileageByShoe.get(shoeId) || 0) + portion);
     });
   });
 
@@ -231,14 +241,13 @@ const getMonthViewPreferencesErrorMessage = (error) => {
 
 export default function TrainingLog() {
   const queryClient = useQueryClient();
-  const { logout } = useAuth();
+  const { logout, user, updateUser } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const initialWeekStart = parseDateParam(searchParams.get('week'), getCurrentWeekStart());
   const [currentWeekStart, setCurrentWeekStart] = useState(initialWeekStart);
   const [viewMode, setViewMode] = useState(() => parseViewModeParam(searchParams.get('view'))); // 'week' | 'month'
   const [rangeStart, setRangeStart] = useState(() => parseDateParam(searchParams.get('rangeStart'), initialWeekStart));
   const [rangeWeeks, setRangeWeeks] = useState(() => parseRangeWeeksParam(searchParams.get('rangeWeeks')));
-  const [user, setUser] = useState(null);
   const [viewingAthleteId, setViewingAthleteId] = useState(() => searchParams.get('athlete'));
   const [athleteSelectorOpen, setAthleteSelectorOpen] = useState(false);
   const [editorState, setEditorState] = useState({
@@ -252,7 +261,6 @@ export default function TrainingLog() {
   const [factorSettingsOpen, setFactorSettingsOpen] = useState(false);
   const [factorDraftKeys, setFactorDraftKeys] = useState([]);
   const [tableZooms, setTableZooms] = useState(getInitialTableZooms);
-  const [isTouchTableView, setIsTouchTableView] = useState(getIsTouchTableView);
   const [monthViewPreferencesReady, setMonthViewPreferencesReady] = useState(false);
   const hasExplicitMonthRangeRef = React.useRef(searchParams.has('rangeStart') || searchParams.has('rangeWeeks'));
   const monthViewPreferenceHydrationStartedRef = React.useRef(false);
@@ -260,13 +268,11 @@ export default function TrainingLog() {
   const monthViewPreferencesErrorShownRef = React.useRef(false);
   
   useEffect(() => {
-    appClient.auth.me().then(u => {
-      setUser(u);
-      if (u.role !== 'admin') {
-        setViewingAthleteId(u.id);
-      }
-    });
-  }, []);
+    if (!user) return;
+    if (user.role !== 'admin') {
+      setViewingAthleteId(user.id);
+    }
+  }, [user]);
   
   const isCoach = user?.role === 'admin';
   const effectiveAthleteId = user ? (isCoach ? viewingAthleteId : user.id) : null;
@@ -279,22 +285,25 @@ export default function TrainingLog() {
     [activeTrainingFactorKeys]
   );
   const currentTableZoom = tableZooms[viewMode] || 1;
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return undefined;
-
-    const mediaQuery = window.matchMedia(TOUCH_TABLE_MEDIA_QUERY);
-    const updateTouchTableView = () => setIsTouchTableView(mediaQuery.matches);
-    updateTouchTableView();
-
-    if (mediaQuery.addEventListener) {
-      mediaQuery.addEventListener('change', updateTouchTableView);
-      return () => mediaQuery.removeEventListener('change', updateTouchTableView);
-    }
-
-    mediaQuery.addListener(updateTouchTableView);
-    return () => mediaQuery.removeListener(updateTouchTableView);
-  }, []);
+  const weekScrollRef = React.useRef(null);
+  usePinchZoom({
+    enabled: viewMode === 'week',
+    scrollRef: weekScrollRef,
+    zoom: currentTableZoom,
+    onZoomChange: (nextZoom) => {
+      setTableZooms((current) => ({
+        ...current,
+        week: clampTableZoom(nextZoom),
+      }));
+    },
+    zoomMin: TABLE_ZOOM_MIN,
+    zoomMax: TABLE_ZOOM_MAX,
+  });
+  useDragScroll({
+    enabled: viewMode === 'week',
+    scrollRef: weekScrollRef,
+    verticalScrollTarget: 'window',
+  });
 
   const setCurrentTableZoom = React.useCallback((nextZoom) => {
     setTableZooms((current) => ({
@@ -499,6 +508,13 @@ export default function TrainingLog() {
       queryClient.invalidateQueries({ queryKey: ['monthDayPlans'] });
       queryClient.invalidateQueries({ queryKey: ['monthTrainingWeeks'] });
     },
+    onError: (error) => {
+      toast({
+        title: 'Could not create week',
+        description: error.message || 'Try again in a moment.',
+        variant: 'destructive',
+      });
+    },
   });
   
   // Update day plan mutation
@@ -530,7 +546,7 @@ export default function TrainingLog() {
       });
     },
     onSuccess: (updatedUser) => {
-      setUser((currentUser) => ({ ...(currentUser || {}), ...updatedUser }));
+      updateUser((currentUser) => ({ ...(currentUser || {}), ...updatedUser }));
       queryClient.invalidateQueries({ queryKey: ['athletes'] });
       setFactorSettingsOpen(false);
       toast({ title: 'Training factors updated' });
@@ -555,7 +571,7 @@ export default function TrainingLog() {
       });
     },
     onSuccess: (updatedUser) => {
-      setUser((currentUser) => ({ ...(currentUser || {}), ...updatedUser }));
+      updateUser((currentUser) => ({ ...(currentUser || {}), ...updatedUser }));
     },
     onError: (error) => {
       if (monthViewPreferencesErrorShownRef.current) return;
@@ -593,15 +609,25 @@ export default function TrainingLog() {
     viewMode,
   ]);
   
-  // Update shoe mileage after session save
+  // Update shoe mileage after session save (atomic server-side increment)
   const updateShoeMileageMutation = useMutation({
     mutationFn: async ({ shoeIds, mileage }) => {
       for (const shoeId of shoeIds) {
-        const shoe = shoes.find(s => s.id === shoeId);
-        if (shoe) {
-          await appClient.entities.Shoe.update(shoeId, {
-            current_mileage: (shoe.current_mileage || 0) + mileage,
-          });
+        try {
+          await appClient.rpc.incrementShoeMileage(shoeId, mileage);
+        } catch (error) {
+          // Fallback for projects that have not rerun schema.sql yet.
+          if (!String(error?.message || '').toLowerCase().includes('increment_shoe_mileage')) {
+            throw error;
+          }
+
+          const latestShoes = await appClient.entities.Shoe.filter({ id: shoeId });
+          const shoe = latestShoes[0] || shoes.find((item) => item.id === shoeId);
+          if (shoe) {
+            await appClient.entities.Shoe.update(shoeId, {
+              current_mileage: Math.max(0, (shoe.current_mileage || 0) + mileage),
+            });
+          }
         }
       }
     },
@@ -609,25 +635,78 @@ export default function TrainingLog() {
   });
 
   const copyWeekMutation = useMutation({
-    mutationFn: async ({ athleteIds, overwriteExisting }) => {
-      const weekStartDate = format(currentWeekStart, 'yyyy-MM-dd');
-      const sourceByDate = new Map(dayPlans.map((dayPlan) => [dayPlan.date, dayPlan]));
-      const sourceWeekGoal = {
-        goal_mileage_min: trainingWeek?.goal_mileage_min ?? null,
-        goal_mileage_max: trainingWeek?.goal_mileage_max ?? null,
+    mutationFn: async ({
+      athleteIds,
+      overwriteExisting,
+      sourceWeekStart: sourceWeekStartValue,
+      targetWeekStart: targetWeekStartValue,
+    }) => {
+      const sourceWeekStart = startOfWeek(sourceWeekStartValue || currentWeekStart, { weekStartsOn: 1 });
+      const targetWeekStart = startOfWeek(targetWeekStartValue || currentWeekStart, { weekStartsOn: 1 });
+      const sourceWeekStartDate = format(sourceWeekStart, 'yyyy-MM-dd');
+      const targetWeekStartDate = format(targetWeekStart, 'yyyy-MM-dd');
+
+      const sourceAthleteId = effectiveAthleteId;
+      if (!sourceAthleteId) {
+        throw new Error('Select an athlete before copying a week.');
+      }
+
+      let sourceWeekGoal = {
+        goal_mileage_min: null,
+        goal_mileage_max: null,
       };
+      let sourceByDayIndex = new Map();
+
+      const isSameVisibleWeek = sourceWeekStartDate === format(currentWeekStart, 'yyyy-MM-dd')
+        && sourceAthleteId === effectiveAthleteId;
+
+      if (isSameVisibleWeek) {
+        sourceWeekGoal = {
+          goal_mileage_min: trainingWeek?.goal_mileage_min ?? null,
+          goal_mileage_max: trainingWeek?.goal_mileage_max ?? null,
+        };
+        sourceByDayIndex = new Map(
+          dayPlans.map((dayPlan) => {
+            const dayIndex = Math.max(0, Math.min(6, differenceInCalendarDays(parseISO(dayPlan.date), sourceWeekStart)));
+            return [dayIndex, dayPlan];
+          })
+        );
+      } else {
+        const sourceWeeks = await appClient.entities.TrainingWeek.filter({
+          athlete_id: sourceAthleteId,
+          week_start_date: sourceWeekStartDate,
+        });
+        const sourceWeek = sourceWeeks[0];
+        if (!sourceWeek) {
+          throw new Error('No training week found for the selected source week.');
+        }
+
+        sourceWeekGoal = {
+          goal_mileage_min: sourceWeek.goal_mileage_min ?? null,
+          goal_mileage_max: sourceWeek.goal_mileage_max ?? null,
+        };
+
+        const sourceDayPlans = await appClient.entities.DayPlan.filter({ training_week_id: sourceWeek.id });
+        sourceByDayIndex = new Map(
+          sourceDayPlans.map((dayPlan) => {
+            const dayIndex = Math.max(0, Math.min(6, differenceInCalendarDays(parseISO(dayPlan.date), sourceWeekStart)));
+            return [dayIndex, dayPlan];
+          })
+        );
+      }
+
       const hasSourceWeekGoal = sourceWeekGoal.goal_mileage_min !== null || sourceWeekGoal.goal_mileage_max !== null;
       let updatedDays = 0;
 
       const ensureTargetWeek = async (athleteId) => {
         const existingWeeks = await appClient.entities.TrainingWeek.filter({
           athlete_id: athleteId,
-          week_start_date: weekStartDate,
+          week_start_date: targetWeekStartDate,
         });
 
         const week = existingWeeks[0] || await appClient.entities.TrainingWeek.create({
           athlete_id: athleteId,
-          week_start_date: weekStartDate,
+          week_start_date: targetWeekStartDate,
         });
 
         const existingDayPlans = await appClient.entities.DayPlan.filter({ training_week_id: week.id });
@@ -635,7 +714,7 @@ export default function TrainingLog() {
         const missingDayPlans = DAYS
           .map((day, index) => ({
             training_week_id: week.id,
-            date: format(addDays(currentWeekStart, index), 'yyyy-MM-dd'),
+            date: format(addDays(targetWeekStart, index), 'yyyy-MM-dd'),
             day_of_week: day,
           }))
           .filter((dayPlan) => !existingByDate.has(dayPlan.date));
@@ -669,8 +748,8 @@ export default function TrainingLog() {
         }
 
         for (const dayIndex of DAYS.keys()) {
-          const date = format(addDays(currentWeekStart, dayIndex), 'yyyy-MM-dd');
-          const sourceDayPlan = sourceByDate.get(date);
+          const date = format(addDays(targetWeekStart, dayIndex), 'yyyy-MM-dd');
+          const sourceDayPlan = sourceByDayIndex.get(dayIndex);
           const targetDayPlan = targetByDate.get(date);
 
           if (!sourceDayPlan || !targetDayPlan) {
@@ -710,16 +789,18 @@ export default function TrainingLog() {
         updatedDays,
       };
     },
-    onSuccess: ({ athleteCount, updatedDays }) => {
+    onSuccess: ({ athleteCount, updatedDays }, { targetWeekStart: targetWeekStartValue }) => {
       queryClient.invalidateQueries({ queryKey: ['trainingWeek'] });
       queryClient.invalidateQueries({ queryKey: ['dayPlans'] });
-      queryClient.invalidateQueries({ queryKey: ['monthWeeks'] });
       queryClient.invalidateQueries({ queryKey: ['monthDayPlans'] });
       queryClient.invalidateQueries({ queryKey: ['monthTrainingWeeks'] });
       setCopyDialogOpen(false);
+      const targetWeekStart = startOfWeek(targetWeekStartValue || currentWeekStart, { weekStartsOn: 1 });
+      const weekEnd = addDays(targetWeekStart, 6);
+      const weekLabel = `${format(targetWeekStart, 'MMM d')} – ${format(weekEnd, 'MMM d')}`;
       toast({
-        title: 'Week copied',
-        description: `Applied coach plans to ${athleteCount} athlete${athleteCount === 1 ? '' : 's'} across ${updatedDays} day${updatedDays === 1 ? '' : 's'}.`,
+        title: 'Coach plan copied',
+        description: `Applied to ${athleteCount} athlete${athleteCount === 1 ? '' : 's'} for ${weekLabel} (${updatedDays} day${updatedDays === 1 ? '' : 's'} updated).`,
       });
     },
     onError: (error) => {
@@ -838,17 +919,16 @@ export default function TrainingLog() {
   };
 
   const handleMonthEditDay = async ({ date, dayPlan }) => {
-    if (!isCoach) return;
-
     const dayDate = startOfWeek(date, { weekStartsOn: 1 });
     setCurrentWeekStart(dayDate);
 
     try {
       const resolvedDayPlan = dayPlan || await ensureDayPlanForDate(date);
+      const editMode = isCoach ? 'coach' : 'athlete';
 
       setEditorState({
-        coachEditor: true,
-        athleteEditor: false,
+        coachEditor: editMode === 'coach',
+        athleteEditor: editMode === 'athlete',
         splitsEditor: false,
         selectedDay: date,
         selectedDayPlan: resolvedDayPlan,
@@ -877,32 +957,36 @@ export default function TrainingLog() {
     return message;
   };
 
-  const persistCoachPlan = async (data, { closeEditor = false, showErrors = false } = {}) => {
+  const persistCoachPlan = async (data, { closeEditor = false } = {}) => {
     try {
-      if (editorState.selectedDayPlan?.id) {
-        await updateDayPlanMutation.mutateAsync({
-          id: editorState.selectedDayPlan.id,
-          data,
-        });
+      if (!editorState.selectedDayPlan?.id) {
+        throw new Error('Could not save because this day is not connected to a training week. Close the editor and try again.');
       }
-      if (closeEditor) {
-        setEditorState((current) => ({ ...current, coachEditor: false }));
-      }
+
+      const updatedDayPlan = await updateDayPlanMutation.mutateAsync({
+        id: editorState.selectedDayPlan.id,
+        data,
+      });
+
+      setEditorState((current) => ({
+        ...current,
+        selectedDayPlan: updatedDayPlan || { ...current.selectedDayPlan, ...data },
+        coachEditor: closeEditor ? false : current.coachEditor,
+      }));
     } catch (error) {
-      if (showErrors) {
-        toast({
-          title: 'Save failed',
-          description: getSaveErrorMessage(error),
-          variant: 'destructive',
-        });
-      }
+      toast({
+        title: 'Save failed',
+        description: getSaveErrorMessage(error),
+        variant: 'destructive',
+      });
+      throw error;
     }
   };
 
-  const handleSaveCoachPlan = (data) => persistCoachPlan(data, { closeEditor: true, showErrors: true });
+  const handleSaveCoachPlan = (data) => persistCoachPlan(data, { closeEditor: true });
   const handleAutoSaveCoachPlan = (data) => persistCoachPlan(data);
 
-  const persistAthleteLog = async (data, { closeEditor = false, updateShoes = false, showErrors = false } = {}) => {
+  const persistAthleteLog = async (data, { closeEditor = false, updateShoes = true } = {}) => {
     try {
       const dayPlan = editorState.selectedDayPlan;
       if (!dayPlan?.id) {
@@ -931,25 +1015,26 @@ export default function TrainingLog() {
         }
       }
 
-      await updateDayPlanMutation.mutateAsync({ id: dayPlan.id, data });
+      const updatedDayPlan = await updateDayPlanMutation.mutateAsync({ id: dayPlan.id, data });
 
-      if (closeEditor) {
-        setEditorState({ ...editorState, athleteEditor: false });
-      }
+      setEditorState((current) => ({
+        ...current,
+        selectedDayPlan: updatedDayPlan || { ...current.selectedDayPlan, ...data },
+        athleteEditor: closeEditor ? false : current.athleteEditor,
+      }));
     } catch (error) {
-      if (showErrors) {
-        toast({
-          title: 'Save failed',
-          description: getSaveErrorMessage(error),
-          variant: 'destructive',
-        });
-      }
+      toast({
+        title: 'Save failed',
+        description: getSaveErrorMessage(error),
+        variant: 'destructive',
+      });
+      throw error;
     }
   };
 
-  const handleSaveAthleteLog = (data) => persistAthleteLog(data, { closeEditor: true, updateShoes: true, showErrors: true });
-  const handleAutoSaveAthleteLog = (data) => persistAthleteLog(data);
-  const handleDeleteAthleteLogEntry = (data) => persistAthleteLog(data, { updateShoes: true, showErrors: true });
+  const handleSaveAthleteLog = (data) => persistAthleteLog(data, { closeEditor: true, updateShoes: true });
+  const handleAutoSaveAthleteLog = (data) => persistAthleteLog(data, { updateShoes: true });
+  const handleDeleteAthleteLogEntry = (data) => persistAthleteLog(data, { updateShoes: true });
 
   const toggleFactorDraftKey = (key, checked) => {
     setFactorDraftKeys((currentKeys) => {
@@ -972,7 +1057,7 @@ export default function TrainingLog() {
         data: { splits },
       });
     }
-    setEditorState({ ...editorState, splitsEditor: false });
+    setEditorState((current) => ({ ...current, splitsEditor: false }));
   };
   
   const getDayPlanForDate = (dayIndex) => {
@@ -1036,18 +1121,24 @@ export default function TrainingLog() {
                   Workouts
                 </Button>
               </Link>
-              <Link to={getPageUrlWithLogContext('Account')}>
-                <Button variant="outline" className="h-9 rounded-full px-3 text-sm font-semibold sm:px-4">
-                  <UserCircle className="mr-2 h-4 w-4" />
-                  Account
-                </Button>
-              </Link>
-              <Button variant="ghost" size="sm" className="h-9 justify-center rounded-full px-3" onClick={() => logout()}>
-                <LogOut className="mr-1.5 h-4 w-4" />
-                Sign Out
-              </Button>
             </>
           )}
+          menuItems={[
+            {
+              key: 'account',
+              label: 'Account',
+              icon: UserCircle,
+              to: getPageUrlWithLogContext('Account'),
+            },
+            {
+              key: 'sign-out',
+              label: 'Sign Out',
+              icon: LogOut,
+              variant: 'ghost',
+              separatorBefore: true,
+              onClick: () => logout(),
+            },
+          ]}
         />
         
         {/* Coach Athlete Selector */}
@@ -1180,18 +1271,16 @@ export default function TrainingLog() {
             </Button>
           </div>
           <RoleLegend className="sm:mx-auto" />
-          {!isTouchTableView && (
-            <TableZoomControls
-              value={currentTableZoom}
-              min={TABLE_ZOOM_MIN}
-              max={TABLE_ZOOM_MAX}
-              step={TABLE_ZOOM_STEP}
-              onChange={setCurrentTableZoom}
-              onFit={fitCurrentTableZoom}
-              onReset={resetCurrentTableZoom}
-              className="w-full sm:w-auto"
-            />
-          )}
+          <TableZoomControls
+            value={currentTableZoom}
+            min={TABLE_ZOOM_MIN}
+            max={TABLE_ZOOM_MAX}
+            step={TABLE_ZOOM_STEP}
+            onChange={setCurrentTableZoom}
+            onFit={fitCurrentTableZoom}
+            onReset={resetCurrentTableZoom}
+            className="w-full sm:w-auto"
+          />
           {isCoach && viewMode === 'week' && trainingWeek && (
             <Button
               variant="outline"
@@ -1236,8 +1325,8 @@ export default function TrainingLog() {
                   setCurrentWeekStart(weekStart);
                   setViewMode('week');
                 }}
-                onDayClick={isCoach ? handleMonthEditDay : undefined}
-                selectedDate={editorState.coachEditor ? editorState.selectedDay : null}
+                onDayClick={handleMonthEditDay}
+                selectedDate={(editorState.coachEditor || editorState.athleteEditor) ? editorState.selectedDay : null}
                 zoom={currentTableZoom}
                 onZoomChange={setCurrentTableZoom}
                 zoomMin={TABLE_ZOOM_MIN}
@@ -1283,9 +1372,13 @@ export default function TrainingLog() {
           <>
             {/* Weekly Grid */}
             <div className="btc-panel mt-5 overflow-hidden sm:mt-6">
-              <div className="btc-zoomable-table-scroll overflow-x-auto" data-training-table-scroll>
+              <div
+                ref={weekScrollRef}
+                className="btc-zoomable-table-scroll btc-table-drag-scroll overflow-x-auto"
+                data-training-table-scroll
+              >
                 <div
-                  className="btc-zoomable-table flex min-w-[70rem] w-full sm:min-w-[77rem] lg:min-w-[84rem]"
+                  className="btc-zoomable-table flex min-w-[59.5rem] w-full sm:min-w-[77rem] lg:min-w-[84rem]"
                   style={{ zoom: currentTableZoom }}
                 >
                   {DAYS.map((day, index) => (
@@ -1375,7 +1468,7 @@ export default function TrainingLog() {
       {/* Editors */}
       <CoachPlanEditor
         open={editorState.coachEditor && viewMode !== 'month'}
-        onClose={() => setEditorState({ ...editorState, coachEditor: false })}
+        onClose={() => setEditorState((current) => ({ ...current, coachEditor: false }))}
         dayPlan={editorState.selectedDayPlan}
         date={editorState.selectedDay}
         onSave={handleSaveCoachPlan}
@@ -1384,7 +1477,7 @@ export default function TrainingLog() {
       
       <AthleteLogEditor
         open={editorState.athleteEditor}
-        onClose={() => setEditorState({ ...editorState, athleteEditor: false })}
+        onClose={() => setEditorState((current) => ({ ...current, athleteEditor: false }))}
         dayPlan={editorState.selectedDayPlan}
         date={editorState.selectedDay}
         onSave={handleSaveAthleteLog}
@@ -1396,7 +1489,7 @@ export default function TrainingLog() {
       
       <SplitsEditor
         open={editorState.splitsEditor}
-        onClose={() => setEditorState({ ...editorState, splitsEditor: false })}
+        onClose={() => setEditorState((current) => ({ ...current, splitsEditor: false }))}
         dayPlan={editorState.selectedDayPlan}
         date={editorState.selectedDay}
         onSave={handleSaveSplits}

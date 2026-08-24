@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { format } from 'date-fns';
-import { AlertTriangle, Copy, Loader2 } from 'lucide-react';
+import { addDays, format, startOfWeek } from 'date-fns';
+import { AlertTriangle, ChevronLeft, ChevronRight, Copy, Loader2 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -18,6 +18,12 @@ const getInitials = (athlete = {}) => {
   return (initials || athlete.full_name?.[0] || athlete.email?.[0] || 'A').toUpperCase();
 };
 
+const formatWeekRange = (weekStart) => {
+  if (!weekStart) return '';
+  const weekEnd = addDays(weekStart, 6);
+  return `${format(weekStart, 'MMM d')} – ${format(weekEnd, 'MMM d, yyyy')}`;
+};
+
 export default function CopyWeekToAthletesDialog({
   open,
   onClose,
@@ -30,21 +36,32 @@ export default function CopyWeekToAthletesDialog({
 }) {
   const [selectedAthleteIds, setSelectedAthleteIds] = useState([]);
   const [overwriteExisting, setOverwriteExisting] = useState(false);
+  const [targetWeekStart, setTargetWeekStart] = useState(currentWeekStart);
 
-  const targetAthletes = useMemo(
-    () => athletes.filter((athlete) => athlete.role !== 'admin' && athlete.id !== currentAthleteId),
-    [athletes, currentAthleteId]
+  const selectableAthletes = useMemo(
+    () => athletes.filter((athlete) => athlete.role !== 'admin'),
+    [athletes]
   );
 
   useEffect(() => {
     if (!open) {
       setSelectedAthleteIds([]);
       setOverwriteExisting(false);
+      setTargetWeekStart(currentWeekStart);
+      return;
     }
-  }, [open]);
 
-  const allSelected = targetAthletes.length > 0 && selectedAthleteIds.length === targetAthletes.length;
-  const weekLabel = currentWeekStart ? format(currentWeekStart, 'MMM d, yyyy') : '';
+    setTargetWeekStart(currentWeekStart);
+    if (currentAthleteId) {
+      setSelectedAthleteIds([currentAthleteId]);
+    }
+  }, [open, currentWeekStart, currentAthleteId]);
+
+  const allSelected = selectableAthletes.length > 0 && selectedAthleteIds.length === selectableAthletes.length;
+  const isSameWeek = targetWeekStart && currentWeekStart
+    && format(targetWeekStart, 'yyyy-MM-dd') === format(currentWeekStart, 'yyyy-MM-dd');
+  const selectedCount = selectedAthleteIds.length;
+  const canCopy = selectedCount > 0 && hasSourcePlan && !isSubmitting;
 
   const toggleAthlete = (athleteId, checked) => {
     setSelectedAthleteIds((current) => {
@@ -56,37 +73,90 @@ export default function CopyWeekToAthletesDialog({
   };
 
   const toggleAll = (checked) => {
-    setSelectedAthleteIds(checked ? targetAthletes.map((athlete) => athlete.id) : []);
+    setSelectedAthleteIds(checked ? selectableAthletes.map((athlete) => athlete.id) : []);
   };
 
-  const canCopy = selectedAthleteIds.length > 0 && hasSourcePlan && !isSubmitting;
+  const shiftTargetWeek = (weeks) => {
+    setTargetWeekStart((current) => startOfWeek(addDays(current || currentWeekStart, weeks * 7), { weekStartsOn: 1 }));
+  };
+
+  const handleCopy = () => {
+    onCopy({
+      athleteIds: selectedAthleteIds,
+      overwriteExisting,
+      sourceWeekStart: currentWeekStart,
+      targetWeekStart,
+    });
+  };
 
   return (
     <Dialog open={open} onOpenChange={(nextOpen) => { if (!nextOpen) onClose(); }}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="btc-editor-dialog max-w-lg">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Copy className="h-5 w-5 text-red-700 dark:text-red-300" />
-            Copy Week to Athletes
+            Copy Coach Plan
           </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-5 py-2">
-          <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300">
-            Week of <span className="font-semibold text-slate-800 dark:text-slate-100">{weekLabel}</span>
+          <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 dark:border-slate-800 dark:bg-slate-900">
+            <div className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+              Copy from this week
+            </div>
+            <div className="mt-1 text-sm font-semibold text-slate-800 dark:text-slate-100">
+              {formatWeekRange(currentWeekStart)}
+            </div>
+            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+              Uses the coach plan from the week you&apos;re viewing now.
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Apply to week</Label>
+            <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-2 py-2 dark:border-slate-800 dark:bg-slate-950">
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 shrink-0"
+                onClick={() => shiftTargetWeek(-1)}
+                aria-label="Previous target week"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <div className="min-w-0 flex-1 text-center text-sm font-semibold text-slate-800 dark:text-slate-100">
+                {formatWeekRange(targetWeekStart)}
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 shrink-0"
+                onClick={() => shiftTargetWeek(1)}
+                aria-label="Next target week"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+            {isSameWeek && (
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Same week — copies to the athletes you select below.
+              </p>
+            )}
           </div>
 
           {!hasSourcePlan && (
             <div className="btc-warning-panel flex gap-2 rounded-lg border px-3 py-2 text-sm">
               <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-              Add at least one coach workout before copying this week.
+              No coach workouts found in the current week.
             </div>
           )}
 
           <div className="space-y-3">
             <div className="flex items-center justify-between gap-3">
               <Label>Athletes</Label>
-              {targetAthletes.length > 0 && (
+              {selectableAthletes.length > 0 && (
                 <button
                   type="button"
                   className="text-xs font-medium text-red-700 hover:text-red-800 dark:text-red-300"
@@ -97,14 +167,15 @@ export default function CopyWeekToAthletesDialog({
               )}
             </div>
 
-            {targetAthletes.length === 0 ? (
+            {selectableAthletes.length === 0 ? (
               <div className="rounded-lg border border-slate-200 px-3 py-4 text-sm text-slate-500 dark:border-slate-800 dark:text-slate-400">
-                No other athletes available.
+                No athletes available.
               </div>
             ) : (
-              <div className="max-h-64 space-y-2 overflow-y-auto pr-1">
-                {targetAthletes.map((athlete) => {
+              <div className="max-h-56 space-y-2 overflow-y-auto pr-1">
+                {selectableAthletes.map((athlete) => {
                   const checked = selectedAthleteIds.includes(athlete.id);
+                  const isCurrent = athlete.id === currentAthleteId;
                   return (
                     <label
                       key={athlete.id}
@@ -117,7 +188,12 @@ export default function CopyWeekToAthletesDialog({
                           {getInitials(athlete)}
                         </AvatarFallback>
                       </Avatar>
-                      <span className="min-w-0 flex-1 truncate text-sm font-medium">{getDisplayName(athlete)}</span>
+                      <span className="min-w-0 flex-1 truncate text-sm font-medium">
+                        {getDisplayName(athlete)}
+                        {isCurrent && (
+                          <span className="ml-1.5 text-xs font-normal text-slate-500 dark:text-slate-400">(viewing)</span>
+                        )}
+                      </span>
                     </label>
                   );
                 })}
@@ -140,10 +216,7 @@ export default function CopyWeekToAthletesDialog({
           <Button variant="outline" onClick={onClose} disabled={isSubmitting}>
             Cancel
           </Button>
-          <Button
-            onClick={() => onCopy({ athleteIds: selectedAthleteIds, overwriteExisting })}
-            disabled={!canCopy}
-          >
+          <Button onClick={handleCopy} disabled={!canCopy}>
             {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Copy className="mr-2 h-4 w-4" />}
             Apply Copy
           </Button>

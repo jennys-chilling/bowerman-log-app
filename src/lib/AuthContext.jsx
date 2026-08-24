@@ -88,6 +88,20 @@ export const AuthProvider = ({ children }) => {
     return () => subscription.unsubscribe();
   }, []);
 
+  const updateUser = (updater) => {
+    setUser((current) => {
+      if (typeof updater === 'function') {
+        return updater(current);
+      }
+
+      if (!updater) {
+        return current;
+      }
+
+      return current ? { ...current, ...updater } : updater;
+    });
+  };
+
   const logout = async () => {
     await appClient.auth.logout();
     setAuthMessage(null);
@@ -110,6 +124,13 @@ export const AuthProvider = ({ children }) => {
     setAuthMessage(null);
     setAuthError(null);
     await loadCurrentUser({ showLoader: false });
+  };
+
+  const resetPasswordForEmail = async (email) => {
+    const redirectTo = `${appParams.appBaseUrl || window.location.origin}/Account`;
+    await appClient.auth.resetPasswordForEmail(email, redirectTo);
+    setAuthMessage(`Password reset email sent to ${email}. Check your inbox for a link to choose a new password.`);
+    setAuthError(null);
   };
 
   const signUpWithPassword = async (email, password) => {
@@ -136,10 +157,12 @@ export const AuthProvider = ({ children }) => {
         authMessage,
         appPublicSettings: null,
         logout,
+        updateUser,
         navigateToLogin,
         checkAppState: loadCurrentUser,
         signInWithMagicLink,
         signInWithPassword,
+        resetPasswordForEmail,
         signUpWithPassword,
         signInWithGoogle,
       }}

@@ -153,10 +153,9 @@ export default function WeeklyReflection({ trainingWeek, onSave, isCoach }) {
     window.clearTimeout(saveTimer.current);
     saveTimer.current = window.setTimeout(() => {
       const versionAtSave = editVersionRef.current;
-      const payload = {
-        athlete_reflection: reflection,
-        coach_feedback: feedback,
-      };
+      const payload = isCoach
+        ? { coach_feedback: feedback }
+        : { athlete_reflection: reflection };
 
       Promise.resolve(onSave(payload))
         .then(() => {
@@ -169,7 +168,7 @@ export default function WeeklyReflection({ trainingWeek, onSave, isCoach }) {
     }, AUTOSAVE_DELAY_MS);
 
     return () => window.clearTimeout(saveTimer.current);
-  }, [feedback, hasUserEdited, onSave, reflection, trainingWeek?.id]);
+  }, [feedback, hasUserEdited, isCoach, onSave, reflection, trainingWeek?.id]);
 
   const handleSave = async () => {
     window.clearTimeout(saveTimer.current);
@@ -177,10 +176,9 @@ export default function WeeklyReflection({ trainingWeek, onSave, isCoach }) {
     const versionAtSave = editVersionRef.current;
 
     try {
-      await onSave({
-        athlete_reflection: reflection,
-        coach_feedback: feedback,
-      });
+      await onSave(isCoach
+        ? { coach_feedback: feedback }
+        : { athlete_reflection: reflection });
       if (editVersionRef.current === versionAtSave) {
         markClean();
       }
