@@ -103,6 +103,9 @@ create table if not exists public.shoes (
 alter table public.shoes
   add column if not exists max_mileage numeric not null default 500;
 
+alter table public.shoes
+  add column if not exists last_used_date date;
+
 create table if not exists public.feedback_submissions (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references public.profiles (id) on delete cascade,
@@ -138,6 +141,7 @@ create index if not exists day_plans_date_idx on public.day_plans (date);
 create index if not exists week_templates_coach_id_idx on public.week_templates (coach_id);
 create index if not exists week_templates_updated_at_idx on public.week_templates (updated_at desc);
 create index if not exists shoes_athlete_id_idx on public.shoes (athlete_id);
+create index if not exists shoes_athlete_last_used_date_idx on public.shoes (athlete_id, last_used_date desc nulls last);
 create index if not exists feedback_submissions_user_id_idx on public.feedback_submissions (user_id);
 create index if not exists feedback_submissions_created_at_idx on public.feedback_submissions (created_at desc);
 
@@ -492,9 +496,13 @@ using (
   )
 );
 
+drop function if exists public.increment_shoe_mileage(uuid, numeric);
+drop function if exists public.increment_shoe_mileage(uuid, numeric, date);
+
 create or replace function public.increment_shoe_mileage(
   shoe_id uuid,
-  mileage_delta numeric
+  mileage_delta numeric,
+  used_on date default null
 )
 returns public.shoes
 language plpgsql
@@ -523,7 +531,13 @@ begin
   end if;
 
   update public.shoes
-  set current_mileage = greatest(0, coalesce(current_mileage, 0) + mileage_delta)
+  set
+    current_mileage = greatest(0, coalesce(current_mileage, 0) + mileage_delta),
+    last_used_date = case
+      when used_on is null then last_used_date
+      when last_used_date is null or used_on >= last_used_date then used_on
+      else last_used_date
+    end
   where id = shoe_id
     and (athlete_id = auth.uid() or public.is_admin())
   returning * into updated_shoe;
@@ -536,4 +550,4 @@ begin
 end;
 $$;
 
-grant execute on function public.increment_shoe_mileage(uuid, numeric) to authenticated;
+grant execute on function public.increment_shoe_mileage(uuid, numeric, date) to authenticated;

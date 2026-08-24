@@ -21,6 +21,7 @@ import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { Check, ChevronsUpDown, Dumbbell, Moon, Plus, Sun, Trash2, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { sortShoesByRecent } from "@/lib/shoeUtils";
 import { getRpeColorClasses } from "./rpeColors";
 import {
   getVisibleTrainingFactorOptions,
@@ -696,7 +697,7 @@ export default function AthleteLogEditor({
     void commitDeletedEntry({ ...formData, lift: { ...emptyLift } });
   };
 
-  const activeShoes = shoes.filter((shoe) => shoe.status === 'Active');
+  const activeShoes = sortShoesByRecent(shoes.filter((shoe) => shoe.status === 'Active'));
   const hasShoeSplitMismatch = formHasShoeSplitMismatch(formData);
 
   useEffect(() => {

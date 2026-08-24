@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { appClient } from '@/api/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/lib/AuthContext';
+import { sortShoesByRecent } from '@/lib/shoeUtils';
 import { AppHeader, AppPage } from '@/components/AppChrome';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -62,9 +63,18 @@ export default function ShoeInventory() {
   
   const { data: shoes = [], isLoading } = useQuery({
     queryKey: ['shoes', user?.id],
-    queryFn: () => appClient.entities.Shoe.filter({ athlete_id: user.id }),
+    queryFn: async () => {
+      try {
+        return await appClient.entities.Shoe.filter({ athlete_id: user.id }, '-last_used_date');
+      } catch {
+        return appClient.entities.Shoe.filter({ athlete_id: user.id }, '-updated_at');
+      }
+    },
     enabled: !!user?.id,
   });
+
+  const activeShoes = sortShoesByRecent(shoes.filter((shoe) => shoe.status === 'Active'));
+  const retiredShoes = sortShoesByRecent(shoes.filter((shoe) => shoe.status === 'Retired'));
   
   const createShoeMutation = useMutation({
     mutationFn: (data) => appClient.entities.Shoe.create({ ...data, athlete_id: user.id }),
@@ -141,9 +151,6 @@ export default function ShoeInventory() {
     if (!window.confirm(`Permanently delete ${shoe.name}? This cannot be undone.`)) return;
     deleteShoeMutation.mutate(shoe.id);
   };
-  
-  const activeShoes = shoes.filter(s => s.status === 'Active');
-  const retiredShoes = shoes.filter(s => s.status === 'Retired');
   
   const getMaxMileage = (shoe) => Number(shoe.max_mileage) || DEFAULT_MAX_MILEAGE;
   const getMileagePercent = (shoe) => Math.min(((shoe.current_mileage || 0) / getMaxMileage(shoe)) * 100, 100);

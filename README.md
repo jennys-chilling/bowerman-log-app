@@ -33,7 +33,7 @@ where email = 'you@example.com';
 
 New users are created as `athlete` profiles by default.
 
-When the schema changes, rerun [supabase/schema.sql](/Users/jennyschilling/bowerman-training-log/supabase/schema.sql) in the Supabase SQL editor. The script uses `if not exists` and replacement policies/triggers, so it is safe to rerun for updates like profile fields, the profile-picture bucket, the feedback submissions table, and the `increment_shoe_mileage` RPC.
+When the schema changes, rerun [supabase/schema.sql](/Users/jennyschilling/bowerman-training-log/supabase/schema.sql) in the Supabase SQL editor. The script uses `if not exists` and replacement policies/triggers, so it is safe to rerun for updates like profile fields, the profile-picture bucket, the feedback submissions table, shoe `last_used_date`, and the `increment_shoe_mileage` RPC.
 
 ## Google auth setup
 

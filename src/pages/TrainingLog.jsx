@@ -37,6 +37,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { toast } from '@/components/ui/use-toast';
 import { cn } from '@/lib/utils';
+import { sortShoesByRecent } from '@/lib/shoeUtils';
 import {
   countsAsRunMileage,
   getAthleteActivities,
@@ -480,11 +481,21 @@ export default function TrainingLog() {
   }, [monthTrainingWeeks]);
 
   // Fetch shoes
-  const { data: shoes = [] } = useQuery({
+  const { data: shoesData = [] } = useQuery({
     queryKey: ['shoes', effectiveAthleteId],
-    queryFn: () => appClient.entities.Shoe.filter({ athlete_id: effectiveAthleteId }),
+    queryFn: async () => {
+      try {
+        return await appClient.entities.Shoe.filter(
+          { athlete_id: effectiveAthleteId },
+          '-last_used_date'
+        );
+      } catch {
+        return appClient.entities.Shoe.filter({ athlete_id: effectiveAthleteId }, '-updated_at');
+      }
+    },
     enabled: !!effectiveAthleteId,
   });
+  const shoes = React.useMemo(() => sortShoesByRecent(shoesData), [shoesData]);
   
   // Create week mutation
   const createWeekMutation = useMutation({
@@ -611,10 +622,10 @@ export default function TrainingLog() {
   
   // Update shoe mileage after session save (atomic server-side increment)
   const updateShoeMileageMutation = useMutation({
-    mutationFn: async ({ shoeIds, mileage }) => {
+    mutationFn: async ({ shoeIds, mileage, usedOn = null }) => {
       for (const shoeId of shoeIds) {
         try {
-          await appClient.rpc.incrementShoeMileage(shoeId, mileage);
+          await appClient.rpc.incrementShoeMileage(shoeId, mileage, usedOn);
         } catch (error) {
           // Fallback for projects that have not rerun schema.sql yet.
           if (!String(error?.message || '').toLowerCase().includes('increment_shoe_mileage')) {
@@ -624,9 +635,13 @@ export default function TrainingLog() {
           const latestShoes = await appClient.entities.Shoe.filter({ id: shoeId });
           const shoe = latestShoes[0] || shoes.find((item) => item.id === shoeId);
           if (shoe) {
-            await appClient.entities.Shoe.update(shoeId, {
+            const nextData = {
               current_mileage: Math.max(0, (shoe.current_mileage || 0) + mileage),
-            });
+            };
+            if (usedOn && (!shoe.last_used_date || usedOn >= shoe.last_used_date)) {
+              nextData.last_used_date = usedOn;
+            }
+            await appClient.entities.Shoe.update(shoeId, nextData);
           }
         }
       }
@@ -1010,7 +1025,18 @@ export default function TrainingLog() {
             await updateShoeMileageMutation.mutateAsync({
               shoeIds: [shoeId],
               mileage: mileageDelta,
+              usedOn: dayPlan.date,
             });
+          } else if ((newShoeMileage.get(shoeId) || 0) > 0) {
+            const shoe = shoes.find((item) => item.id === shoeId);
+            if (shoe && (!shoe.last_used_date || dayPlan.date >= shoe.last_used_date)) {
+              try {
+                await appClient.entities.Shoe.update(shoeId, { last_used_date: dayPlan.date });
+                queryClient.invalidateQueries({ queryKey: ['shoes'] });
+              } catch {
+                // Ignore until last_used_date exists in Supabase.
+              }
+            }
           }
         }
       }

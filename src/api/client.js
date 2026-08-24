@@ -441,12 +441,18 @@ export const appClient = {
     },
   },
   rpc: {
-    async incrementShoeMileage(shoeId, mileageDelta) {
+    async incrementShoeMileage(shoeId, mileageDelta, usedOn = null) {
       const supabase = assertSupabaseConfigured();
-      const { data, error } = await supabase.rpc('increment_shoe_mileage', {
+      const payload = {
         shoe_id: shoeId,
         mileage_delta: mileageDelta,
-      });
+      };
+
+      if (usedOn) {
+        payload.used_on = usedOn;
+      }
+
+      const { data, error } = await supabase.rpc('increment_shoe_mileage', payload);
 
       if (error) {
         throw normalizeSupabaseError(error, 'Failed to update shoe mileage');
