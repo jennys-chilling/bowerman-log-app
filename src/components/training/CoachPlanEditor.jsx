@@ -18,6 +18,7 @@ import {
   emptyCoachLift,
   getCoachActivities,
   hasCoachActivityData,
+  hasCoachEmptyDraftActivity,
   hasCoachLiftData,
   isXTrainOtherType,
   makeCoachSession,
@@ -293,7 +294,14 @@ export default function CoachPlanEditor({ open, onClose, dayPlan, date, onSave, 
   }, [date, dayPlan, open]);
 
   useEffect(() => {
-    if (!open || !hasUserEdited || !onAutoSave) {
+    // Don't autosave while a blank "Add Activity" draft exists — save strips empty
+    // activities, then reloading the day plan would wipe the new form.
+    const hasPendingEmptyDraft = (
+      hasCoachEmptyDraftActivity(formData.am_coach)
+      || hasCoachEmptyDraftActivity(formData.pm_coach)
+    );
+
+    if (!open || !hasUserEdited || !onAutoSave || hasPendingEmptyDraft) {
       return undefined;
     }
 

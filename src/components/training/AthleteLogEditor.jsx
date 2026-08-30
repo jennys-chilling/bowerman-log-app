@@ -37,6 +37,7 @@ import {
   emptyAthleteActivity,
   getAthleteActivities,
   hasAthleteActivityData,
+  hasAthleteEmptyDraftActivity,
   isBikeType,
   isXTrainOtherType,
   isXTrainType,
@@ -699,9 +700,15 @@ export default function AthleteLogEditor({
 
   const activeShoes = sortShoesByRecent(shoes.filter((shoe) => shoe.status === 'Active'));
   const hasShoeSplitMismatch = formHasShoeSplitMismatch(formData);
+  const hasPendingEmptyDraft = (
+    hasAthleteEmptyDraftActivity(formData.am_session)
+    || hasAthleteEmptyDraftActivity(formData.pm_session)
+  );
 
   useEffect(() => {
-    if (!open || !hasUserEdited || !onAutoSave || hasShoeSplitMismatch) {
+    // Don't autosave while a blank "Add Activity" draft exists — save strips empty
+    // activities, then reloading the day plan would wipe the new form.
+    if (!open || !hasUserEdited || !onAutoSave || hasShoeSplitMismatch || hasPendingEmptyDraft) {
       return undefined;
     }
 
@@ -719,7 +726,7 @@ export default function AthleteLogEditor({
     }, AUTOSAVE_DELAY_MS);
 
     return () => window.clearTimeout(autoSaveTimer.current);
-  }, [formData, hasShoeSplitMismatch, hasUserEdited, onAutoSave, open]);
+  }, [formData, hasPendingEmptyDraft, hasShoeSplitMismatch, hasUserEdited, onAutoSave, open]);
 
   const handleSave = async () => {
     window.clearTimeout(autoSaveTimer.current);

@@ -207,6 +207,11 @@ export const getAthleteActivities = (session = {}) => {
 
 export const hasAthleteSessionData = (session = {}) => getAthleteActivities(session).some(hasAthleteActivityData);
 
+/** True when a multi-activity form still has a blank draft that save would drop. */
+export const hasAthleteEmptyDraftActivity = (activities = []) => (
+  activities.length > 1 && activities.some((activity) => !hasAthleteActivityData(activity))
+);
+
 export const sanitizeAthleteActivity = (activity = {}) => {
   const sessionType = activity.session_type || '';
   const allowMileage = allowsActivityMileage(sessionType);
@@ -275,6 +280,11 @@ export const getCoachActivities = (session = {}) => {
 };
 
 export const hasCoachSessionData = (session = {}) => getCoachActivities(session).some(hasCoachActivityData);
+
+/** True when a multi-activity form still has a blank draft that save would drop. */
+export const hasCoachEmptyDraftActivity = (activities = []) => (
+  activities.length > 1 && activities.some((activity) => !hasCoachActivityData(activity))
+);
 
 export const sanitizeCoachActivity = (activity = {}) => {
   const workoutType = formatWorkoutTypes(parseWorkoutTypes(activity.workout_type)) || activity.workout_type || '';
